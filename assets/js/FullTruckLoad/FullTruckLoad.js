@@ -244,7 +244,7 @@ document.getElementById('modifyButton').addEventListener('click', function () {
     document.getElementById('addFreightRow').disabled = false;
     document.getElementById('addVendorFreightRow').disabled = false;
 
-    document.querySelectorAll('.deleteRow, .delete-shipment-btn').forEach(btn => btn.disabled = false);
+    document.querySelectorAll('.deleteRow, .delete-shipment-btn, .edit-shipment-btn').forEach(btn => btn.disabled = false);
     document.getElementById("lrNumber").disabled = true;
 });
 
@@ -400,8 +400,18 @@ addShipmentBtn.addEventListener('click', function () {
         return;
     }
 
-    const tr = document.createElement('tr');
-    if (currentEditShipmentId) tr.dataset.id = currentEditShipmentId;
+    // Create or find row
+    let tr;
+    if (currentEditShipmentId) {
+        // Try to find existing row in DOM by its dataset id, or create a new one with that id
+        tr = shipmentTableBody.querySelector(`tr[data-id="${currentEditShipmentId}"]`);
+    }
+
+    if (!tr) {
+        tr = document.createElement('tr');
+        if (currentEditShipmentId) tr.dataset.id = currentEditShipmentId;
+        shipmentTableBody.appendChild(tr);
+    }
 
     Object.assign(tr.dataset, { type, name, address, pincode, city, refNo, invValue, qty, actWt, chgWt });
 
@@ -422,37 +432,10 @@ addShipmentBtn.addEventListener('click', function () {
         </td>
     `;
 
-    shipmentTableBody.appendChild(tr);
+    // Recalculate summary totals from all rows
+    recalculateShipmentSummary();
 
-    const allRows = shipmentTableBody.querySelectorAll('tr');
-    let uniqueCities = new Set(), uniqueRefs = new Set();
-    let totalInvoiceValue = 0;
-
-    allRows.forEach(row => {
-        if (row.dataset.city) uniqueCities.add(row.dataset.city);
-        if (row.dataset.refNo) uniqueRefs.add(row.dataset.refNo);
-        totalInvoiceValue += parseFloat(row.dataset.invValue) || 0;
-    });
-
-    const firstRow = allRows[0];
-    const firstPinCode = firstRow ? firstRow.dataset.pincode : '';
-    const firstAddress = firstRow ? firstRow.dataset.address : '';
-    const citiesString = Array.from(uniqueCities).join(', ');
-    const refsString = Array.from(uniqueRefs).join(', ');
-
-    if (type === 'Delivery') {
-        document.getElementById('destinationPinCode').value = firstPinCode;
-        document.getElementById('destinationCity').value = citiesString;
-        document.getElementById('destinationAddress').value = firstAddress;
-    } else if (type === 'Pickup') {
-        document.getElementById('originPinCode').value = firstPinCode;
-        document.getElementById('originCity').value = citiesString;
-        document.getElementById('originAddress').value = firstAddress;
-    }
-
-    document.getElementById('referenceNumber').value = refsString;
-    document.getElementById('invoiceValue').value = totalInvoiceValue.toFixed(2);
-
+    // Reset form inputs and button state
     currentEditShipmentId = null;
     document.getElementById('shipmentId').value = '';
     document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-plus-lg"></i> Add';
@@ -462,7 +445,6 @@ addShipmentBtn.addEventListener('click', function () {
         .forEach(id => document.getElementById(id).value = '');
 
     document.getElementById('consigneeorConsignorName').focus();
-    if (typeof updateShipmentTotals === 'function') updateShipmentTotals();
 });
 
 shipmentTableBody.addEventListener('click', function (e) {
@@ -473,27 +455,28 @@ shipmentTableBody.addEventListener('click', function (e) {
         const tr = deleteBtn.closest('tr');
         if (tr.dataset.id) deletedShipmentIds.push(tr.dataset.id);
         tr.remove();
-        updateShipmentTotals();
+        recalculateShipmentSummary();
     } else if (editBtn) {
         const tr = editBtn.closest('tr');
-        currentEditShipmentId = tr.dataset.id || null;
+        currentEditShipmentId = tr.dataset.id || ('temp_' + Date.now()); // Fallback temporary ID if new row
+        tr.dataset.id = currentEditShipmentId;
         document.getElementById('shipmentId').value = currentEditShipmentId;
 
-        document.getElementById('shipmentType').value = tr.dataset.type;
-        document.getElementById('consigneeorConsignorName').value = tr.dataset.name;
-        document.getElementById('consigneeorConsignorAddress').value = tr.dataset.address;
-        document.getElementById('shipmentPinCode').value = tr.dataset.pincode;
-        document.getElementById('shipmentCity').value = tr.dataset.city;
-        document.getElementById('shipmentReferenceNumber').value = tr.dataset.refNo;
-        document.getElementById('shipmentInvoiceValue').value = tr.dataset.invValue;
-        document.getElementById('shipmentQuantity').value = tr.dataset.qty;
-        document.getElementById('shipmentActualWt').value = tr.dataset.actWt;
-        document.getElementById('shipmentChargeWt').value = tr.dataset.chgWt;
+        // Load data into upper section input fields
+        document.getElementById('shipmentType').value = tr.dataset.type || '';
+        document.getElementById('consigneeorConsignorName').value = tr.dataset.name || '';
+        document.getElementById('consigneeorConsignorAddress').value = tr.dataset.address || '';
+        document.getElementById('shipmentPinCode').value = tr.dataset.pincode || '';
+        document.getElementById('shipmentCity').value = tr.dataset.city || '';
+        document.getElementById('shipmentReferenceNumber').value = tr.dataset.refNo || '';
+        document.getElementById('shipmentInvoiceValue').value = tr.dataset.invValue || '';
+        document.getElementById('shipmentQuantity').value = tr.dataset.qty || '';
+        document.getElementById('shipmentActualWt').value = tr.dataset.actWt || '';
+        document.getElementById('shipmentChargeWt').value = tr.dataset.chgWt || '';
 
-        document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-pencil"></i> Update';
-        tr.remove();
+        // Change button text to Edit Item / Update
+        document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-pencil"></i> Edit Item';
         document.getElementById('consigneeorConsignorName').focus();
-        updateShipmentTotals();
     }
 });
 
@@ -1036,4 +1019,42 @@ function updateShipmentTotals() {
     const chargeWtInput = document.getElementById('chargeWt');
     chargeWtInput.value = totalChgWt.toFixed(2);
     chargeWtInput.dispatchEvent(new Event('change'));
+}
+
+function recalculateShipmentSummary() {
+    const allRows = shipmentTableBody.querySelectorAll('tr');
+    let uniqueCities = new Set(), uniqueRefs = new Set();
+    let totalInvoiceValue = 0;
+
+    allRows.forEach(row => {
+        if (row.dataset.city) uniqueCities.add(row.dataset.city);
+        if (row.dataset.refNo) uniqueRefs.add(row.dataset.refNo);
+        totalInvoiceValue += parseFloat(row.dataset.invValue) || 0;
+    });
+
+    const firstRow = allRows[0];
+    const firstPinCode = firstRow ? firstRow.dataset.pincode : '';
+    const firstAddress = firstRow ? firstRow.dataset.address : '';
+    const citiesString = Array.from(uniqueCities).join(', ');
+    const refsString = Array.from(uniqueRefs).join(', ');
+
+    if (firstRow) {
+        const type = firstRow.dataset.type;
+        if (type === 'Delivery') {
+            document.getElementById('destinationPinCode').value = firstPinCode;
+            document.getElementById('destinationCity').value = citiesString;
+            document.getElementById('destinationAddress').value = firstAddress;
+        } else if (type === 'Pickup') {
+            document.getElementById('originPinCode').value = firstPinCode;
+            document.getElementById('originCity').value = citiesString;
+            document.getElementById('originAddress').value = firstAddress;
+        }
+    }
+
+    document.getElementById('referenceNumber').value = refsString;
+    document.getElementById('invoiceValue').value = totalInvoiceValue.toFixed(2);
+
+    if (typeof updateShipmentTotals === 'function') {
+        updateShipmentTotals();
+    }
 }
