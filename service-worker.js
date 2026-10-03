@@ -1,4 +1,4 @@
-const VERSION = 'v3.04.09.08';
+const VERSION = 'v3.04.09.10';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
 const API_CACHE = `biznav-api-${VERSION}`;
@@ -24,9 +24,11 @@ async function limitCache(cacheName, maxItems) {
 
 /* ================= LIFECYCLE ================= */
 self.addEventListener('install', event => {
+    // Force the waiting service worker to become the active service worker immediately
+    self.skipWaiting();
+
     event.waitUntil(
         caches.open(STATIC_CACHE).then(async cache => {
-            // Use cache-busting during install to avoid caching stale CDN/proxy responses
             const fetchPromises = PRECACHE_ASSETS.map(async url => {
                 try {
                     const res = await fetch(url, { cache: 'no-cache' });
@@ -67,6 +69,11 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
     if (event.data?.type === 'SKIP_WAITING' || event.data?.action === 'skipWaiting') {
         self.skipWaiting();
+    }
+
+    // Respond with the current version when requested
+    if (event.data?.type === 'GET_VERSION') {
+        event.ports[0].postMessage({ version: VERSION });
     }
 });
 

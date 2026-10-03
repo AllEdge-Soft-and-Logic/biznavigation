@@ -533,7 +533,7 @@
                 </button>
 
                 <div class="footer-text">
-                    <span id="versionInfo">&copy; AllEdge @ 2018 | v3.04.09.08 | Build: 04-02-2026</span>
+                    <span id="versionInfo">&copy; AllEdge @ 2018 | Loading Version...</span>
                 </div>
             </form>
         </section>
@@ -543,7 +543,7 @@
     <script src="assets/js/utils/server.js" defer></script>
     <script src="assets/js/utils/login.js" defer></script>
 
-    <!-- UI Interaction Scripts -->
+    <!-- UI Interaction & Version Sync Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Password toggle
@@ -575,6 +575,24 @@
                 document.body.appendChild(ripple);
                 ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
             });
+
+            // Dynamic Version Sync with Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.ready.then(registration => {
+                    if (navigator.serviceWorker.controller) {
+                        const channel = new MessageChannel();
+                        channel.port1.onmessage = (event) => {
+                            if (event.data && event.data.version) {
+                                const versionElement = document.getElementById('versionInfo');
+                                if (versionElement) {
+                                    versionElement.innerHTML = `&copy; AllEdge @ 2018 | ${event.data.version} | Build: ${new Date().toLocaleDateString('en-GB')}`;
+                                }
+                            }
+                        };
+                        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+                    }
+                });
+            }
         });
     </script>
 </body>

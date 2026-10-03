@@ -569,10 +569,12 @@
 
             // Scroll to Top Logic
             const backBtn = document.getElementById("backToTop");
-            window.addEventListener("scroll", () => {
-                backBtn.style.display = window.scrollY > 400 ? "block" : "none";
-            });
-            backBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+            if (backBtn) {
+                window.addEventListener("scroll", () => {
+                    backBtn.style.display = window.scrollY > 400 ? "block" : "none";
+                });
+                backBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+            }
 
             // Pricing Toggle Logic
             const monthlyBtn = document.getElementById("monthlyBtn");
@@ -580,6 +582,7 @@
             const prices = document.querySelectorAll(".price");
 
             const togglePricing = (isMonthly) => {
+                if (!monthlyBtn || !yearlyBtn) return;
                 monthlyBtn.classList.toggle("btn-primary", isMonthly);
                 monthlyBtn.classList.toggle("text-white", isMonthly);
                 monthlyBtn.classList.toggle("btn-light", !isMonthly);
@@ -614,25 +617,48 @@
                 setTimeout(() => ripple.remove(), 600);
             });
 
-            // PWA Logic
+            // PWA & Service Worker Logic
             const showBanner = (message, buttonText, action) => {
                 const banner = document.getElementById('installBanner');
                 if (!banner) return;
-                banner.querySelector('.banner-text').innerText = message;
+                const bannerText = banner.querySelector('.banner-text');
+                if (bannerText) bannerText.innerText = message;
                 const btn = banner.querySelector('#installBtn');
-                btn.innerText = buttonText;
-                btn.onclick = action;
+                if (btn) {
+                    btn.innerText = buttonText;
+                    btn.onclick = action;
+                }
                 banner.classList.remove('d-none');
             };
 
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js').then(() => {
-                    navigator.serviceWorker.addEventListener('message', event => {
-                        if (event.data?.type === 'SW_UPDATED') {
-                            showBanner("System Updated", "Refresh Node", () => location.reload());
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    // Check for updates on load
+                    registration.update();
+
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New version found, prompt user to refresh or auto-apply
+                                    showBanner("System Updated", "Refresh Now", () => {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                    });
+                                }
+                            });
                         }
                     });
-                }).catch(() => console.log("SW registration bypassed or failed"));
+                }).catch((err) => console.log("SW registration bypassed or failed", err));
+
+                // Auto reload page once the new service worker controls the page
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
             }
 
             let deferredPrompt;
