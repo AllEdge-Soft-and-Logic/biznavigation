@@ -353,15 +353,6 @@ if (saveButton) {
 
             showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
 
-            // --- FIX: Clear the table and reset global state after successful save ---
-            const tbd = document.querySelector('#pendingShipmentTable tbody');
-            if (tbd) tbd.innerHTML = '';
-            clearInvoiceTotals();
-            clearChargesTable();
-            invoiceData = {};
-            invoiceChargesData = {};
-            // ---------------------------------------------------------------------
-
             if (strategy.updateInvoiceNo) await strategy.updateInvoiceNo(invoiceNo);
 
             disableForm();
@@ -421,14 +412,21 @@ async function newInvoice() {
         const tbd = document.querySelector('#pendingShipmentTable tbody');
         if (tbd) tbd.innerHTML = '';
         document.getElementById('invoiceInformation').value = '';
-        document.getElementById('addShipmentNo').disabled = false;
     } catch (e) {
         console.error('Unlock failed:', e);
     }
 
+    // 1. Reset the form container first
     const form = document.getElementById('container');
     if (form) form.reset();
 
+    // 2. Clear all line items, totals, and charges tables explicitly so they reset to 0.00
+    invoiceData = {};
+    invoiceChargesData = {};
+    clearInvoiceTotals();
+    clearChargesTable();
+
+    // 3. Configure button states for a new record
     const saveBtn = document.getElementById('saveButton');
     saveBtn.dataset.mode = 'insert';
     saveBtn.disabled = false;
@@ -441,6 +439,7 @@ async function newInvoice() {
     document.getElementById('addShipmentNo').disabled = true;
     document.getElementById('newButton').disabled = false;
 
+    // 4. Clear explicit text inputs
     [
         'invoiceNo', 'partyName', 'partyCode', 'invoiceAddress',
         'movementType', 'transitType', 'department', 'modeType',
@@ -450,13 +449,8 @@ async function newInvoice() {
         if (el) el.value = '';
     });
 
+    // Set default date to today
     document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
-
-    invoiceData = {};
-    invoiceChargesData = {};
-
-    clearInvoiceTotals();
-    clearChargesTable();
 
     await loadInvoiceNoSuggestions();
     enableForm();
@@ -464,21 +458,27 @@ async function newInvoice() {
     showToast('🚀 New Invoice Ready');
 }
 
-// Ensure all possible element IDs are cleared
+// Comprehensive reset for all totals elements to "0.00"
 function clearInvoiceTotals() {
     const table = document.getElementById('pendingShipmentTable');
     if (table?.tBodies?.[0]) table.tBodies[0].innerHTML = '';
 
     const totalIds = [
-        'totalFreight', 'totalFSCAmt', 'totalOtherAmt', 'totalSGST', 'totalChargeableWeight', 'totalQuantity',
-        'totalCGST', 'totalIGST', 'totalGST', 'totalGrand',
-        'cgstAmount', 'sgstAmount', 'igstAmount', 'gstAmount', 'totalAmount'
+        'totalFreight', 'totalFSCAmt', 'totalOtherAmt', 'totalSGST',
+        'totalChargeableWeight', 'totalQuantity', 'totalCGST', 'totalIGST',
+        'totalGST', 'totalGrand', 'cgstAmount', 'sgstAmount', 'igstAmount',
+        'gstAmount', 'totalAmount', 'totalFreight_sc', 'totalFreight_d',
+        'totalCGST_sc', 'totalSGST_sc', 'totalIGST_sc'
     ];
+
     totalIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.value = '0.00';
-            else el.textContent = '0.00';
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                el.value = '0.00';
+            } else {
+                el.textContent = '0.00';
+            }
         }
     });
 }
@@ -618,15 +618,6 @@ if (invNoEl) {
 async function loadInvoice(invoiceNo) {
     if (!invoiceNo || invoiceNo.trim() === "") return;
     invoiceNo = invoiceNo.trim();
-
-    // --- FIX: Clear previous table data and global state before loading new invoice ---
-    const tbd = document.querySelector('#pendingShipmentTable tbody');
-    if (tbd) tbd.innerHTML = '';
-    invoiceData = {};
-    invoiceChargesData = {};
-    clearInvoiceTotals();
-    clearChargesTable();
-    // ---------------------------------------------------------------------------------
 
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
     if (!invoiceDetails) {

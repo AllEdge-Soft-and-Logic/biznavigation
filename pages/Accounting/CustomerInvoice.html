@@ -526,18 +526,6 @@
                                 <!-- Form Inputs -->
                                 <div class="row g-3 form-grid">
                                     <!-- Row 1: Customer & Invoice basics -->
-                                    <div class="col-lg-4 col-md-6 col-sm-12">
-                                        <label for="partyName" class="form-label">Customer Name</label>
-                                        <input list="partySuggestions" class="form-control" id="partyName" required
-                                            placeholder="Choose Customer..." autocomplete="off">
-                                        <datalist id="partySuggestions"></datalist>
-                                    </div>
-                                    <div class="col-lg-4 col-md-6 col-sm-12">
-                                        <label for="invoiceAddress" class="form-label">Invoice Address</label>
-                                        <textarea class="form-control single-line-address" id="invoiceAddress" rows="1"
-                                            readonly aria-readonly="true"
-                                            placeholder="Invoice address will auto-fill based on customer"></textarea>
-                                    </div>
                                     <div class="col-lg-2 col-md-6 col-sm-6">
                                         <label for="invoiceNo" class="form-label">Invoice No</label>
                                         <div class="input-group">
@@ -555,7 +543,18 @@
                                         <label for="invoiceDate" class="form-label">Booked Date</label>
                                         <input type="date" class="form-control" id="invoiceDate" required>
                                     </div>
-
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <label for="partyName" class="form-label">Customer Name</label>
+                                        <input list="partySuggestions" class="form-control" id="partyName" required
+                                            placeholder="Choose Customer..." autocomplete="off">
+                                        <datalist id="partySuggestions"></datalist>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <label for="invoiceAddress" class="form-label">Invoice Address</label>
+                                        <textarea class="form-control single-line-address" id="invoiceAddress" rows="1"
+                                            readonly aria-readonly="true"
+                                            placeholder="Invoice address will auto-fill based on customer"></textarea>
+                                    </div>
                                     <!-- Row 2: Movement & Transit -->
                                     <div class="col-lg-2 col-md-4 col-sm-6">
                                         <label for="movementType" class="form-label">Movement Type</label>
