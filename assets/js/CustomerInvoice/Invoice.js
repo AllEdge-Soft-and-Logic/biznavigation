@@ -353,6 +353,15 @@ if (saveButton) {
 
             showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
 
+            // --- FIX: Clear the table and reset global state after successful save ---
+            const tbd = document.querySelector('#pendingShipmentTable tbody');
+            if (tbd) tbd.innerHTML = '';
+            clearInvoiceTotals();
+            clearChargesTable();
+            invoiceData = {};
+            invoiceChargesData = {};
+            // ---------------------------------------------------------------------
+
             if (strategy.updateInvoiceNo) await strategy.updateInvoiceNo(invoiceNo);
 
             disableForm();
@@ -609,6 +618,15 @@ if (invNoEl) {
 async function loadInvoice(invoiceNo) {
     if (!invoiceNo || invoiceNo.trim() === "") return;
     invoiceNo = invoiceNo.trim();
+
+    // --- FIX: Clear previous table data and global state before loading new invoice ---
+    const tbd = document.querySelector('#pendingShipmentTable tbody');
+    if (tbd) tbd.innerHTML = '';
+    invoiceData = {};
+    invoiceChargesData = {};
+    clearInvoiceTotals();
+    clearChargesTable();
+    // ---------------------------------------------------------------------------------
 
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
     if (!invoiceDetails) {

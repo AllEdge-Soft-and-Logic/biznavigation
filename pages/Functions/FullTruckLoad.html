@@ -65,10 +65,23 @@
                                             id="deleteButton" disabled title="Delete booking">
                                             <i class="bi bi-trash"></i> Delete
                                         </button>
-                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
-                                            id="reportButton" disabled>
-                                            <i class="bi bi-printer"></i> LR Print
-                                        </button>
+
+                                        <!-- LR Print Dropdown -->
+                                        <div class="dropdown d-inline-block">
+                                            <button type="button"
+                                                class="btn btn-outline-info btn-sm bg-white dropdown-toggle"
+                                                id="reportButton" data-bs-toggle="dropdown" aria-expanded="false"
+                                                disabled title="LR Print options">
+                                                <i class="bi bi-printer"></i> Print
+                                            </button>
+                                            <ul class="dropdown-menu shadow-sm" aria-labelledby="reportButton">
+                                                <li><a class="dropdown-item" href="#" data-print-type="lr_report">LR
+                                                        Print</a></li>
+                                                <li><a class="dropdown-item" href="#"
+                                                        data-print-type="lr_annexure_Report">LR Annexure</a></li>
+                                            </ul>
+                                        </div>
+
                                         <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
                                             id="saveButton" data-mode="insert" title="Save booking">
                                             <i class="bi bi-check2-circle"></i> Save
@@ -258,10 +271,15 @@
                                                     data-bs-toggle="tab" data-bs-target="#vendorCharges" type="button"
                                                     role="tab">Vendor Charges</button>
                                             </li>
-                                            <li class="nav-item" role="presentation">
+                                            <li class="nav-item d-none" role="presentation">
                                                 <button class="nav-link" id="description-tab" data-bs-toggle="tab"
                                                     data-bs-target="#description" type="button"
                                                     role="tab">Description</button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="status-tab" data-bs-toggle="tab"
+                                                    data-bs-target="#driverDetails" type="button" role="tab">Driver
+                                                    Details</button>
                                             </li>
                                             <li class="nav-item" role="presentation">
                                                 <button class="nav-link" id="status-tab" data-bs-toggle="tab"
@@ -328,31 +346,39 @@
                                                             id="shipmentInvoiceValue" name="shipmentInvoiceValue"
                                                             min="0" step="0.01" placeholder="0.00">
                                                     </div>
-                                                    <div class="col-lg-2 col-md-2 col-sm-4">
+                                                    <div class="col-lg-1 col-md-2 col-sm-4">
                                                         <label for="shipmentQuantity"
                                                             class="form-label">Quantity</label>
                                                         <input type="number" class="form-control text-end"
                                                             id="shipmentQuantity" name="shipmentQuantity" min="0"
                                                             step="0.01" placeholder="0.00" required>
                                                     </div>
-                                                    <div class="col-lg-2 col-md-2 col-sm-4">
+                                                    <div class="col-lg-1 col-md-2 col-sm-4">
                                                         <label for="shipmentActualWt" class="form-label">Actual
                                                             Wt</label>
                                                         <input type="number" class="form-control text-end"
                                                             id="shipmentActualWt" name="shipmentActualWt" min="0"
                                                             step="0.50" placeholder="0.00" required>
                                                     </div>
-                                                    <div class="col-lg-2 col-md-2 col-sm-4">
+                                                    <div class="col-lg-1 col-md-2 col-sm-4">
                                                         <label for="shipmentChargeWt" class="form-label">Charge
                                                             Wt</label>
                                                         <input type="number" class="form-control text-end"
                                                             id="shipmentChargeWt" name="shipmentChargeWt" min="0"
                                                             step="0.50" placeholder="0.00" required>
                                                     </div>
-                                                    <div class="col-lg-2 col-md-12 text-end">
+                                                    <div class="col-lg-4 col-md-3 col-sm-6">
+                                                        <label for="shipmentEWayBillNumber" class="form-label">E-Way
+                                                            Bill Number</label>
+                                                        <input type="text" class="form-control text-upper"
+                                                            id="shipmentEWayBillNumber" name="shipmentEWayBillNumber"
+                                                            required autocomplete="off" maxlength="50"
+                                                            placeholder="E-Way Bill Number">
+                                                    </div>
+                                                    <div class="col-lg-1 col-md-12 text-end">
                                                         <button type="button" id="addShipmentRow"
                                                             class="btn btn-outline-primary w-100">
-                                                            <i class="bi bi-plus-circle"></i> Add Item
+                                                            <i class="bi bi-plus-circle"></i> Add
                                                         </button>
                                                     </div>
                                                 </div>
@@ -367,6 +393,7 @@
                                                                 <th>Pincode</th>
                                                                 <th>City</th>
                                                                 <th>Ref No</th>
+                                                                <th>E-Way Bill No</th>
                                                                 <th>Inv Value</th>
                                                                 <th>Qty</th>
                                                                 <th>Act Wt</th>
@@ -505,6 +532,39 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            <!-- Driver Details Tab -->
+                                            <div class="tab-pane fade" id="driverDetails" role="tabpanel">
+                                                <div class="row g-3">
+                                                    <div class="col-md-1 col-sm-12 text-start">
+                                                        <label for="driverCode" class="form-label">Driver Code
+                                                        </label>
+                                                        <input type="text" class="form-control text-upper"
+                                                            id="driverCode" name="driverCode" autocomplete="off"
+                                                            placeholder="Driver Code" readonly>
+                                                    </div>
+                                                    <div class="col-md-4 col-sm-12 text-start">
+                                                        <label for="driverName" class="form-label">Driver Name
+                                                        </label>
+                                                        <input type="text" class="form-control text-upper"
+                                                            id="driverName" name="driverName" autocomplete="off"
+                                                            placeholder="Driver Name">
+                                                    </div>
+                                                    <div class="col-md-2 col-sm-12 text-start">
+                                                        <label for="driverPhoneNo" class="form-label">Driver Phone No
+                                                        </label>
+                                                        <input type="text" class="form-control text-upper"
+                                                            id="driverPhoneNo" name="driverPhoneNo" autocomplete="off"
+                                                            placeholder="Driver Phone No">
+                                                    </div>
+                                                    <div class="col-md-4 col-sm-12 text-start">
+                                                        <label for="driverDLNo" class="form-label">Driver DL No
+                                                        </label>
+                                                        <input type="text" class="form-control text-upper"
+                                                            id="driverDLNo" name="driverDLNo" autocomplete="off"
+                                                            placeholder="Driver DL No">
+                                                    </div>
+                                                </div>
+                                            </div>
 
                                             <!-- Status Tab -->
                                             <div class="tab-pane fade" id="status" role="tabpanel">
@@ -571,6 +631,7 @@
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
     <script src="../../assets/js/FullTruckLoad/FullTruckLoad.js" defer></script>
     <script src="../../assets/js/FullTruckLoad/lr_Report.js" defer></script>
+    <script src="../../assets/js/FullTruckLoad/lr_annexure_Report.js" defer></script>
 
 </body>
 

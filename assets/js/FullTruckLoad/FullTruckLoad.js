@@ -65,17 +65,9 @@ document.getElementById("lrNumber").addEventListener("input", function () {
     loadMovementDetails(this.value.trim());
 });
 
-async function loadMovementDetails(query = '') {
-    const { data, error } = await supabaseClient
-        .from('FullLoadBookingDetails')
-        .select('*')
-        .eq('company_id', CompanyID)
-        .ilike('lr_number', `%${query}%`)
-        .order('lr_number', { ascending: false });
-
-    if (error) return;
-
-    movementDetails = data.map(row => ({
+// Helper to map raw database row to application state keys
+function mapMovementRow(row) {
+    return {
         lrNumber: row.lr_number,
         lrDate: row.pickup_date,
         quotationID: row.quotation_id,
@@ -108,16 +100,29 @@ async function loadMovementDetails(query = '') {
         information: row.information,
         completionDate: row.completion_date,
         waybillno: row.waybillno,
-    }));
+        driverCode: row.driver_code,
+        driverName: row.driver_name,
+        driverPhoneNo: row.driver_phone_no,
+        driverDLNo: row.driver_dl_no
+    };
+}
 
+async function loadMovementDetails(query = '') {
+    const { data, error } = await supabaseClient
+        .from('FullLoadBookingDetails')
+        .select('*')
+        .eq('company_id', CompanyID)
+        .ilike('lr_number', `%${query}%`)
+        .order('lr_number', { ascending: false });
+
+    if (error || !data) return;
+
+    movementDetails = data.map(mapMovementRow);
     populateLRNumberSuggestions();
 }
 
 function populateLRNumberSuggestions() {
-    let suggestions = "";
-    movementDetails.forEach(movement => {
-        suggestions += `<option data-lr-numbber="${movement.lrNumber}" value="${movement.lrNumber}"></option>`;
-    });
+    const suggestions = movementDetails.map(m => `<option value="${m.lrNumber}"></option>`).join('');
     document.getElementById("lrNumberSuggestions").innerHTML = suggestions;
 }
 
@@ -140,61 +145,33 @@ $("#lrNumber").on("change", async function () {
             return;
         }
 
-        movementData = {
-            lrNumber: data.lr_number,
-            lrDate: data.pickup_date,
-            quotationID: data.quotation_id,
-            movementType: data.movement_type,
-            transitType: data.transit_type,
-            partyCode: data.customer_code,
-            partyName: data.customer_name,
-            originPinCode: data.origin_pincode,
-            originCity: data.origin_city,
-            originAddress: data.origin_address,
-            destinationPinCode: data.destination_pincode,
-            destinationCity: data.destination_city,
-            destinationAddress: data.destination_address,
-            requestedDate: data.requested_date,
-            vehicleType: data.vehicle_type,
-            referenceNumber: data.reference_number,
-            invoiceValue: data.invoice_value,
-            vendorCode: data.vendor_code,
-            vendorName: data.vendor_name,
-            vehicleNumber: data.vehicle_number,
-            containerNumber: data.container_number,
-            modeType: data.mode_type,
-            quantity: data.quantity,
-            actualWT: data.actual_weight,
-            chargeWT: data.charge_weight,
-            paymentType: data.payment_type,
-            routeDetails: data.routedetails,
-            descriptionOfGoods: data.description_of_goods,
-            status: data.status,
-            information: data.information,
-            waybillno: data.waybillno
-        };
+        movementData = mapMovementRow(data);
     }
 
-    // Fill form fields dynamically
-    Object.keys(movementData).forEach(key => {
-        const elementMap = {
-            lrDate: "#lrDate", quotationID: "#quotationID", modeType: "#modeType",
-            movementType: "#movementType", partyCode: "#partyCode", partyName: "#partyName",
-            originPinCode: "#originPinCode", originCity: "#originCity", originAddress: "#originAddress",
-            destinationPinCode: "#destinationPinCode", destinationCity: "#destinationCity",
-            destinationAddress: "#destinationAddress", requestedDate: "#requestedDate",
-            referenceNumber: "#referenceNumber", invoiceValue: "#invoiceValue", vendorCode: "#vendorCode",
-            vendorName: "#vendorName", vehicleType: "#vehicleType", vehicleNumber: "#vehicleNumber",
-            containerNumber: "#containerNumber", routeDetails: "#routeDetails", quantity: "#quantity",
-            actualWT: "#actualWt", chargeWT: "#chargeWt", paymentType: "#paymentType",
-            information: "#information", descriptionOfGoods: "#descriptionofGoods", waybillno: "#wayBillNo"
-        };
-        if (elementMap[key]) $(elementMap[key]).val(movementData[key]);
+    // Map state keys directly to DOM selector strings
+    const elementMap = {
+        lrDate: "#lrDate", quotationID: "#quotationID", modeType: "#modeType",
+        movementType: "#movementType", partyCode: "#partyCode", partyName: "#partyName",
+        originPinCode: "#originPinCode", originCity: "#originCity", originAddress: "#originAddress",
+        destinationPinCode: "#destinationPinCode", destinationCity: "#destinationCity",
+        destinationAddress: "#destinationAddress", requestedDate: "#requestedDate",
+        referenceNumber: "#referenceNumber", invoiceValue: "#invoiceValue", vendorCode: "#vendorCode",
+        vendorName: "#vendorName", vehicleType: "#vehicleType", vehicleNumber: "#vehicleNumber",
+        containerNumber: "#containerNumber", routeDetails: "#routeDetails", quantity: "#quantity",
+        actualWT: "#actualWt", chargeWT: "#chargeWt", paymentType: "#paymentType",
+        information: "#information", descriptionOfGoods: "#descriptionofGoods", waybillno: "#wayBillNo",
+        driverCode: "#driverCode", driverName: "#driverName", driverPhoneNo: "#driverPhoneNo", driverDLNo: "#driverDLNo"
+    };
+
+    Object.entries(movementData).forEach(([key, value]) => {
+        if (elementMap[key]) $(elementMap[key]).val(value ?? "");
     });
 
-    await loadBillingCharges(lrNumber, "Sale", "chargesDetailsTable");
-    await loadBillingCharges(lrNumber, "Buy", "vendorChargesDetailsTable");
-    await loadShipmentDetails(lrNumber);
+    await Promise.all([
+        loadBillingCharges(lrNumber, "Sale", "chargesDetailsTable"),
+        loadBillingCharges(lrNumber, "Buy", "vendorChargesDetailsTable"),
+        loadShipmentDetails(lrNumber)
+    ]);
 
     document.getElementById("addFreightRow").disabled = true;
     document.getElementById("addVendorFreightRow").disabled = true;
@@ -229,8 +206,8 @@ document.getElementById('newButton').addEventListener('click', async function ()
     ["chargesDetailsTable", "vendorChargesDetailsTable", "shipmentDetailsTable"].forEach(id => {
         const table = document.getElementById(id);
         if (table) {
-            if (table.querySelector("tbody")) table.querySelector("tbody").innerHTML = "";
-            if (table.querySelector("tfoot")) table.querySelector("tfoot").innerHTML = "";
+            table.querySelector("tbody")?.replaceChildren();
+            table.querySelector("tfoot")?.replaceChildren();
         }
     });
 });
@@ -258,7 +235,7 @@ function areRequiredFieldsFilled() {
     for (let fieldId of requiredFields) {
         const field = document.getElementById(fieldId);
         if (!field || !field.value.trim()) {
-            field.focus();
+            field?.focus();
             alert('Please fill in all required fields. Missing: ' + fieldId);
             return false;
         }
@@ -288,7 +265,6 @@ document.getElementById("saveButton").addEventListener("click", async function (
         return;
     }
 
-    // Auto-apply tariffs if tables are empty prior to saving
     if (document.querySelectorAll("#chargesDetailsTable tbody tr:not([data-status='deleted'])").length === 0) {
         await applyCustomerTariff();
     }
@@ -338,7 +314,11 @@ document.getElementById("saveButton").addEventListener("click", async function (
         information: val("information"),
         description_of_goods: val("descriptionofGoods"),
         waybillno: val("wayBillNo"),
-        company_id: CompanyID
+        company_id: CompanyID,
+        driver_code: val("driverCode"),
+        driver_name: val("driverName"),
+        driver_phone_no: val("driverPhoneNo"),
+        driver_dl_no: val("driverDLNo")
     };
 
     try {
@@ -358,9 +338,12 @@ document.getElementById("saveButton").addEventListener("click", async function (
 
         const bookingId = data.id;
 
-        await saveCharges(bookingId, "chargesDetailsTable", "Sale");
-        await saveCharges(bookingId, "vendorChargesDetailsTable", "Buy");
-        await saveShipments(bookingId, lrNumber);
+        await Promise.all([
+            saveCharges(bookingId, "chargesDetailsTable", "Sale"),
+            saveCharges(bookingId, "vendorChargesDetailsTable", "Buy"),
+            saveShipments(bookingId, lrNumber)
+        ]);
+
         await loadShipmentDetails(lrNumber);
 
         disableForm();
@@ -389,6 +372,7 @@ addShipmentBtn.addEventListener('click', function () {
     const pincode = document.getElementById('shipmentPinCode').value.trim();
     const city = document.getElementById('shipmentCity').value.trim();
     const refNo = document.getElementById('shipmentReferenceNumber').value.trim();
+    const eWayBillNo = document.getElementById('shipmentEWayBillNumber').value.trim();
 
     const invValue = parseFloat(document.getElementById('shipmentInvoiceValue').value || 0).toFixed(2);
     const qty = parseFloat(document.getElementById('shipmentQuantity').value || 0).toFixed(2);
@@ -400,12 +384,7 @@ addShipmentBtn.addEventListener('click', function () {
         return;
     }
 
-    // Create or find row
-    let tr;
-    if (currentEditShipmentId) {
-        // Try to find existing row in DOM by its dataset id, or create a new one with that id
-        tr = shipmentTableBody.querySelector(`tr[data-id="${currentEditShipmentId}"]`);
-    }
+    let tr = currentEditShipmentId ? shipmentTableBody.querySelector(`tr[data-id="${currentEditShipmentId}"]`) : null;
 
     if (!tr) {
         tr = document.createElement('tr');
@@ -413,7 +392,9 @@ addShipmentBtn.addEventListener('click', function () {
         shipmentTableBody.appendChild(tr);
     }
 
-    Object.assign(tr.dataset, { type, name, address, pincode, city, refNo, invValue, qty, actWt, chgWt });
+    Object.assign(tr.dataset, {
+        type, name, address, pincode, city, refNo, eWayBillNo, e_waybill_no: eWayBillNo, invValue, qty, actWt, chgWt
+    });
 
     tr.innerHTML = `
         <td>${type}</td>
@@ -422,6 +403,7 @@ addShipmentBtn.addEventListener('click', function () {
         <td>${pincode}</td>
         <td class="text-cap">${city}</td>
         <td class="text-upper">${refNo}</td>
+        <td class="text-upper">${eWayBillNo}</td>
         <td class="text-end">${invValue}</td>
         <td class="text-end">${qty}</td>
         <td class="text-end">${actWt}</td>
@@ -432,16 +414,14 @@ addShipmentBtn.addEventListener('click', function () {
         </td>
     `;
 
-    // Recalculate summary totals from all rows
     recalculateShipmentSummary();
 
-    // Reset form inputs and button state
     currentEditShipmentId = null;
     document.getElementById('shipmentId').value = '';
     document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-plus-lg"></i> Add';
 
     ['consigneeorConsignorName', 'consigneeorConsignorAddress', 'shipmentPinCode', 'shipmentCity',
-        'shipmentReferenceNumber', 'shipmentInvoiceValue', 'shipmentQuantity', 'shipmentActualWt', 'shipmentChargeWt']
+        'shipmentReferenceNumber', 'shipmentInvoiceValue', 'shipmentQuantity', 'shipmentActualWt', 'shipmentChargeWt', 'shipmentEWayBillNumber']
         .forEach(id => document.getElementById(id).value = '');
 
     document.getElementById('consigneeorConsignorName').focus();
@@ -458,23 +438,22 @@ shipmentTableBody.addEventListener('click', function (e) {
         recalculateShipmentSummary();
     } else if (editBtn) {
         const tr = editBtn.closest('tr');
-        currentEditShipmentId = tr.dataset.id || ('temp_' + Date.now()); // Fallback temporary ID if new row
+        currentEditShipmentId = tr.dataset.id || ('temp_' + Date.now());
         tr.dataset.id = currentEditShipmentId;
         document.getElementById('shipmentId').value = currentEditShipmentId;
 
-        // Load data into upper section input fields
         document.getElementById('shipmentType').value = tr.dataset.type || '';
         document.getElementById('consigneeorConsignorName').value = tr.dataset.name || '';
         document.getElementById('consigneeorConsignorAddress').value = tr.dataset.address || '';
         document.getElementById('shipmentPinCode').value = tr.dataset.pincode || '';
         document.getElementById('shipmentCity').value = tr.dataset.city || '';
         document.getElementById('shipmentReferenceNumber').value = tr.dataset.refNo || '';
+        document.getElementById('shipmentEWayBillNumber').value = tr.dataset.eWayBillNo || tr.dataset.e_waybill_no || '';
         document.getElementById('shipmentInvoiceValue').value = tr.dataset.invValue || '';
         document.getElementById('shipmentQuantity').value = tr.dataset.qty || '';
         document.getElementById('shipmentActualWt').value = tr.dataset.actWt || '';
         document.getElementById('shipmentChargeWt').value = tr.dataset.chgWt || '';
 
-        // Change button text to Edit Item / Update
         document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-pencil"></i> Edit Item';
         document.getElementById('consigneeorConsignorName').focus();
     }
@@ -495,10 +474,11 @@ async function saveShipments(bookingId, lrNumber) {
             pincode: tr.dataset.pincode,
             city: tr.dataset.city,
             reference_number: tr.dataset.refNo,
+            e_waybill_no: tr.dataset.e_waybill_no || tr.dataset.eWayBillNo || '',
             invoice_value: parseFloat(tr.dataset.invValue) || 0,
             quantity: parseFloat(tr.dataset.qty) || 0,
             actual_weight: parseFloat(tr.dataset.actWt) || 0,
-            charge_weight: parseFloat(tr.dataset.chgWt) || 0
+            charge_weight: parseFloat(tr.dataset.chgWt) || 0,
         };
 
         const rowId = tr.dataset.id;
@@ -511,21 +491,24 @@ async function saveShipments(bookingId, lrNumber) {
         }
     });
 
+    const promises = [];
     if (deletedShipmentIds.length > 0) {
-        await supabaseClient.from('FullLoadShipmentDetails').delete().in('id', deletedShipmentIds);
+        promises.push(supabaseClient.from('FullLoadShipmentDetails').delete().in('id', deletedShipmentIds));
     }
     if (shipmentsToUpdate.length > 0) {
-        await supabaseClient.from('FullLoadShipmentDetails').upsert(shipmentsToUpdate);
+        promises.push(supabaseClient.from('FullLoadShipmentDetails').upsert(shipmentsToUpdate));
     }
     if (shipmentsToInsert.length > 0) {
-        await supabaseClient.from('FullLoadShipmentDetails').insert(shipmentsToInsert);
+        promises.push(supabaseClient.from('FullLoadShipmentDetails').insert(shipmentsToInsert));
     }
+
+    if (promises.length > 0) await Promise.all(promises);
     deletedShipmentIds = [];
 }
 
 async function loadShipmentDetails(lrNumber) {
     const { data, error } = await supabaseClient.from('FullLoadShipmentDetails').select('*').eq('lr_number', lrNumber);
-    if (error) return;
+    if (error || !data) return;
 
     shipmentTableBody.innerHTML = '';
     deletedShipmentIds = [];
@@ -533,11 +516,22 @@ async function loadShipmentDetails(lrNumber) {
 
     data.forEach(row => {
         const tr = document.createElement('tr');
+        const eWayBillNo = row.e_waybill_no || '';
+
         Object.assign(tr.dataset, {
-            id: row.id, type: row.shipment_type, name: row.consignee_or_consignor_name,
-            address: row.consignee_or_consignor_address, pincode: row.pincode, city: row.city,
-            refNo: row.reference_number, invValue: row.invoice_value, qty: row.quantity,
-            actWt: row.actual_weight, chgWt: row.charge_weight
+            id: row.id,
+            type: row.shipment_type,
+            name: row.consignee_or_consignor_name,
+            address: row.consignee_or_consignor_address,
+            pincode: row.pincode,
+            city: row.city,
+            refNo: row.reference_number,
+            eWayBillNo: eWayBillNo,
+            e_waybill_no: eWayBillNo,
+            invValue: row.invoice_value,
+            qty: row.quantity,
+            actWt: row.actual_weight,
+            chgWt: row.charge_weight
         });
 
         tr.innerHTML = `
@@ -546,11 +540,12 @@ async function loadShipmentDetails(lrNumber) {
             <td class="text-cap text-truncate" style="max-width: 150px;" title="${row.consignee_or_consignor_address}">${row.consignee_or_consignor_address}</td>
             <td>${row.pincode}</td>
             <td class="text-cap">${row.city}</td>
-            <td class="text-upper">${row.reference_number}</td>
-            <td class="text-end">${parseFloat(row.invoice_value).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(row.quantity).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(row.actual_weight).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(row.charge_weight).toFixed(2)}</td>
+            <td class="text-upper">${row.reference_number || ''}</td>
+            <td class="text-upper">${eWayBillNo}</td>
+            <td class="text-end">${parseFloat(row.invoice_value || 0).toFixed(2)}</td>
+            <td class="text-end">${parseFloat(row.quantity || 0).toFixed(2)}</td>
+            <td class="text-end">${parseFloat(row.actual_weight || 0).toFixed(2)}</td>
+            <td class="text-end">${parseFloat(row.charge_weight || 0).toFixed(2)}</td>
             <td class="text-center text-nowrap">
                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 edit-shipment-btn" title="Edit Row" disabled><i class="bi bi-pencil"></i></button>
                 <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-shipment-btn" title="Remove Row" disabled><i class="bi bi-trash"></i></button>
@@ -563,7 +558,7 @@ async function loadShipmentDetails(lrNumber) {
 
 async function loadBillingCharges(lrNumber, accountType, tableId) {
     const { data, error } = await supabaseClient.from("FullLoadBookingCharges").select("*").eq("LRNumber", lrNumber).eq("AccountType", accountType);
-    if (error) return;
+    if (error || !data) return;
 
     const tableBody = document.getElementById(tableId).querySelector("tbody");
     tableBody.innerHTML = "";
@@ -610,25 +605,27 @@ document.getElementById("addVendorFreightRow").addEventListener("click", async (
 async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
     const chargesType = document.getElementById(chargesInput).value.trim();
     const amount = parseFloat(document.getElementById(amountInput).value) || 0;
-    let taxID = document.getElementById(taxInput).value || 1;
+    const taxID = document.getElementById(taxInput).value || 1;
     const HSNCode = await getDropdownDataValue(chargesType, "ChargesType");
 
-    document.getElementById("addVendorFreightRow").disabled = true;
-    document.getElementById("addFreightRow").disabled = true;
+    const addVendorBtn = document.getElementById("addVendorFreightRow");
+    const addFreightBtn = document.getElementById("addFreightRow");
+
+    addVendorBtn.disabled = true;
+    addFreightBtn.disabled = true;
 
     if (!chargesType || amount <= 0) {
         alert("Enter Charges Type and Amount");
-        document.getElementById("addVendorFreightRow").disabled = false;
-        document.getElementById("addFreightRow").disabled = false;
+        addVendorBtn.disabled = false;
+        addFreightBtn.disabled = false;
         return;
     }
 
     const tableBody = document.getElementById(tableId).querySelector("tbody");
     for (let row of tableBody.querySelectorAll("tr")) {
         if (row.dataset.status !== "deleted" && row.children[0].textContent.trim() === chargesType) {
-            // alert("This charge type is already added.");
-            document.getElementById("addVendorFreightRow").disabled = false;
-            document.getElementById("addFreightRow").disabled = false;
+            addVendorBtn.disabled = false;
+            addFreightBtn.disabled = false;
             return;
         }
     }
@@ -648,7 +645,7 @@ async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
         <td class="text-end">${taxCalculations.totalGstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalculations.grandTotal.toFixed(2)}</td>
         <td><button type="button" class="btn btn-sm btn-danger deleteRow">Delete</button></td>
-        <td class="d-none">${HSNCode ? HSNCode.hsn_code : "0"}</td>
+        <td class="d-none">${HSNCode?.hsn_code || "0"}</td>
         <td class="d-none">${taxID}</td>
     `;
     tableBody.appendChild(tr);
@@ -666,8 +663,8 @@ async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
     document.getElementById(chargesInput).value = "";
     document.getElementById(amountInput).value = "";
     document.getElementById(taxInput).selectedIndex = 0;
-    document.getElementById("addVendorFreightRow").disabled = false;
-    document.getElementById("addFreightRow").disabled = false;
+    addVendorBtn.disabled = false;
+    addFreightBtn.disabled = false;
 }
 
 function updateChargesTotals(tableId) {
@@ -701,15 +698,11 @@ function updateChargesTotals(tableId) {
     `;
 }
 
-// =========================================================================
-// SAVE CHARGES WITH DEDUPLICATION (IGNORE IF ALREADY EXISTS)
-// =========================================================================
 async function saveCharges(bookingId, tableId, accountType) {
     const rows = document.getElementById(tableId).querySelectorAll("tbody tr");
     const insertData = [];
     const deleteIds = [];
 
-    // Fetch existing records in DB to prevent duplicates
     const { data: existingData } = await supabaseClient
         .from("FullLoadBookingCharges")
         .select("ChargesType")
@@ -717,7 +710,6 @@ async function saveCharges(bookingId, tableId, accountType) {
         .eq("AccountType", accountType);
 
     const existingChargeTypes = new Set(existingData?.map(d => d.ChargesType) || []);
-
     const getNumber = val => (!val || val === "No GST") ? 0 : parseFloat(val) || 0;
 
     rows.forEach(row => {
@@ -725,30 +717,27 @@ async function saveCharges(bookingId, tableId, accountType) {
         const cells = row.querySelectorAll("td");
         const chargeType = cells[0].textContent.trim();
 
-        if (status === "new") {
-            // Ignore insertion if already saved in the database
-            if (!existingChargeTypes.has(chargeType)) {
-                insertData.push({
-                    ID_FT: bookingId,
-                    LRNumber: document.getElementById("lrNumber").value.trim(),
-                    ChargesType: chargeType,
-                    TaxRate: getNumber(cells[1].textContent),
-                    Quantity: 1,
-                    PerQtyAmt: getNumber(cells[2].textContent),
-                    TotalAmount: getNumber(cells[2].textContent),
-                    CGSTAmt: getNumber(cells[3].textContent),
-                    SGSTAmt: getNumber(cells[4].textContent),
-                    IGSTAmt: getNumber(cells[5].textContent),
-                    TotalGSTAmt: getNumber(cells[6].textContent),
-                    GrandTotalAmt: getNumber(cells[7].textContent),
-                    HSNCode: cells[9].textContent || "",
-                    TaxID: cells[10].textContent || "",
-                    AccountType: accountType,
-                    created_by: UserLoginID,
-                    created_at: localtimeStamp
-                });
-                existingChargeTypes.add(chargeType); // prevent intra-loop duplicate adds
-            }
+        if (status === "new" && !existingChargeTypes.has(chargeType)) {
+            insertData.push({
+                ID_FT: bookingId,
+                LRNumber: document.getElementById("lrNumber").value.trim(),
+                ChargesType: chargeType,
+                TaxRate: getNumber(cells[1].textContent),
+                Quantity: 1,
+                PerQtyAmt: getNumber(cells[2].textContent),
+                TotalAmount: getNumber(cells[2].textContent),
+                CGSTAmt: getNumber(cells[3].textContent),
+                SGSTAmt: getNumber(cells[4].textContent),
+                IGSTAmt: getNumber(cells[5].textContent),
+                TotalGSTAmt: getNumber(cells[6].textContent),
+                GrandTotalAmt: getNumber(cells[7].textContent),
+                HSNCode: cells[9].textContent || "",
+                TaxID: cells[10].textContent || "",
+                AccountType: accountType,
+                created_by: UserLoginID,
+                created_at: localtimeStamp
+            });
+            existingChargeTypes.add(chargeType);
         }
 
         if (status === "deleted" && row.dataset.id) {
@@ -756,12 +745,10 @@ async function saveCharges(bookingId, tableId, accountType) {
         }
     });
 
-    if (insertData.length > 0) {
-        await supabaseClient.from("FullLoadBookingCharges").insert(insertData);
-    }
-    if (deleteIds.length > 0) {
-        await supabaseClient.from("FullLoadBookingCharges").delete().in("id", deleteIds);
-    }
+    const promises = [];
+    if (insertData.length > 0) promises.push(supabaseClient.from("FullLoadBookingCharges").insert(insertData));
+    if (deleteIds.length > 0) promises.push(supabaseClient.from("FullLoadBookingCharges").delete().in("id", deleteIds));
+    if (promises.length > 0) await Promise.all(promises);
 }
 
 async function getTariffRate(partyCode, tariffType) {
@@ -775,7 +762,7 @@ async function getTariffRate(partyCode, tariffType) {
     if (!partyCode || !movementType || !modeType || !vehicleType || !routeDetails) {
         return null;
     }
-    console.log('Check Date', partyCode, movementType, modeType, vehicleType, routeDetails, tariffType, bookingDate)
+
     const { data, error } = await supabaseClient
         .from("FTL_FCL_Tariff")
         .select("Rate")
@@ -785,24 +772,18 @@ async function getTariffRate(partyCode, tariffType) {
         .eq("VehicleType", vehicleType)
         .eq("RouteDetails", routeDetails)
         .eq("TariffType", tariffType)
-        .gte("CargoWeight", chargeWt) // Changed from lte to gte
+        .gte("CargoWeight", chargeWt)
         .lte("EffectiveDate", bookingDate)
         .order("EffectiveDate", { ascending: false })
-        .order("CargoWeight", { ascending: true }) // Changed order to get the lowest matching slab capacity
+        .order("CargoWeight", { ascending: true })
         .limit(1);
-    console.log(data);
+
     if (error) {
         console.error("Tariff fetch error:", error);
         return null;
     }
 
-    // Safely check if data exists and has at least one item before reading Rate
-    if (data && data.length > 0 && data[0] != null) {
-        console.log('applyCustomerTariff', data[0].Rate);
-        return data[0].Rate;
-    }
-
-    return null;
+    return data?.[0]?.Rate || null;
 }
 
 async function applyCustomerTariff() {
@@ -821,13 +802,7 @@ async function applyCustomerTariff() {
     chargesInput.value = "Freight Amount";
     amountInput.value = rate;
 
-    // 🔥 Automatically add/update the row in the Customer Charges table
-    await addFreightRow(
-        "chargesDetailsTable",
-        "chargesType",
-        "customerFreightAmt",
-        "partyDefaultTax"
-    );
+    await addFreightRow("chargesDetailsTable", "chargesType", "customerFreightAmt", "partyDefaultTax");
 }
 
 async function applyVendorTariff() {
@@ -846,19 +821,12 @@ async function applyVendorTariff() {
     chargesInput.value = "Freight Amount";
     amountInput.value = rate;
 
-    // 🔥 Automatically add/update the row in the Vendor Charges table
-    await addFreightRow(
-        "vendorChargesDetailsTable",
-        "vendorChargesType",
-        "vendorFreightAmt",
-        "vendorDefaultTax"
-    );
+    await addFreightRow("vendorChargesDetailsTable", "vendorChargesType", "vendorFreightAmt", "vendorDefaultTax");
 }
 
 ["lrDate", "partyCode", "modeType", "movementType", "routeDetails", "vehicleType", "chargeWt", "vendorCode"].forEach(id => {
     document.getElementById(id).addEventListener("change", async () => {
-        await applyCustomerTariff();
-        await applyVendorTariff();
+        await Promise.all([applyCustomerTariff(), applyVendorTariff()]);
     });
 });
 
@@ -914,7 +882,7 @@ function applyFixedCharges(charges, accountType) {
         addFreightRow(tableId, chargesInput, amountInput, taxInput);
 
         const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-        rows[rows.length - 1].dataset.auto = "true";
+        if (rows.length > 0) rows[rows.length - 1].dataset.auto = "true";
     });
 }
 
@@ -928,8 +896,26 @@ async function generateLRNumber() {
     return data;
 }
 
-document.getElementById("reportButton").addEventListener("click", async () => {
-    await generateConsignmentNote(document.getElementById("lrNumber").value.trim());
+// Handle clicks on the LR Print dropdown options
+document.querySelectorAll('.dropdown-menu [data-print-type]').forEach(item => {
+    item.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        const printType = e.currentTarget.getAttribute('data-print-type');
+        const lrNumberField = document.getElementById("lrNumber");
+        const lrNumber = lrNumberField ? lrNumberField.value.trim() : "";
+
+        if (!lrNumber) {
+            alert("Please enter or select an LR Number first.");
+            return;
+        }
+
+        if (printType === 'lr_report') {
+            await generateConsignmentNote(lrNumber);
+        } else if (printType === 'lr_annexure_Report') {
+            await generateConsignmentNote_annexure(lrNumber);
+        }
+    });
 });
 
 document.getElementById("partyName").addEventListener("change", async function () {
@@ -1054,7 +1040,5 @@ function recalculateShipmentSummary() {
     document.getElementById('referenceNumber').value = refsString;
     document.getElementById('invoiceValue').value = totalInvoiceValue.toFixed(2);
 
-    if (typeof updateShipmentTotals === 'function') {
-        updateShipmentTotals();
-    }
+    updateShipmentTotals();
 }
