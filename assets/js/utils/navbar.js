@@ -19,13 +19,13 @@ const Navbar = (() => {
             title: "Operations",
             icon: "bi-gear",
             children: [
-                { label: "Enquiry", icon: "bi-search", href: "/pages/Functions/Enquiry.html" },
-                { label: "Quotation", icon: "bi-file-earmark-text", href: "/pages/Functions/Quotation.html" },
-                { label: "International", icon: "bi-globe-central-south-asia", href: "/pages/Functions/InternationalBooking.html" },
+                { label: "Enquiry", icon: "bi-search", href: "/pages/functions/Enquiry.html" },
+                { label: "Quotation", icon: "bi-file-earmark-text", href: "/pages/functions/Quotation.html" },
+                { label: "International", icon: "bi-globe-central-south-asia", href: "/pages/functions/InternationalBooking.html" },
                 { label: "Domestic", icon: "bi-truck", href: "/pages/Functions/DomesticBooking.html" },
-                { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Functions/CustomsClearance.html" },
-                { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/Functions/FullTruckLoad.html" },
-                { label: "Dedicated Vehicle Trips", icon: "bi-truck-flatbed", href: "/pages/Functions/dedicatedvehicletrips.html" }
+                { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/functions/CustomsClearance.html" },
+                { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/functions/FullTruckLoad.html" },
+                { label: "Dedicated Vehicle Trips", icon: "bi-truck-flatbed", href: "/pages/functions/dedicatedvehicletrips.html" }
             ]
         },
         {
