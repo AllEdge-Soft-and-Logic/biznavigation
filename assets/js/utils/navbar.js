@@ -12,6 +12,7 @@ const Navbar = (() => {
                 { label: "Courier", icon: "bi-box-seam", href: "/pages/master/CourierRegistration.html" },
                 { label: "Employee", icon: "bi-person-badge-fill", href: "/pages/master/EmployeeMaster.html" },
                 { label: "Vehicle Master", icon: "bi-truck", href: "/pages/master/VehicleMaster.html" },
+                { label: "Driver Master", icon: "bi-person-badge", href: "/pages/master/DriverMaster.html" },
                 { label: "User Rules", icon: "bi-shield-lock", href: "/pages/master/UserAccessRules.html" }
             ]
         },

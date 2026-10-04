@@ -3,311 +3,689 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Employee Master</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Employee Master — manage employee records, family details, employment and user credentials.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Employee Master · BizNavigation</title>
 
-    <!-- Bootstrap CSS & Icons -->
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js" defer></script>
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
+    <!-- Optional shared theme (same as Driver Master) -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
+    <!-- Page-scoped polish -->
+    <style>
+        :root {
+            --em-radius: .65rem;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        /* ---------- Sticky action bar ---------- */
+        .em-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 1rem;
+            margin: -1rem -1rem .5rem;
+            background: rgba(255, 255, 255, .94);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+            border-top-left-radius: var(--bs-card-border-radius, .5rem);
+            border-top-right-radius: var(--bs-card-border-radius, .5rem);
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .em-action-bar .em-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-weight: 700;
+            color: var(--bs-dark);
+            margin: 0;
+        }
+
+        .em-action-bar .btn {
+            flex-shrink: 0;
+        }
+
+        /* ---------- Section titles ---------- */
+        .em-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .35rem;
+            font-size: .72rem;
+            font-weight: 600;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .em-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .em-section-title i {
+            color: var(--bs-primary);
+        }
+
+        /* ---------- Fields ---------- */
+        .form-label {
+            font-size: .8rem;
+            font-weight: 500;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .15);
+        }
+
+        .input-group-text {
+            background: #fff;
+        }
+
+        /* ---------- Tabs ---------- */
+        .em-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+            color: var(--bs-secondary-color);
+            border-top-left-radius: var(--em-radius);
+            border-top-right-radius: var(--em-radius);
+        }
+
+        .em-tabs .nav-link.active {
+            color: var(--bs-primary);
+            font-weight: 600;
+        }
+
+        .em-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        /* ---------- Employee avatar chip ---------- */
+        .employee-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .25rem .7rem .25rem .25rem;
+            border-radius: 999px;
+            background: var(--bs-tertiary-bg, #f8f9fa);
+            border: 1px solid var(--bs-border-color-translucent, #e9ecef);
+            font-size: .8rem;
+        }
+
+        .employee-chip .avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--bs-primary);
+            color: #fff;
+            font-weight: 600;
+            font-size: .72rem;
+        }
+
+        /* ---------- Linked driver banner ---------- */
+        #driverLinkBanner {
+            border-left: 4px solid var(--bs-info);
+            background: rgba(13, 202, 240, .08);
+            border-radius: .4rem;
+            padding: .55rem .75rem;
+            font-size: .85rem;
+        }
+
+        /* ---------- Empty tables ---------- */
+        .em-empty {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color);
+        }
+
+        .em-empty i {
+            display: block;
+            font-size: 1.6rem;
+            opacity: .45;
+            margin-bottom: .4rem;
+        }
+
+        /* ---------- Loading overlay ---------- */
+        #loadingSpinner {
+            backdrop-filter: blur(2px);
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 575.98px) {
+            .em-action-bar .btn {
+                flex: 1 1 auto;
+            }
+
+            .em-action-bar .em-title {
+                width: 100%;
+            }
+        }
+
+        /* ---------- Print ---------- */
+        @media print {
+
+            .em-action-bar,
+            .nav-tabs,
+            .app-wrapper>#sidebar {
+                display: none !important;
+            }
+
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-light">
+
     <!-- 🔥 APP LAYOUT -->
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <!-- fallback -->
-            <div class="text-center text-white p-3">Loading...</div>
+            <div class="text-center text-muted p-3">Loading Sidebar…</div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
-
-            <!-- 🔥 PAGE CONTENT -->
             <div class="page-content">
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
+                            <form id="employeeForm" autocomplete="off" novalidate>
 
-                <div class="container-fluid mt-2">
-                    <div class="card shadow-lg rounded">
+                                <!-- ============ ACTION BAR ============ -->
+                                <div class="em-action-bar">
+                                    <h5 class="em-title">
+                                        <i class="bi bi-person-badge text-primary"></i>
+                                        Employee Master
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
 
-                        <div class="card-body">
-                            <form id="employeeForm" autocomplete="off">
+                                        <!-- Employee quick chip (populated by JS after load) -->
+                                        <span id="employeeChip" class="employee-chip d-none ms-2">
+                                            <span class="avatar" id="employeeChipInitials">–</span>
+                                            <span id="employeeChipName" class="text-truncate"
+                                                style="max-width: 180px;">–</span>
+                                        </span>
+                                    </h5>
 
-                                <!-- Action Buttons -->
-                                <div class="d-flex flex-wrap gap-1 mb-3">
-                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
-                                        title="Create new booking">
-                                        <i class="bi bi-file-earmark-plus"></i> New
-                                    </button>
-                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
-                                        title="Modify booking">
-                                        <i class="bi bi-pencil"></i> Modify
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
-                                        title="Delete booking">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
-                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
-                                        <i class="bi bi-printer"></i> Print </button>
-                                    <button id="saveButton" class="btn btn-primary btn-sm" type="button"
-                                        data-mode="insert">
-                                        <span id="saveSpinnerBtn"
-                                            class="spinner-border spinner-border-sm me-2 d-none"></span>
-                                        <i class="bi bi-save"></i> Save
-                                    </button>
-                                    <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
-                                    <input type="text" class="form-control bg-light d-none" id="status" value="New"
-                                        readonly>
-                                    <input type="hidden" id="tempFormID">
-                                </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="Create new employee">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
+                                        </button>
 
-                                <!-- BASIC DETAILS -->
-                                <div class="row g-2">
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="employeeCode">Employee Code</label>
-                                        <input type="text" class="form-control" id="employeeCode" name="employeeCode"
-                                            readonly>
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" disabled title="Modify employee">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" disabled title="Delete employee">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
+                                            id="reportButton" disabled title="Print employee profile">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
+                                        </button>
+
+                                        <!-- 🆕 Promote to Driver -->
+                                        <button type="button" class="btn btn-outline-success btn-sm bg-white"
+                                            id="promoteToDriverBtn" disabled
+                                            title="Create / open the linked driver record">
+                                            <i class="bi bi-truck-front"></i>
+                                            <span class="d-none d-lg-inline ms-1">Driver</span>
+                                        </button>
+
+                                        <button id="saveButton" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            type="button" data-mode="insert" title="Save employee">
+                                            <span id="saveSpinnerBtn"
+                                                class="spinner-border spinner-border-sm me-2 d-none" role="status"
+                                                aria-hidden="true"></span>
+                                            <i class="bi bi-check2-circle"></i> Save
+                                        </button>
                                     </div>
 
-                                    <div class="col-md-4">
-                                        <label class="form-label small" for="employeeName">Employee Name</label>
-                                        <input list="employeeList" class="form-control" id="employeeName"
-                                            name="employeeName" required>
+                                    <!-- Hidden tracking -->
+                                    <input type="hidden" id="status" value="New">
+                                    <input type="hidden" id="tempFormID">
+                                    <input type="hidden" id="companyId" name="company_id">
+                                    <input type="hidden" id="employeeId" name="employee_id">
+                                    <input type="hidden" id="linkedDriverId" name="linked_driver_id">
+                                </div>
+
+                                <!-- ============ LINKED DRIVER BANNER ============ -->
+                                <div id="driverLinkBanner"
+                                    class="d-none mb-2 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <span>
+                                        <i class="bi bi-truck-front-fill text-info me-1"></i>
+                                        Linked to driver
+                                        <strong id="linkedDriverCode">–</strong>
+                                        <span class="text-muted">(<span id="linkedDriverStatus">–</span>)</span>
+                                    </span>
+                                    <a href="../driver/driver-master.html" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-box-arrow-up-right"></i> Open Driver
+                                    </a>
+                                </div>
+
+                                <!-- ============ BASIC DETAILS ============ -->
+                                <p class="em-section-title">
+                                    <i class="bi bi-person-vcard"></i> Basic Details
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="employeeCode">Employee Code</label>
+                                        <input type="text" class="form-control" id="employeeCode" name="employeeCode"
+                                            readonly aria-readonly="true" placeholder="Auto-generated">
+                                    </div>
+
+                                    <div class="col-xl-4 col-lg-5 col-md-8 col-sm-6">
+                                        <label class="form-label" for="employeeName">
+                                            Employee Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            <input list="employeeList" class="form-control fw-bold" id="employeeName"
+                                                name="employeeName" placeholder="Full name" required maxlength="100"
+                                                autocomplete="name">
+                                            <div class="invalid-feedback">Employee name is required.</div>
+                                        </div>
                                         <datalist id="employeeList"></datalist>
                                     </div>
 
-                                    <div class="col-md-3">
-                                        <label class="form-label small" for="employeeType">Employee Type</label>
-                                        <select class="form-select" id="employeeType" name="employeeType">
-                                            <option value="">Select</option>
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label class="form-label" for="employeeType">
+                                            Employee Type<span class="req">*</span>
+                                        </label>
+                                        <select class="form-select" id="employeeType" name="employeeType" required>
+                                            <option value="">Select…</option>
                                             <option>Permanent</option>
                                             <option>Contract</option>
                                             <option>Intern</option>
                                         </select>
+                                        <div class="invalid-feedback">Select an employee type.</div>
                                     </div>
 
-                                    <div class="col-md-3">
-                                        <label class="form-label small" for="dateOfJoining">Date of Joining</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="dateOfJoining">
+                                            Date of Joining<span class="req">*</span>
+                                        </label>
                                         <input type="date" class="form-control" id="dateOfJoining" name="dateOfJoining"
                                             required>
+                                        <div class="invalid-feedback">Joining date is required.</div>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="gender">Gender</label>
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label class="form-label" for="employeeStatus">Employee Status</label>
+                                        <select class="form-select" id="employeeStatus" name="employeeStatus">
+                                            <option value="">Select…</option>
+                                            <option>Active</option>
+                                            <option>Inactive</option>
+                                            <option>Left</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- ============ PERSONAL ============ -->
+                                <p class="em-section-title">
+                                    <i class="bi bi-person-lines-fill"></i> Personal
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="gender">Gender</label>
                                         <select class="form-select" id="gender" name="gender">
-                                            <option value="">Select</option>
+                                            <option value="">Select…</option>
                                             <option>Male</option>
                                             <option>Female</option>
                                             <option>Other</option>
                                         </select>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="maritalStatus">Marital Status</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="maritalStatus">Marital Status</label>
                                         <select class="form-select" id="maritalStatus" name="maritalStatus">
-                                            <option value="">Select</option>
+                                            <option value="">Select…</option>
                                             <option>Single</option>
                                             <option>Married</option>
                                         </select>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="dateOfBirth">Date of Birth</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="dateOfBirth">
+                                            Date of Birth<span class="req">*</span>
+                                        </label>
                                         <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth"
                                             required>
+                                        <div class="invalid-feedback">Date of birth is required.</div>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="bloodGroup">Blood Group</label>
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label class="form-label" for="bloodGroup">Blood Group</label>
                                         <input list="bloodGroupList" class="form-control" id="bloodGroup"
-                                            name="bloodGroup">
+                                            name="bloodGroup" placeholder="e.g. O+">
                                         <datalist id="bloodGroupList"></datalist>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="panNumber">PAN Number</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="panNumber">
+                                            PAN Number<span class="req">*</span>
+                                        </label>
                                         <input type="text" class="form-control text-uppercase" id="panNumber"
-                                            name="panNumber" required pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
-                                            oninput="this.value=this.value.toUpperCase()">
+                                            name="panNumber" required pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}" maxlength="10"
+                                            placeholder="ABCDE1234F" autocomplete="off" data-uppercase>
+                                        <div class="invalid-feedback">Enter a valid PAN (e.g. ABCDE1234F).</div>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="passportNumber">Passport Number</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="passportNumber">Passport Number</label>
                                         <input type="text" class="form-control text-uppercase" id="passportNumber"
-                                            name="passportNumber" oninput="this.value=this.value.toUpperCase()">
+                                            name="passportNumber" maxlength="20" autocomplete="off" data-uppercase>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="aadharNumber">Aadhar Number</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="aadharNumber">Aadhaar Number</label>
                                         <input type="text" class="form-control" id="aadharNumber" name="aadharNumber"
-                                            pattern="[0-9]{12}" maxlength="12">
+                                            pattern="[0-9]{12}" maxlength="12" inputmode="numeric"
+                                            placeholder="12 digits" autocomplete="off">
+                                        <div class="invalid-feedback">Aadhaar must be 12 digits.</div>
                                     </div>
 
-                                    <div class="col-md-2">
-                                        <label class="form-label small" for="uanNumber">UAN Number</label>
-                                        <input type="text" class="form-control" id="uanNumber" name="uanNumber">
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <label class="form-label small" for="personalContactNo">Personal Contact
-                                            No</label>
-                                        <input type="tel" class="form-control" id="personalContactNo"
-                                            pattern="[0-9]{10}" maxlength="10" name="personalContactNo">
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <label class="form-label small" for="personalEmail">Personal Email ID</label>
-                                        <input type="email" class="form-control" id="personalEmail" name="personalEmail"
-                                            required>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label small" for="permanentAddress">Permanent Address</label>
-                                        <textarea class="form-control" rows="2" id="permanentAddress"
-                                            name="permanentAddress"></textarea>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label small" for="currentAddress">Current Address</label>
-                                        <textarea class="form-control" rows="2" id="currentAddress"
-                                            name="currentAddress"></textarea>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <label class="form-label small" for="employeeStatus">Employee Status</label>
-                                        <select class="form-select" id="employeeStatus" name="employeeStatus">
-                                            <option value="">Select</option>
-                                            <option>Active</option>
-                                            <option>Inactive</option>
-                                            <option>Left</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <label class="form-label small" for="statusDate">Status Date</label>
-                                        <input type="date" class="form-control" id="statusDate" name="statusDate"
-                                            disabled>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label small" for="leavingReason">Leaving Reason</label>
-                                        <input type="text" class="form-control" id="leavingReason" name="leavingReason"
-                                            disabled>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="uanNumber">UAN Number</label>
+                                        <input type="text" class="form-control" id="uanNumber" name="uanNumber"
+                                            maxlength="20" autocomplete="off">
                                     </div>
                                 </div>
-                                <!-- Tabs -->
-                                <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
+
+                                <!-- ============ CONTACT ============ -->
+                                <p class="em-section-title">
+                                    <i class="bi bi-telephone"></i> Contact
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label class="form-label" for="personalContactNo">Personal Contact No</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-phone"></i></span>
+                                            <input type="tel" class="form-control" id="personalContactNo"
+                                                name="personalContactNo" pattern="[0-9]{10}" maxlength="10"
+                                                inputmode="numeric" placeholder="10-digit mobile" autocomplete="tel">
+                                            <div class="invalid-feedback">Enter a valid 10-digit number.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label class="form-label" for="personalEmail">
+                                            Personal Email ID<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                            <input type="email" class="form-control" id="personalEmail"
+                                                name="personalEmail" required placeholder="name@example.com"
+                                                autocomplete="email">
+                                            <div class="invalid-feedback">Enter a valid email address.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="permanentAddress">Permanent Address</label>
+                                        <textarea class="form-control" rows="2" id="permanentAddress"
+                                            name="permanentAddress" maxlength="255"
+                                            placeholder="Street, area, landmark…"
+                                            autocomplete="street-address"></textarea>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="currentAddress">Current Address</label>
+                                        <textarea class="form-control" rows="2" id="currentAddress"
+                                            name="currentAddress" maxlength="255" placeholder="Street, area, landmark…"
+                                            autocomplete="street-address"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- ============ STATUS / EXIT ============ -->
+                                <p class="em-section-title">
+                                    <i class="bi bi-door-closed"></i> Status &amp; Exit
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="statusDate">Status Date</label>
+                                        <input type="date" class="form-control" id="statusDate" name="statusDate"
+                                            disabled>
+                                        <div class="form-text">Unlocks when status is set.</div>
+                                    </div>
+
+                                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6">
+                                        <label class="form-label" for="leavingReason">Leaving Reason</label>
+                                        <input type="text" class="form-control" id="leavingReason" name="leavingReason"
+                                            disabled maxlength="120" placeholder="Reason if the employee has left">
+                                    </div>
+                                </div>
+
+                                <!-- ============ TABS ============ -->
+                                <ul class="nav nav-tabs em-tabs mt-4" id="partyTabs" role="tablist">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active" id="familyDetails-tab" data-bs-toggle="tab"
                                             data-bs-target="#familyDetails" type="button" role="tab"
                                             aria-controls="familyDetails" aria-selected="true">
-                                            Family Details
+                                            <i class="bi bi-people me-1"></i> Family Details
+                                            <span class="badge text-bg-secondary ms-1" id="familyCountBadge">0</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="employmentCharges-tab" data-bs-toggle="tab"
                                             data-bs-target="#employmentCharges" type="button" role="tab"
                                             aria-controls="employmentCharges" aria-selected="false">
-                                            Employment Details
+                                            <i class="bi bi-briefcase me-1"></i> Employment Details
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="userCredentials-tab" data-bs-toggle="tab"
                                             data-bs-target="#userCredentials" type="button" role="tab"
                                             aria-controls="userCredentials" aria-selected="false">
-                                            User Credentials
+                                            <i class="bi bi-shield-lock me-1"></i> User Credentials
                                         </button>
                                     </li>
                                 </ul>
-                                <div class="tab-content border border-top-0 p-3">
 
-                                    <!-- Family Details Tab -->
-                                    <div class="tab-pane fade show active" id="familyDetails" role="tabpanel">
-                                        <div class="row g-2">
-                                            <div class="col-md-3">
-                                                <label class="form-label small" for="relation">Relation</label>
-                                                <input type="text" class="form-control" id="relation" name="relation">
+                                <div class="tab-content border border-top-0 rounded-bottom p-3" id="partyTabsContent">
+
+                                    <!-- ===== Family Details ===== -->
+                                    <div class="tab-pane fade show active" id="familyDetails" role="tabpanel"
+                                        aria-labelledby="familyDetails-tab" tabindex="0">
+
+                                        <div class="row g-2 align-items-end mb-3">
+                                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                                <label class="form-label" for="relation">Relation</label>
+                                                <input type="text" class="form-control" id="relation" name="relation"
+                                                    placeholder="e.g. Spouse, Father">
                                             </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label small" for="familyName">Name</label>
+                                            <div class="col-lg-3 col-md-6 col-sm-6">
+                                                <label class="form-label" for="familyName">Name</label>
                                                 <input type="text" class="form-control" id="familyName"
-                                                    name="familyName">
+                                                    name="familyName" placeholder="Family member name">
                                             </div>
-                                            <div class="col-md-2">
-                                                <label class="form-label small" for="familyDOB">DOB</label>
+                                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                                <label class="form-label" for="familyDOB">DOB</label>
                                                 <input type="date" class="form-control" id="familyDOB" name="familyDOB">
                                             </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-primary btn-sm">Add</button>
+                                            <div class="col-lg-2 col-md-4 col-sm-6">
+                                                <label class="form-label" for="familyContact">Contact</label>
+                                                <input type="tel" class="form-control" id="familyContact"
+                                                    name="familyContact" maxlength="15" inputmode="numeric"
+                                                    placeholder="Optional">
+                                            </div>
+                                            <div class="col-lg-2 col-md-4 col-sm-6 d-grid">
+                                                <button type="button" class="btn btn-outline-primary" id="addFamilyBtn">
+                                                    <i class="bi bi-plus-circle"></i>
+                                                    <span class="d-lg-none ms-1">Add</span>
+                                                </button>
                                             </div>
                                         </div>
-                                        <table class="table table-sm mt-2">
-                                            <thead>
-                                                <tr>
-                                                    <th>Relation</th>
-                                                    <th>Name</th>
-                                                    <th>DOB</th>
-                                                    <th></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="familyTable"></tbody>
-                                        </table>
+
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-sm align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Relation</th>
+                                                        <th>Name</th>
+                                                        <th>DOB</th>
+                                                        <th>Contact</th>
+                                                        <th class="text-center" style="width: 60px;"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="familyTable">
+                                                    <tr>
+                                                        <td colspan="5" class="em-empty">
+                                                            <i class="bi bi-people"></i>
+                                                            No family members added yet.
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
 
-                                    <!-- Employment Details Tab -->
-                                    <div class="tab-pane fade" id="employmentCharges" role="tabpanel">
-                                        <div class="row g-2">
-                                            <div class="col-md-3">
-                                                <label class="form-label small" for="department">Department</label>
+                                    <!-- ===== Employment Details ===== -->
+                                    <div class="tab-pane fade" id="employmentCharges" role="tabpanel"
+                                        aria-labelledby="employmentCharges-tab" tabindex="0">
+                                        <div class="row g-3">
+                                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="department">Department</label>
                                                 <input type="text" class="form-control" id="department"
-                                                    name="department">
+                                                    name="department" placeholder="e.g. Operations">
                                             </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label small" for="designation">Designation</label>
+                                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="designation">Designation</label>
                                                 <input type="text" class="form-control" id="designation"
-                                                    name="designation">
+                                                    name="designation" placeholder="e.g. Senior Driver">
                                             </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label small" for="ctc">CTC</label>
-                                                <input type="number" class="form-control" id="ctc" name="ctc"
-                                                    step="0.01">
+                                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="ctc">CTC (annual)</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">₹</span>
+                                                    <input type="number" class="form-control" id="ctc" name="ctc"
+                                                        step="0.01" min="0" placeholder="0.00">
+                                                </div>
                                             </div>
-
+                                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="reportingTo">Reporting To</label>
+                                                <input type="text" class="form-control" id="reportingTo"
+                                                    name="reportingTo" placeholder="Manager name">
+                                            </div>
+                                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="workLocation">Work Location</label>
+                                                <input type="text" class="form-control" id="workLocation"
+                                                    name="workLocation" placeholder="e.g. Bengaluru HQ">
+                                            </div>
+                                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="shift">Shift</label>
+                                                <select class="form-select" id="shift" name="shift">
+                                                    <option value="">Select…</option>
+                                                    <option>General</option>
+                                                    <option>Morning</option>
+                                                    <option>Evening</option>
+                                                    <option>Night</option>
+                                                    <option>Rotational</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                    <!-- User Credentials Tab -->
-                                    <div class="tab-pane fade" id="userCredentials" role="tabpanel">
-                                        <div class="row g-2">
-                                            <div class="col-md-4">
-                                                <label class="form-label small" for="loginID">Login ID</label>
-                                                <input type="text" class="form-control" id="loginID" name="loginID">
+
+                                    <!-- ===== User Credentials ===== -->
+                                    <div class="tab-pane fade" id="userCredentials" role="tabpanel"
+                                        aria-labelledby="userCredentials-tab" tabindex="0">
+                                        <div class="row g-3">
+                                            <div class="col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="loginID">Login ID</label>
+                                                <input type="text" class="form-control" id="loginID" name="loginID"
+                                                    autocomplete="username" placeholder="username">
                                             </div>
 
-                                            <div class="col-md-4">
-                                                <label class="form-label small" for="userType">User Type</label>
+                                            <div class="col-lg-4 col-md-6 col-sm-6">
+                                                <label class="form-label" for="userType">User Type</label>
                                                 <select class="form-select" id="userType" name="userType">
                                                     <option value="">Select User Type</option>
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-primary btn-sm" id="setUserID"
-                                                    disabled>Create
-                                                    User
-                                                    ID</button>
+                                            <div class="col-lg-2 col-md-6 col-sm-6 d-grid align-self-end">
+                                                <button type="button" class="btn btn-outline-primary" id="setUserID"
+                                                    disabled>
+                                                    <i class="bi bi-person-plus"></i>
+                                                    <span class="d-lg-none ms-1">Create</span>
+                                                    <span class="d-none d-lg-inline ms-1">Create User ID</span>
+                                                </button>
                                             </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-primary btn-sm" id="resetPassword"
-                                                    disabled>Reset
-                                                    Password</button>
+
+                                            <div class="col-lg-2 col-md-6 col-sm-6 d-grid align-self-end">
+                                                <button type="button" class="btn btn-outline-warning" id="resetPassword"
+                                                    disabled>
+                                                    <i class="bi bi-key"></i>
+                                                    <span class="d-lg-none ms-1">Reset</span>
+                                                    <span class="d-none d-lg-inline ms-1">Reset Password</span>
+                                                </button>
                                             </div>
+                                        </div>
+
+                                        <div class="alert alert-info mt-3 mb-0 py-2 small">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Credentials are stored securely. Passwords are hashed before saving.
                                         </div>
                                     </div>
                                 </div>
+
                             </form>
                         </div>
                     </div>
@@ -316,36 +694,273 @@
         </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner"
-        class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
-        <div class="spinner-border text-light" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-    <!-- Toast Container -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage">
-                    Error message here...
+    <!-- ============ SEARCH SAVED EMPLOYEES MODAL ============ -->
+    <div class="modal fade" id="searchEmployeeModal" tabindex="-1" aria-labelledby="searchEmployeeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="searchEmployeeModalLabel">
+                        <i class="bi bi-search me-1"></i> Search Saved Employees
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" id="searchSavedEmployeeInput" class="form-control"
+                            placeholder="Search by Name, Code, Phone or Email…" aria-label="Search saved employees"
+                            autocomplete="off">
+                        <button class="btn btn-outline-primary" type="button" id="btnTriggerEmployeeSearch">
+                            Search
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover table-bordered align-middle text-center mb-0">
+                            <caption class="visually-hidden">Search results for saved employees</caption>
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Code</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Phone</th>
+                                    <th scope="col">Email</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="searchEmployeeTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted fst-italic py-3">
+                                        Enter search criteria to find employees…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
-    <!-- Your scripts -->
-    <script src="../../assets/js/utils/server.js"></script>
-    <script src="../../assets/js/utils/navbar.js"></script>
-    <script src="../../assets/js/utils/utils.js"></script>
-    <script src="../../assets/js/utils/logout.js"></script>
-    <script src="../../assets/js/utils/GlobalShortcut.js"></script>
-    <script src="../../assets/js/EmployeeMaster/employee.js"></script>
+    <!-- ============ LOADING OVERLAY ============ -->
+    <div id="loadingSpinner"
+        class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
+        style="z-index: 2000;">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading…</span>
+        </div>
+    </div>
+
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here…</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <!-- 🆕 success toast -->
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ EXTERNAL LIBRARIES (deferred) ============ -->
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js" defer></script>
+
+    <!-- ============ LOCAL SCRIPTS ============ -->
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
+    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
+    <script src="../../assets/js/EmployeeMaster/employee.js" defer></script>
+
+    <!-- ============ PAGE-SCOPED BEHAVIOUR ============ -->
+    <script>
+        /* ============================================================
+         * employee-master-ui.js  (inline)
+         * ------------------------------------------------------------
+         * Pure UI helpers — safe to run alongside the existing
+         * employee.js because they only enhance the DOM. Nothing here
+         * touches Supabase; it just improves UX.
+         * ============================================================ */
+        (function () {
+            'use strict';
+
+            const $ = (id) => document.getElementById(id);
+
+            /* ---------- 1. Uppercase inputs (replaces inline oninput) ---------- */
+            document.querySelectorAll('[data-uppercase]').forEach((el) => {
+                const up = () => { el.value = el.value.toUpperCase(); };
+                el.addEventListener('input', up);
+                el.addEventListener('paste', () => setTimeout(up, 0));
+            });
+
+            /* ---------- 2. Enable / disable exit fields on status change ---------- */
+            const statusSel = $('employeeStatus');
+            const statusDate = $('statusDate');
+            const leavingReason = $('leavingReason');
+
+            function syncExitFields() {
+                if (!statusSel) return;
+                const exitStatus = ['Inactive', 'Left'].includes(statusSel.value);
+                if (statusDate) statusDate.disabled = !exitStatus;
+                if (leavingReason) leavingReason.disabled = !exitStatus;
+                if (!exitStatus) {
+                    if (statusDate) statusDate.value = '';
+                    if (leavingReason) leavingReason.value = '';
+                }
+            }
+            if (statusSel) {
+                statusSel.addEventListener('change', syncExitFields);
+                syncExitFields();
+            }
+
+            /* ---------- 3. Employee chip in action bar ---------- */
+            const chip = $('employeeChip');
+            const chipName = $('employeeChipName');
+            const chipInit = $('employeeChipInitials');
+
+            function refreshChip() {
+                const name = ($('employeeName') && $('employeeName').value || '').trim();
+                if (!chip || !name) { if (chip) chip.classList.add('d-none'); return; }
+
+                chip.classList.remove('d-none');
+                if (chipName) chipName.textContent = name;
+                if (chipInit) {
+                    const parts = name.split(/\s+/).filter(Boolean);
+                    chipInit.textContent = parts.slice(0, 2)
+                        .map((p) => p[0].toUpperCase()).join('') || '–';
+                }
+            }
+
+            const nameEl = $('employeeName');
+            if (nameEl) nameEl.addEventListener('input', refreshChip);
+
+            /* ---------- 4. Driver link banner helpers (public API) ---------- */
+            window.EmployeeMasterUI = {
+                /** Show the "linked to driver" banner. */
+                showDriverLink: (driver) => {
+                    const banner = $('driverLinkBanner');
+                    if (!banner || !driver) return;
+                    banner.classList.remove('d-none');
+                    if ($('linkedDriverCode')) $('linkedDriverCode').textContent = driver.driver_code || '–';
+                    if ($('linkedDriverStatus')) $('linkedDriverStatus').textContent = driver.status || 'Active';
+                    if ($('linkedDriverId')) $('linkedDriverId').value = driver.id || '';
+                    const promote = $('promoteToDriverBtn');
+                    if (promote) {
+                        promote.disabled = false;
+                        promote.innerHTML =
+                            '<i class="bi bi-truck-front-fill"></i>' +
+                            '<span class="d-none d-lg-inline ms-1">Open Driver</span>';
+                    }
+                },
+
+                /** Hide the banner (employee has no driver record yet). */
+                hideDriverLink: () => {
+                    const banner = $('driverLinkBanner');
+                    if (banner) banner.classList.add('d-none');
+                    if ($('linkedDriverId')) $('linkedDriverId').value = '';
+                    const promote = $('promoteToDriverBtn');
+                    if (promote) {
+                        promote.innerHTML =
+                            '<i class="bi bi-truck-front"></i>' +
+                            '<span class="d-none d-lg-inline ms-1">Driver</span>';
+                    }
+                },
+
+                /** Called by employee.js after loading a record. */
+                onRecordLoaded: (record) => {
+                    if (!record) return;
+                    refreshChip();
+                    syncExitFields();
+                    if (record.driver) {
+                        window.EmployeeMasterUI.showDriverLink(record.driver);
+                    } else {
+                        window.EmployeeMasterUI.hideDriverLink();
+                    }
+                }
+            };
+
+            /* ---------- 5. "Promote to Driver" click handler ---------- */
+            const promoteBtn = $('promoteToDriverBtn');
+            if (promoteBtn) {
+                promoteBtn.addEventListener('click', () => {
+                    const driverId = $('linkedDriverId') && $('linkedDriverId').value;
+                    if (driverId) {
+                        // already linked → jump to driver page
+                        window.location.href = `../driver/driver-master.html?id=${encodeURIComponent(driverId)}`;
+                    } else {
+                        // not linked yet → open driver page in "create from employee" mode
+                        const empId = $('employeeId') && $('employeeId').value;
+                        if (!empId) {
+                            alert('Please save the employee first.');
+                            return;
+                        }
+                        window.location.href =
+                            `../driver/driver-master.html?employee_id=${encodeURIComponent(empId)}&mode=promote`;
+                    }
+                });
+            }
+
+            /* ---------- 6. Family table "no rows" state ---------- */
+            function refreshFamilyEmpty() {
+                const tbody = $('familyTable');
+                const badge = $('familyCountBadge');
+                if (!tbody) return;
+                const rows = tbody.querySelectorAll('tr:not([data-empty])').length;
+                if (badge) badge.textContent = String(rows);
+                if (rows === 0) {
+                    tbody.innerHTML =
+                        '<tr data-empty><td colspan="5" class="em-empty">' +
+                        '<i class="bi bi-people"></i>No family members added yet.</td></tr>';
+                }
+            }
+            // expose so employee.js can call after add/remove
+            window.EmployeeMasterUI.refreshFamilyEmpty = refreshFamilyEmpty;
+            refreshFamilyEmpty();
+
+            /* ---------- 7. Loading overlay helpers (safety net) ---------- */
+            window.EmployeeMasterUI.showLoading = () => $('loadingSpinner')?.classList.remove('d-none');
+            window.EmployeeMasterUI.hideLoading = () => $('loadingSpinner')?.classList.add('d-none');
+
+            /* ---------- 8. Toast helpers (so employee.js can use them) ---------- */
+            window.EmployeeMasterUI.toast = (type, message) => {
+                const id = type === 'success' ? 'successToast' : 'errorToast';
+                const msg = type === 'success' ? 'successToastMessage' : 'errorToastMessage';
+                const el = $(id);
+                if (!el || !window.bootstrap) return console.warn('[EmployeeMaster]', message);
+                const m = $(msg); if (m) m.textContent = message;
+                bootstrap.Toast.getOrCreateInstance(el, { delay: 4500 }).show();
+            };
+
+        })();
+    </script>
 </body>
 
 </html>

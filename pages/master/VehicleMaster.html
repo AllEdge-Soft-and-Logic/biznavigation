@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizNavigation - Vehicle Master</title>
+    <meta name="description" content="Vehicle Master – manage fleet vehicles, documents, fuel and maintenance logs.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Vehicle Master · BizNavigation</title>
 
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -26,6 +28,86 @@
     <!-- Upgraded Modern Form Styles -->
     <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
 
+    <!-- Page-scoped polish (safe to move into booking-theme.css) -->
+    <style>
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
+        .vm-sticky-foot {
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+            background: #fff;
+            border-top: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
+            }
+        }
+    </style>
+
     <!-- Core Scripts (Deferred) -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
@@ -42,35 +124,46 @@
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-content">
-
                 <div class="container-fluid mt-3 mb-4">
-                    <div class="card">
-                        <div class="card-body">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
                             <form id="customsClearanceForm" autocomplete="off" novalidate>
 
-                                <!-- Action Bar -->
+                                <!-- ============ ACTION BAR ============ -->
                                 <div
-                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Vehicle Master</h5>
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-truck-front text-primary"></i>
+                                        Vehicle Master
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
+
                                     <div class="d-flex flex-wrap gap-2">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
-                                            id="newButton" title="Create new booking">
-                                            <i class="bi bi-file-earmark-plus"></i> New
+                                            id="newButton" title="Create new vehicle" aria-label="Create new vehicle">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-warning btn-sm bg-white"
-                                            id="modifyButton" disabled title="Modify booking">
-                                            <i class="bi bi-pencil"></i> Modify
+                                            id="modifyButton" disabled title="Modify vehicle"
+                                            aria-label="Modify vehicle">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm bg-white"
-                                            id="deleteButton" disabled title="Delete booking">
-                                            <i class="bi bi-trash"></i> Delete
+                                            id="deleteButton" disabled title="Delete vehicle"
+                                            aria-label="Delete vehicle">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-info btn-sm bg-white"
-                                            id="reportButton" disabled title="Print booking">
-                                            <i class="bi bi-printer"></i> Print
+                                            id="reportButton" disabled title="Print vehicle" aria-label="Print vehicle">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
                                         </button>
-                                        <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
-                                            id="saveButton" data-mode="insert" title="Save booking">
+                                        <button type="submit" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            id="saveButton" data-mode="insert" title="Save vehicle">
                                             <i class="bi bi-check2-circle"></i> Save
                                         </button>
                                     </div>
@@ -82,66 +175,109 @@
                                     <input type="hidden" id="serviceProviderCode" name="serviceProviderCode" />
                                 </div>
 
-                                <!-- Main Details Grid -->
+                                <!-- ============ IDENTIFICATION ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-upc-scan"></i> Identification
+                                </p>
+
                                 <div class="row g-3">
                                     <!-- Vehicle Code -->
-                                    <div class="col-xl-1 col-md-3 col-sm-6">
-                                        <label for="vehicleCode" class="form-label">Code</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="vehicleCode" class="form-label">Vehicle Code</label>
                                         <input type="text" id="vehicleCode" name="vehicleCode"
-                                            class="form-control text-upper" disabled />
+                                            class="form-control text-upper" placeholder="Auto-generated" readonly
+                                            aria-readonly="true" />
                                     </div>
+
                                     <!-- Registration No. -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="regNumber" class="form-label">Registration No</label>
+                                    <div class="col-xl-4 col-lg-5 col-md-8 col-sm-6">
+                                        <label for="regNumber" class="form-label">
+                                            Registration No<span class="req">*</span>
+                                        </label>
                                         <div class="input-group">
+                                            <span class="input-group-text bg-white">
+                                                <i class="bi bi-hash"></i>
+                                            </span>
                                             <input list="regNumberSuggestions" id="regNumber" name="regNumber"
-                                                class="form-control input-highlight fw-bold"
-                                                placeholder="e.g. KA-01-AB-1234" autocomplete="off" required />
-                                            <button type="button" class="btn btn-outline-secondary btn-sm bg-white"
-                                                data-bs-toggle="modal" data-bs-target="#searchVehicleModal">
+                                                class="form-control input-highlight fw-bold text-uppercase"
+                                                placeholder="e.g. KA01AB1234" autocomplete="off" maxlength="15"
+                                                spellcheck="false" required />
+                                            <button type="button" class="btn btn-outline-secondary bg-white"
+                                                data-bs-toggle="modal" data-bs-target="#searchVehicleModal"
+                                                title="Search saved vehicles" aria-label="Search saved vehicles">
                                                 <i class="bi bi-search"></i>
                                             </button>
                                         </div>
                                         <datalist id="regNumberSuggestions"></datalist>
+                                        <div class="invalid-feedback">Registration number is required.</div>
                                     </div>
 
                                     <!-- Chassis Number -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="chassisNumber" class="form-label">Chassis Number</label>
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="chassisNumber" class="form-label">
+                                            Chassis / VIN<span class="req">*</span>
+                                        </label>
                                         <input type="text" id="chassisNumber" name="chassisNumber"
-                                            class="form-control text-upper" placeholder="17-character VIN" required />
-                                    </div>
-                                    <!-- Engine Number -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="engineNumber" class="form-label">Engine Number</label>
-                                        <input type="text" id="engineNumber" name="engineNumber"
                                             class="form-control text-uppercase" placeholder="17-character VIN"
-                                            maxlength="17" autocomplete="off" required />
+                                            maxlength="17" autocomplete="off" spellcheck="false" required />
+                                        <div class="invalid-feedback">Chassis number is required.</div>
                                     </div>
+
+                                    <!-- Engine Number -->
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="engineNumber" class="form-label">
+                                            Engine Number<span class="req">*</span>
+                                        </label>
+                                        <input type="text" id="engineNumber" name="engineNumber"
+                                            class="form-control text-uppercase" placeholder="e.g. ENG-XXXXXXXX"
+                                            maxlength="20" autocomplete="off" spellcheck="false" required />
+                                        <div class="invalid-feedback">Engine number is required.</div>
+                                    </div>
+                                </div>
+
+                                <!-- ============ SPECIFICATIONS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-gear-wide-connected"></i> Specifications
+                                </p>
+
+                                <div class="row g-3">
                                     <!-- Make / Manufacturer -->
-                                    <div class="col-xl-2 col-md-6 col-sm-12">
-                                        <label for="make" class="form-label">Make / Manufacturer</label>
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                                        <label for="make" class="form-label">
+                                            Make / Manufacturer<span class="req">*</span>
+                                        </label>
                                         <input list="makeSuggestions" id="make" name="make" class="form-control"
                                             placeholder="e.g. Tata, Volvo" autocomplete="off" required />
                                         <datalist id="makeSuggestions"></datalist>
+                                        <div class="invalid-feedback">Make is required.</div>
                                     </div>
 
                                     <!-- Model -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="model" class="form-label">Model</label>
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="model" class="form-label">
+                                            Model<span class="req">*</span>
+                                        </label>
                                         <input type="text" id="model" name="model" class="form-control text-upper"
-                                            placeholder="e.g. 407, FH16" required />
-                                    </div>
-                                    <!-- Year -->
-                                    <div class="col-xl-1 col-md-3 col-sm-6">
-                                        <label for="makeYear" class="form-label">Years</label>
-                                        <input type="number" id="makeYear" name="makeYear"
-                                            class="form-control text-upper" placeholder="Year" required />
+                                            placeholder="e.g. 407, FH16" autocomplete="off" required />
+                                        <div class="invalid-feedback">Model is required.</div>
                                     </div>
 
-                                    <!-- Vehicle Type (Select) -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="vehicleType" class="form-label">Vehicle Type</label>
+                                    <!-- Year -->
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="makeYear" class="form-label">
+                                            Year<span class="req">*</span>
+                                        </label>
+                                        <input type="number" id="makeYear" name="makeYear" class="form-control"
+                                            placeholder="YYYY" inputmode="numeric" min="1950" max="2100" step="1"
+                                            required />
+                                        <div class="invalid-feedback">Enter a valid year.</div>
+                                    </div>
+
+                                    <!-- Vehicle Type -->
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="vehicleType" class="form-label">
+                                            Vehicle Type<span class="req">*</span>
+                                        </label>
                                         <select id="vehicleType" name="vehicleType" class="form-select" required>
                                             <option value="Truck">Truck</option>
                                             <option value="Van">Van</option>
@@ -149,180 +285,148 @@
                                             <option value="Bus">Bus</option>
                                             <option value="Sedan">Car / Sedan</option>
                                         </select>
+                                        <div class="invalid-feedback">Select a vehicle type.</div>
+                                    </div>
+
+                                    <!-- Vehicle Sub-Type -->
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="vehicleTypeList" class="form-label">
+                                            Sub-Type<span class="req">*</span>
+                                        </label>
+                                        <input list="vehicleTypeSuggestions" id="vehicleTypeList" name="vehicleTypeList"
+                                            class="form-control" placeholder="Choose..." autocomplete="off" required />
+                                        <datalist id="vehicleTypeSuggestions"></datalist>
+                                        <div class="invalid-feedback">Sub-type is required.</div>
                                     </div>
 
                                     <!-- Fuel Type -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="fuelType" class="form-label">Fuel Type</label>
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="fuelType" class="form-label">
+                                            Fuel Type<span class="req">*</span>
+                                        </label>
                                         <select id="fuelType" name="fuelType" class="form-select" required>
                                             <option value="Diesel">Diesel</option>
                                             <option value="Petrol">Petrol</option>
                                             <option value="EV">Electric</option>
                                             <option value="CNG">CNG</option>
                                         </select>
+                                        <div class="invalid-feedback">Select a fuel type.</div>
                                     </div>
 
                                     <!-- Load Capacity -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="loadCapacity" class="form-label">Load Capacity (kg)</label>
-                                        <input type="number" id="loadCapacity" name="loadCapacity" min="0" step="any"
-                                            class="form-control text-end" placeholder="e.g. 2500" required />
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="loadCapacity" class="form-label">
+                                            Load Capacity<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number" id="loadCapacity" name="loadCapacity" min="0"
+                                                step="any" class="form-control text-end" placeholder="0"
+                                                inputmode="decimal" required />
+                                            <span class="input-group-text">kg</span>
+                                        </div>
+                                        <div class="invalid-feedback">Enter the load capacity.</div>
                                     </div>
 
                                     <!-- Operational Status -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="operationalStatus" class="form-label">Operational Status</label>
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="operationalStatus" class="form-label">
+                                            Operational Status<span class="req">*</span>
+                                        </label>
                                         <select id="operationalStatus" name="operationalStatus" class="form-select"
                                             required>
                                             <option value="Active">Active</option>
                                             <option value="Maintenance">Under Maintenance</option>
                                             <option value="Inactive">Inactive</option>
                                         </select>
+                                        <div class="invalid-feedback">Select a status.</div>
                                     </div>
+                                </div>
 
+                                <!-- ============ OWNERSHIP & NOTES ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-person-badge"></i> Ownership &amp; Notes
+                                </p>
+
+                                <div class="row g-3">
                                     <!-- Owner / Consignor Name -->
-                                    <div class="col-xl-4 col-md-6 col-sm-12">
-                                        <label for="partyName" class="form-label">Owner Name</label>
+                                    <div class="col-xl-5 col-lg-6 col-md-12 col-sm-12">
+                                        <label for="partyName" class="form-label">
+                                            Owner Name<span class="req">*</span>
+                                        </label>
                                         <input list="partySuggestions" id="partyName" name="partyName"
                                             class="form-control" placeholder="Choose owner..." autocomplete="off"
                                             required />
                                         <datalist id="partySuggestions"></datalist>
-                                    </div>
-
-                                    <!-- Category / Body Type List -->
-                                    <div class="col-xl-2 col-md-3 col-sm-6">
-                                        <label for="vehicleTypeList" class="form-label">Vehicle Sub-Type</label>
-                                        <input list="vehicleTypeSuggestions" id="vehicleTypeList" name="vehicleTypeList"
-                                            class="form-control" placeholder="Choose..." autocomplete="off" required />
-                                        <datalist id="vehicleTypeSuggestions"></datalist>
+                                        <div class="invalid-feedback">Owner name is required.</div>
                                     </div>
 
                                     <!-- Additional Notes -->
-                                    <div class="col-10">
+                                    <div class="col-xl-7 col-lg-6 col-md-12 col-sm-12">
                                         <label for="information" class="form-label">Information / Remarks</label>
                                         <input type="text" id="information" name="information" class="form-control"
-                                            placeholder="Enter operational notes or clearance remarks" />
+                                            placeholder="Enter operational notes or clearance remarks" maxlength="255"
+                                            autocomplete="off" />
                                     </div>
                                 </div>
 
-                                <!-- Tabbed Sections -->
-                                <div class="col-12 mt-4">
-                                    <ul class="nav nav-tabs" id="vehicleMasterTabs" role="tablist">
+                                <!-- ============ TABBED SECTIONS ============ -->
+                                <div class="mt-4">
+                                    <ul class="nav nav-tabs vm-tabs" id="vehicleMasterTabs" role="tablist">
                                         <li class="nav-item" role="presentation">
-                                            <button class="nav-link active" id="documents-tab" data-bs-toggle="tab"
-                                                data-bs-target="#documents" type="button" role="tab"
-                                                aria-controls="documents" aria-selected="true">
+                                            <button class="nav-link active" id="assignments-tab" data-bs-toggle="tab"
+                                                data-bs-target="#assignments" type="button" role="tab"
+                                                aria-controls="assignments" aria-selected="true">
+                                                <i class="bi bi-diagram-3 me-1"></i> Assignments
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="fuelLogs-tab" data-bs-toggle="tab"
+                                                data-bs-target="#fuelLogs" type="button" role="tab"
+                                                aria-controls="fuelLogs" aria-selected="false">
+                                                <i class="bi bi-fuel-pump me-1"></i> Fuel Logs
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="maintenanceLogs-tab" data-bs-toggle="tab"
+                                                data-bs-target="#maintenanceLogs" type="button" role="tab"
+                                                aria-controls="maintenanceLogs" aria-selected="false">
+                                                <i class="bi bi-tools me-1"></i> Maintenance Logs
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="documentsLogs-tab" data-bs-toggle="tab"
+                                                data-bs-target="#documentsLogs" type="button" role="tab"
+                                                aria-controls="documentsLogs" aria-selected="false">
                                                 <i class="bi bi-file-earmark-text me-1"></i> Documents
+                                                <span class="badge text-bg-secondary ms-1" id="docCountBadge">0</span>
                                             </button>
                                         </li>
                                     </ul>
 
-                                    <div class="tab-content" id="vehicleMasterTabsContent">
-                                        <!-- Documents Tab Pane -->
-                                        <div class="tab-pane fade show active" id="documents" role="tabpanel"
-                                            aria-labelledby="documents-tab">
-                                            <div class="row g-2 align-items-end mb-3">
-                                                <div class="col-md-4 col-sm-6">
-                                                    <label for="documentTypeInput" class="form-label">Document
-                                                        Type</label>
-                                                    <input list="documentTypeList" id="documentTypeInput"
-                                                        class="form-control"
-                                                        placeholder="Select or enter document type" />
-                                                    <datalist id="documentTypeList"></datalist>
-                                                </div>
+                                    <div class="tab-content border border-top-0 rounded-bottom p-3"
+                                        id="vehicleMasterTabsContent">
 
-                                                <div class="col-md-3 col-sm-6">
-                                                    <label for="documentNumber" class="form-label">Document
-                                                        Number</label>
-                                                    <input type="text" id="documentNumber" class="form-control"
-                                                        placeholder="e.g. RC-98765432" />
-                                                </div>
-
-                                                <div class="col-md-2 col-sm-6">
-                                                    <label for="validUpTo" class="form-label">Valid Up To</label>
-                                                    <input type="date" id="validUpTo" class="form-control" />
-                                                </div>
-                                                <div class="col-md-2 col-sm-6">
-                                                    <label for="documentFile" class="form-label">Select File (PDF, PNG,
-                                                        JPG)</label>
-                                                    <input type="file" id="documentFile" class="form-control"
-                                                        accept=".pdf,.png,.jpg,.jpeg" />
-                                                </div>
-                                                <div class="col-md-1 col-sm-6">
-                                                    <button type="button" id="addDocumentButton"
-                                                        class="btn btn-outline-primary w-100">
-                                                        <i class="bi bi-plus-circle"></i> Add
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div class="table-container">
-                                                <table id="chargesTable" class="table table-hover">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Document Type</th>
-                                                            <th>Document Number</th>
-                                                            <th>Valid Up To</th>
-                                                            <th>Attached Document</th>
-                                                            <th class="text-center">Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="documentTableBody">
-                                                        <!-- Dynamic rows added here -->
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
-
-                            <!-- SEARCH SAVED VEHICLES MODAL -->
-                            <div class="modal fade" id="searchVehicleModal" tabindex="-1"
-                                aria-labelledby="searchVehicleModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                                    <div class="modal-content">
-
-                                        <!-- Modal Header -->
-                                        <div class="modal-header bg-primary text-white">
-                                            <h5 class="modal-title" id="searchVehicleModalLabel">
-                                                <i class="bi bi-search"></i> Search Saved Vehicles
-                                            </h5>
-                                            <button type="button" class="btn-close btn-close-white"
-                                                data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-
-                                        <!-- Modal Body -->
-                                        <div class="modal-body">
-                                            <!-- Search Input Box -->
-                                            <div class="input-group mb-3">
-                                                <input type="text" id="searchSavedVehicleInput" class="form-control"
-                                                    placeholder="Search by Registration No, Owner Name, Make or Model..."
-                                                    autocomplete="off">
-                                                <button class="btn btn-outline-primary" type="button"
-                                                    id="btnTriggerSearch">
-                                                    <i class="bi bi-search"></i> Search
-                                                </button>
-                                            </div>
-
-                                            <!-- Search Results Table -->
+                                        <!-- ===== Assignments ===== -->
+                                        <div class="tab-pane fade show active" id="assignments" role="tabpanel"
+                                            aria-labelledby="assignments-tab" tabindex="0">
                                             <div class="table-responsive">
-                                                <table
-                                                    class="table table-sm table-hover table-bordered align-middle text-center">
+                                                <table class="table table-hover align-middle mb-0">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th>Registration No</th>
-                                                            <th>Owner Name</th>
-                                                            <th>Vehicle Type</th>
-                                                            <th>Model</th>
-                                                            <th>Make</th>
+                                                            <th scope="col">Assignment ID</th>
+                                                            <th scope="col">Driver</th>
+                                                            <th scope="col">Route</th>
+                                                            <th scope="col">From</th>
+                                                            <th scope="col">To</th>
+                                                            <th scope="col">Status</th>
+                                                            <th scope="col" class="text-center">Action</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody id="searchVehicleTableBody">
+                                                    <tbody id="assignmentTableBody">
                                                         <tr>
-                                                            <td colspan="6"
-                                                                class="text-center text-muted fst-italic py-3">
-                                                                Enter search criteria to find vehicles...
+                                                            <td colspan="7" class="vm-empty">
+                                                                <i class="bi bi-diagram-3"></i>
+                                                                No assignments recorded for this vehicle yet.
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -330,29 +434,207 @@
                                             </div>
                                         </div>
 
-                                        <!-- Modal Footer -->
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                data-bs-dismiss="modal">Close</button>
+                                        <!-- ===== Fuel Logs ===== -->
+                                        <div class="tab-pane fade" id="fuelLogs" role="tabpanel"
+                                            aria-labelledby="fuelLogs-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Date</th>
+                                                            <th scope="col">Odometer</th>
+                                                            <th scope="col">Fuel Type</th>
+                                                            <th scope="col" class="text-end">Qty (L)</th>
+                                                            <th scope="col" class="text-end">Rate</th>
+                                                            <th scope="col" class="text-end">Amount</th>
+                                                            <th scope="col">Station</th>
+                                                            <th scope="col" class="text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="fuelLogTableBody">
+                                                        <tr>
+                                                            <td colspan="8" class="vm-empty">
+                                                                <i class="bi bi-fuel-pump"></i>
+                                                                No fuel logs recorded for this vehicle yet.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
 
+                                        <!-- ===== Maintenance Logs ===== -->
+                                        <div class="tab-pane fade" id="maintenanceLogs" role="tabpanel"
+                                            aria-labelledby="maintenanceLogs-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Date</th>
+                                                            <th scope="col">Type</th>
+                                                            <th scope="col">Description</th>
+                                                            <th scope="col">Vendor</th>
+                                                            <th scope="col">Odometer</th>
+                                                            <th scope="col" class="text-end">Cost</th>
+                                                            <th scope="col">Next Due</th>
+                                                            <th scope="col" class="text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="maintenanceLogTableBody">
+                                                        <tr>
+                                                            <td colspan="8" class="vm-empty">
+                                                                <i class="bi bi-tools"></i>
+                                                                No maintenance logs recorded for this vehicle yet.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- ===== Documents ===== -->
+                                        <div class="tab-pane fade" id="documentsLogs" role="tabpanel"
+                                            aria-labelledby="documentsLogs-tab" tabindex="0">
+
+                                            <div class="row g-2 align-items-end mb-3">
+                                                <div class="col-lg-4 col-md-6 col-sm-6">
+                                                    <label for="documentTypeInput" class="form-label">Document
+                                                        Type</label>
+                                                    <input list="documentTypeList" id="documentTypeInput"
+                                                        class="form-control" autocomplete="off"
+                                                        placeholder="Select or enter document type" />
+                                                    <datalist id="documentTypeList"></datalist>
+                                                </div>
+
+                                                <div class="col-lg-3 col-md-6 col-sm-6">
+                                                    <label for="documentNumber" class="form-label">Document
+                                                        Number</label>
+                                                    <input type="text" id="documentNumber" class="form-control"
+                                                        placeholder="e.g. RC-98765432" autocomplete="off" />
+                                                </div>
+
+                                                <div class="col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="validUpTo" class="form-label">Valid Up To</label>
+                                                    <input type="date" id="validUpTo" class="form-control" />
+                                                </div>
+
+                                                <div class="col-lg-2 col-md-5 col-sm-6">
+                                                    <label for="documentFile" class="form-label">Attachment</label>
+                                                    <input type="file" id="documentFile" class="form-control"
+                                                        accept=".pdf,.png,.jpg,.jpeg"
+                                                        aria-describedby="documentFileHelp" />
+                                                    <div id="documentFileHelp" class="form-text">PDF, PNG or JPG</div>
+                                                </div>
+
+                                                <div class="col-lg-1 col-md-3 col-sm-12 d-grid">
+                                                    <button type="button" id="addDocumentButton"
+                                                        class="btn btn-outline-primary" title="Add document">
+                                                        <i class="bi bi-plus-circle"></i>
+                                                        <span class="d-lg-none ms-1">Add</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="table-responsive">
+                                                <table id="chargesTable" class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Document Type</th>
+                                                            <th scope="col">Document Number</th>
+                                                            <th scope="col">Valid Up To</th>
+                                                            <th scope="col">Attached Document</th>
+                                                            <th scope="col" class="text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="documentTableBody">
+                                                        <tr>
+                                                            <td colspan="5" class="vm-empty">
+                                                                <i class="bi bi-file-earmark-text"></i>
+                                                                No documents attached. Use the form above to add one.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+
+                            </form>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SEARCH SAVED VEHICLES MODAL ============ -->
+    <div class="modal fade" id="searchVehicleModal" tabindex="-1" aria-labelledby="searchVehicleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="searchVehicleModalLabel">
+                        <i class="bi bi-search me-1"></i> Search Saved Vehicles
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="search" id="searchSavedVehicleInput" class="form-control"
+                            placeholder="Search by Registration No, Owner Name, Make or Model..."
+                            aria-label="Search saved vehicles" autocomplete="off">
+                        <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
+                            Search
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover table-bordered align-middle text-center mb-0">
+                            <caption class="visually-hidden">Search results for saved vehicles</caption>
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Registration No</th>
+                                    <th scope="col">Owner Name</th>
+                                    <th scope="col">Vehicle Type</th>
+                                    <th scope="col">Model</th>
+                                    <th scope="col">Make</th>
+                                </tr>
+                            </thead>
+                            <tbody id="searchVehicleTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted fst-italic py-3">
+                                        Enter search criteria to find vehicles…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert">
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage">Error message here...</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here…</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>

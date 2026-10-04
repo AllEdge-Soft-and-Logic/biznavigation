@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Driver Master – manage drivers, licenses, compliance documents and vehicle assignments.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Driver Master · BizNavigation</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
+    <!-- Upgraded Modern Form Styles -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
+    <!-- Page-scoped polish -->
+    <style>
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
+        /* Driver avatar chip in action bar */
+        .driver-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .25rem .65rem .25rem .25rem;
+            border-radius: 999px;
+            background: var(--bs-tertiary-bg, #f8f9fa);
+            border: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .driver-chip .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--bs-primary, #0d6efd);
+            color: #fff;
+            font-weight: 600;
+            font-size: .75rem;
+        }
+
+        /* Expiry indicator */
+        .expiry-chip {
+            font-size: .7rem;
+            padding: .15rem .45rem;
+            border-radius: .375rem;
+        }
+
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
+            }
+        }
+    </style>
+
+    <!-- Core Scripts (Deferred) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+</head>
+
+<body>
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
+                            <form id="driverMasterForm" autocomplete="off" novalidate>
+
+                                <!-- ============ ACTION BAR ============ -->
+                                <div
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-person-vcard text-primary"></i>
+                                        Driver Master
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="Create new driver" aria-label="Create new driver">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" disabled title="Modify driver" aria-label="Modify driver">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" disabled title="Delete driver" aria-label="Delete driver">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
+                                            id="reportButton" disabled title="Print driver profile"
+                                            aria-label="Print driver profile">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
+                                        </button>
+                                        <button type="submit" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            id="saveButton" data-mode="insert" title="Save driver">
+                                            <i class="bi bi-check2-circle"></i> Save
+                                        </button>
+                                    </div>
+
+                                    <!-- Form State & Meta Tracking -->
+                                    <input type="hidden" id="status" name="status" value="New" />
+                                    <input type="hidden" id="tempFormID" name="tempFormID" />
+                                    <input type="hidden" id="driverId" name="driverId" />
+                                    <input type="hidden" id="companyId" name="company_id" />
+                                </div>
+
+                                <!-- ============ IDENTIFICATION ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-person-badge"></i> Identification
+                                </p>
+
+                                <div class="row g-3">
+                                    <!-- Driver Code -->
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="driverCode" class="form-label">Driver Code</label>
+                                        <input type="text" id="driverCode" name="driver_code"
+                                            class="form-control text-uppercase" placeholder="Auto-generated" readonly
+                                            aria-readonly="true" />
+                                    </div>
+
+                                    <!-- Driver Name -->
+                                    <div class="col-xl-4 col-lg-5 col-md-8 col-sm-6">
+                                        <label for="driverName" class="form-label">
+                                            Driver Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white">
+                                                <i class="bi bi-person"></i>
+                                            </span>
+                                            <input type="text" id="driverName" name="driver_name"
+                                                class="form-control input-highlight fw-bold" placeholder="Full name"
+                                                autocomplete="off" maxlength="100" required />
+                                            <div class="invalid-feedback">Driver name is required.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status -->
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label for="statusSelect" class="form-label">
+                                            Status<span class="req">*</span>
+                                        </label>
+                                        <select id="statusSelect" name="status" class="form-select" required>
+                                            <option value="Active">Active</option>
+                                            <option value="Inactive">Inactive</option>
+                                            <option value="Suspended">Suspended</option>
+                                            <option value="On Leave">On Leave</option>
+                                        </select>
+                                        <div class="invalid-feedback">Select a status.</div>
+                                    </div>
+
+                                    <!-- Assigned Vehicle -->
+                                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                                        <label for="assignedVehicle" class="form-label">Assigned Vehicle</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white">
+                                                <i class="bi bi-truck-front"></i>
+                                            </span>
+                                            <input list="vehicleSuggestions" id="assignedVehicle"
+                                                name="assigned_vehicle_number" class="form-control text-uppercase"
+                                                placeholder="Registration number…" autocomplete="off" />
+                                            <datalist id="vehicleSuggestions"></datalist>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ============ CONTACT ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-telephone"></i> Contact
+                                </p>
+
+                                <div class="row g-3">
+                                    <!-- Phone -->
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="phoneNumber" class="form-label">
+                                            Phone Number<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-phone"></i></span>
+                                            <input type="tel" id="phoneNumber" name="phone_number" class="form-control"
+                                                placeholder="10-digit mobile number" inputmode="numeric"
+                                                pattern="[0-9+\-\s]{6,15}" maxlength="15" autocomplete="off" required />
+                                            <div class="invalid-feedback">Enter a valid phone number.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Alternate Phone -->
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="alternatePhone" class="form-label">Alternate Phone</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i
+                                                    class="bi bi-telephone"></i></span>
+                                            <input type="tel" id="alternatePhone" name="alternate_phone"
+                                                class="form-control" placeholder="Optional" inputmode="numeric"
+                                                pattern="[0-9+\-\s]{6,15}" maxlength="15" autocomplete="off" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Pincode -->
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label for="pincode" class="form-label">Pincode</label>
+                                        <input type="text" id="pincode" name="pincode" class="form-control"
+                                            placeholder="6 digits" inputmode="numeric" pattern="[0-9]{4,10}"
+                                            maxlength="10" autocomplete="off" />
+                                    </div>
+
+                                    <!-- City -->
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label for="city" class="form-label">City</label>
+                                        <input type="text" id="city" name="city" class="form-control" placeholder="City"
+                                            autocomplete="off" />
+                                    </div>
+
+                                    <!-- State -->
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label for="state" class="form-label">State</label>
+                                        <input type="text" id="state" name="state" class="form-control"
+                                            placeholder="State" autocomplete="off" />
+                                    </div>
+
+                                    <!-- Address -->
+                                    <div class="col-12">
+                                        <label for="address" class="form-label">Address</label>
+                                        <textarea id="address" name="address" class="form-control" rows="2"
+                                            placeholder="Street, area, landmark…" maxlength="255"
+                                            autocomplete="off"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- ============ LICENSE & COMPLIANCE ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-shield-check"></i> License &amp; Compliance
+                                </p>
+
+                                <div class="row g-3">
+                                    <!-- License Number -->
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="licenseNumber" class="form-label">
+                                            License Number<span class="req">*</span>
+                                        </label>
+                                        <input type="text" id="licenseNumber" name="license_number"
+                                            class="form-control text-uppercase" placeholder="e.g. DL-0420110149646"
+                                            autocomplete="off" maxlength="20" required />
+                                        <div class="invalid-feedback">License number is required.</div>
+                                    </div>
+
+                                    <!-- License Expiry -->
+                                    <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6">
+                                        <label for="licenseExpiry" class="form-label">
+                                            License Expiry<span class="req">*</span>
+                                        </label>
+                                        <input type="date" id="licenseExpiry" name="license_expiry_date"
+                                            class="form-control" required />
+                                        <div class="invalid-feedback">License expiry is required.</div>
+                                        <div class="form-text" id="licenseExpiryHint"></div>
+                                    </div>
+
+                                    <!-- Badge Number -->
+                                    <div class="col-xl-3 col-lg-5 col-md-6 col-sm-6">
+                                        <label for="badgeNumber" class="form-label">Badge Number</label>
+                                        <input type="text" id="badgeNumber" name="badge_number"
+                                            class="form-control text-uppercase" placeholder="Public service badge no."
+                                            autocomplete="off" maxlength="30" />
+                                    </div>
+
+                                    <!-- Aadhar Number -->
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="aadharNumber" class="form-label">Aadhaar Number</label>
+                                        <input type="text" id="aadharNumber" name="aadhar_number" class="form-control"
+                                            placeholder="12 digits" inputmode="numeric" pattern="[0-9]{12}"
+                                            maxlength="12" autocomplete="off" />
+                                        <div class="invalid-feedback">Aadhaar must be 12 digits.</div>
+                                    </div>
+
+                                    <!-- PAN Number -->
+                                    <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6">
+                                        <label for="panNumber" class="form-label">PAN Number</label>
+                                        <input type="text" id="panNumber" name="pan_number"
+                                            class="form-control text-uppercase" placeholder="ABCDE1234F"
+                                            pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}" maxlength="10"
+                                            autocomplete="off" />
+                                        <div class="invalid-feedback">Enter a valid PAN (e.g. ABCDE1234F).</div>
+                                    </div>
+                                </div>
+
+                                <!-- ============ TABBED SECTIONS ============ -->
+                                <div class="mt-4">
+                                    <ul class="nav nav-tabs vm-tabs" id="driverMasterTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="documents-tab" data-bs-toggle="tab"
+                                                data-bs-target="#documents" type="button" role="tab"
+                                                aria-controls="documents" aria-selected="true">
+                                                <i class="bi bi-file-earmark-text me-1"></i> Documents
+                                                <span class="badge text-bg-secondary ms-1" id="docCountBadge">0</span>
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="assignments-tab" data-bs-toggle="tab"
+                                                data-bs-target="#assignments" type="button" role="tab"
+                                                aria-controls="assignments" aria-selected="false">
+                                                <i class="bi bi-diagram-3 me-1"></i> Vehicle Assignments
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="trips-tab" data-bs-toggle="tab"
+                                                data-bs-target="#trips" type="button" role="tab" aria-controls="trips"
+                                                aria-selected="false">
+                                                <i class="bi bi-signpost-split me-1"></i> Trip History
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="audit-tab" data-bs-toggle="tab"
+                                                data-bs-target="#audit" type="button" role="tab" aria-controls="audit"
+                                                aria-selected="false">
+                                                <i class="bi bi-clock-history me-1"></i> Audit Trail
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                    <div class="tab-content border border-top-0 rounded-bottom p-3"
+                                        id="driverMasterTabsContent">
+
+                                        <!-- ===== Documents ===== -->
+                                        <div class="tab-pane fade show active" id="documents" role="tabpanel"
+                                            aria-labelledby="documents-tab" tabindex="0">
+
+                                            <div class="row g-2 align-items-end mb-3">
+                                                <div class="col-lg-4 col-md-6 col-sm-6">
+                                                    <label for="documentTypeInput" class="form-label">Document
+                                                        Type</label>
+                                                    <input list="documentTypeList" id="documentTypeInput"
+                                                        class="form-control" autocomplete="off"
+                                                        placeholder="e.g. License, Aadhaar, PAN, Badge" />
+                                                    <datalist id="documentTypeList">
+                                                        <option value="Driving License"></option>
+                                                        <option value="Aadhaar Card"></option>
+                                                        <option value="PAN Card"></option>
+                                                        <option value="Badge"></option>
+                                                        <option value="Police Verification"></option>
+                                                        <option value="Medical Certificate"></option>
+                                                        <option value="Address Proof"></option>
+                                                    </datalist>
+                                                </div>
+
+                                                <div class="col-lg-3 col-md-6 col-sm-6">
+                                                    <label for="documentNumber" class="form-label">Document
+                                                        Number</label>
+                                                    <input type="text" id="documentNumber" class="form-control"
+                                                        placeholder="e.g. DL-98765432" autocomplete="off" />
+                                                </div>
+
+                                                <div class="col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="validUpTo" class="form-label">Valid Up To</label>
+                                                    <input type="date" id="validUpTo" class="form-control" />
+                                                </div>
+
+                                                <div class="col-lg-2 col-md-5 col-sm-6">
+                                                    <label for="documentFile" class="form-label">Attachment</label>
+                                                    <input type="file" id="documentFile" class="form-control"
+                                                        accept=".pdf,.png,.jpg,.jpeg"
+                                                        aria-describedby="documentFileHelp" />
+                                                    <div id="documentFileHelp" class="form-text">PDF, PNG or JPG</div>
+                                                </div>
+
+                                                <div class="col-lg-1 col-md-3 col-sm-12 d-grid">
+                                                    <button type="button" id="addDocumentButton"
+                                                        class="btn btn-outline-primary" title="Add document">
+                                                        <i class="bi bi-plus-circle"></i>
+                                                        <span class="d-lg-none ms-1">Add</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="table-responsive">
+                                                <table id="documentTable" class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Document Type</th>
+                                                            <th scope="col">Document Number</th>
+                                                            <th scope="col">Valid Up To</th>
+                                                            <th scope="col">Attached Document</th>
+                                                            <th scope="col" class="text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="documentTableBody">
+                                                        <tr>
+                                                            <td colspan="5" class="vm-empty">
+                                                                <i class="bi bi-file-earmark-text"></i>
+                                                                No documents attached. Use the form above to add one.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- ===== Vehicle Assignments ===== -->
+                                        <div class="tab-pane fade" id="assignments" role="tabpanel"
+                                            aria-labelledby="assignments-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Vehicle No</th>
+                                                            <th scope="col">From</th>
+                                                            <th scope="col">To</th>
+                                                            <th scope="col">Route / Purpose</th>
+                                                            <th scope="col">Status</th>
+                                                            <th scope="col" class="text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="assignmentTableBody">
+                                                        <tr>
+                                                            <td colspan="6" class="vm-empty">
+                                                                <i class="bi bi-diagram-3"></i>
+                                                                No vehicle assignments recorded for this driver yet.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- ===== Trip History ===== -->
+                                        <div class="tab-pane fade" id="trips" role="tabpanel"
+                                            aria-labelledby="trips-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Trip ID</th>
+                                                            <th scope="col">Date</th>
+                                                            <th scope="col">Vehicle</th>
+                                                            <th scope="col">Origin</th>
+                                                            <th scope="col">Destination</th>
+                                                            <th scope="col" class="text-end">Distance (km)</th>
+                                                            <th scope="col">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tripTableBody">
+                                                        <tr>
+                                                            <td colspan="7" class="vm-empty">
+                                                                <i class="bi bi-signpost-split"></i>
+                                                                No trip history recorded for this driver yet.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- ===== Audit Trail ===== -->
+                                        <div class="tab-pane fade" id="audit" role="tabpanel"
+                                            aria-labelledby="audit-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Action</th>
+                                                            <th scope="col">Performed By</th>
+                                                            <th scope="col">Timestamp</th>
+                                                            <th scope="col">Changes</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="auditTableBody">
+                                                        <tr>
+                                                            <td colspan="4" class="vm-empty">
+                                                                <i class="bi bi-clock-history"></i>
+                                                                No audit history available for this record.
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SEARCH SAVED DRIVERS MODAL ============ -->
+    <div class="modal fade" id="searchDriverModal" tabindex="-1" aria-labelledby="searchDriverModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="searchDriverModalLabel">
+                        <i class="bi bi-search me-1"></i> Search Saved Drivers
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="search" id="searchSavedDriverInput" class="form-control"
+                            placeholder="Search by Driver Name, Phone, License, or Code…"
+                            aria-label="Search saved drivers" autocomplete="off">
+                        <button class="btn btn-outline-primary" type="button" id="btnTriggerDriverSearch">
+                            Search
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover table-bordered align-middle text-center mb-0">
+                            <caption class="visually-hidden">Search results for saved drivers</caption>
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Driver Code</th>
+                                    <th scope="col">Driver Name</th>
+                                    <th scope="col">Phone</th>
+                                    <th scope="col">License No</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="searchDriverTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted fst-italic py-3">
+                                        Enter search criteria to find drivers…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here…</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Library Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <!-- Local Scripts -->
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/pincode-helper.js" defer></script>
+    <script src="../../assets/js/utils/taxDescription.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
+    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
+    <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/driver-master/driver-master.js" defer></script>
+    <script src="../../assets/js/utils/documents-logs.js" defer></script>
+</body>
+
+</html>

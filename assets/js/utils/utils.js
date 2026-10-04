@@ -1234,6 +1234,7 @@ async function loadDatalist(datalistId, valueType) {
         return;
     }
 
+
     // console.log(`Loading datalist for: ${valueType}`);
     datalist.innerHTML = '';
 
