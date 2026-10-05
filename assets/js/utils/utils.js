@@ -2471,7 +2471,7 @@ async function generateQRCodeBase64(text) {
 //         try {
 //             const registration = await navigator.serviceWorker.getRegistration();
 //             if (registration) {
-//                 // Force check server for a new sw.js version
+//                 // Force check server for a new service-worker.js version
 //                 await registration.update();
 //             }
 //         } catch (err) {

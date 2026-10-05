@@ -632,7 +632,8 @@
             };
 
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').then(registration => {
+                // FIX 1: Use relative path './' instead of '/' so it works in Live Server and subfolders
+                navigator.serviceWorker.register('./service-worker.js').then(registration => {
                     // Check for updates on load
                     registration.update();
 
@@ -651,7 +652,9 @@
                     });
                 }).catch((err) => console.log("SW registration bypassed or failed", err));
 
-                // Auto reload page once the new service worker controls the page
+                // FIX 2: THIS BLOCK WAS CAUSING THE PAGE TO CANCEL NAVIGATION AND RELOAD INDEX.HTML
+                // We have commented it out. You can safely refresh the page manually when you update the SW.
+                /*
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
                     if (!refreshing) {
@@ -659,6 +662,7 @@
                         window.location.reload();
                     }
                 });
+                */
             }
 
             let deferredPrompt;
