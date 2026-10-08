@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Billing</title>
+    <meta name="description" content="Vendor Billing – record vendor bills, expenses and shipment-wise charges.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Vendor Billing · BizNavigation</title>
 
     <!-- Resource Hints -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -27,7 +29,10 @@
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
-    <!-- Upgraded Modern Form Styles (Unified) -->
+    <!-- Upgraded Modern Form Styles -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
+    <!-- Page-scoped polish -->
     <style>
         :root {
             --primary-color: #2563eb;
@@ -46,13 +51,75 @@
             --transition: all 0.2s ease-in-out;
         }
 
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
         body {
             background-color: var(--bg-color);
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
         }
 
-        /* Card Styling */
         .card {
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: var(--radius-lg);
@@ -62,13 +129,6 @@
 
         .card-body {
             padding: 1.5rem 2rem !important;
-        }
-
-        /* Action Bar */
-        .action-bar {
-            padding-bottom: 1.25rem;
-            margin-bottom: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
         }
 
         .btn {
@@ -85,7 +145,6 @@
             font-size: 0.85rem;
         }
 
-        /* Form Controls */
         .form-label {
             margin-bottom: 0.3rem !important;
             font-size: 0.75rem;
@@ -137,7 +196,6 @@
             cursor: default;
         }
 
-        /* Preserved highlight for auto-populated fields */
         .invoice-bg {
             background-color: #eff6ff !important;
             border-color: #bfdbfe !important;
@@ -155,44 +213,6 @@
             text-transform: uppercase;
         }
 
-        /* Modern Tabs — tighter to content above */
-        .nav-tabs {
-            border-bottom: 1px solid var(--border-color);
-            gap: 1.5rem;
-            padding-bottom: 0px;
-            margin-bottom: 0;
-        }
-
-        .nav-tabs .nav-link {
-            border: none;
-            color: var(--text-muted);
-            background-color: transparent;
-            font-weight: 600;
-            padding: 0.75rem 0.25rem !important;
-            font-size: 0.875rem;
-            border-bottom: 2px solid transparent;
-            border-radius: 0;
-            transition: var(--transition);
-        }
-
-        .nav-tabs .nav-link:hover {
-            color: var(--text-main);
-            border-bottom-color: #cbd5e1;
-        }
-
-        .nav-tabs .nav-link.active {
-            color: var(--primary-color) !important;
-            background-color: transparent !important;
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .tab-content {
-            padding-top: 1.25rem;
-            background: transparent;
-            border: none !important;
-        }
-
-        /* Modern Tables */
         .table-responsive {
             max-height: 500px;
             overflow: auto;
@@ -256,7 +276,6 @@
             color: var(--primary-color) !important;
         }
 
-        /* Modals */
         .modal-content {
             border: none;
             border-radius: var(--radius-lg);
@@ -288,7 +307,6 @@
             background-color: #f8fafc;
         }
 
-        /* Address selection list */
         #addressListContainer .address-item {
             padding: 0.75rem 1rem;
             border: 1px solid var(--border-color);
@@ -304,7 +322,6 @@
             border-color: #bfdbfe;
         }
 
-        /* Select2 unified look */
         .select2-container--default .select2-selection--single,
         .select2-container--default .select2-selection--multiple {
             border: 1px solid var(--border-color);
@@ -337,17 +354,21 @@
             background-color: var(--primary-color) !important;
         }
 
-        /* Toast */
         .toast {
             border: none;
             border-radius: var(--radius-md);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
-        /* Mobile tweaks */
         @media (max-width: 768px) {
             .card-body {
                 padding: 1rem 1.25rem !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
             }
         }
     </style>
@@ -366,44 +387,57 @@
             <div class="page-content">
 
                 <div class="container-fluid mt-3 mb-4">
-                    <div class="card">
-                        <div class="card-body">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
 
-                            <form class="invoiceForm" autocomplete="off">
+                            <form class="invoiceForm" autocomplete="off" novalidate>
 
-                                <!-- Action Bar -->
+                                <!-- ============ ACTION BAR ============ -->
                                 <div
-                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Vendor Billing</h5>
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-receipt-cutoff text-primary"></i>
+                                        Vendor Billing
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
 
                                     <div class="d-flex flex-wrap gap-2">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
-                                            id="newButton" title="Create new booking">
-                                            <i class="bi bi-file-earmark-plus"></i> New
+                                            id="newButton" title="Create new billing" aria-label="New billing">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-warning btn-sm bg-white"
-                                            id="modifyButton" disabled title="Modify booking">
-                                            <i class="bi bi-pencil"></i> Modify
+                                            id="modifyButton" disabled title="Modify billing"
+                                            aria-label="Modify billing">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm bg-white"
-                                            id="deleteButton" disabled title="Delete booking">
-                                            <i class="bi bi-trash"></i> Delete
+                                            id="deleteButton" disabled title="Delete billing"
+                                            aria-label="Delete billing">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-info btn-sm bg-white"
-                                            id="reportButton" disabled title="Print">
-                                            <i class="bi bi-printer"></i> Print
+                                            id="reportButton" disabled title="Print billing" aria-label="Print billing">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
                                         </button>
                                         <button id="saveButton" class="btn btn-primary btn-sm px-4 shadow-sm"
                                             type="button" data-mode="insert" title="Save billing">
                                             <span id="saveSpinnerBtn"
-                                                class="spinner-border spinner-border-sm me-2 d-none"></span>
-                                            <i class="bi bi-check2-circle"></i> Save
+                                                class="spinner-border spinner-border-sm me-2 d-none"
+                                                aria-hidden="true"></span>
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Save
                                         </button>
-                                        <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
+                                        <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"
+                                            aria-hidden="true"></div>
                                     </div>
 
                                     <input type="text" class="form-control bg-light d-none" id="status" value="New"
-                                        readonly>
+                                        readonly aria-hidden="true">
                                 </div>
 
                                 <!-- Hidden Fields -->
@@ -413,175 +447,233 @@
                                 <input type="hidden" id="vendorBillingID">
                                 <input type="hidden" id="mode" value="insert">
 
-                                <!-- Form Inputs -->
+                                <!-- ============ EXPENSE INFORMATION ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-tag"></i> Expense Information
+                                </p>
+
                                 <div class="row g-3">
-                                    <!-- Expense Type -->
-                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="billReferenceNo" class="form-label">Reference No</label>
+                                        <div class="input-group">
+                                            <input list="billReferenceNoSuggestions" class="form-control invoice-bg"
+                                                id="billReferenceNo" required autocomplete="off"
+                                                placeholder="Reference No">
+                                            <datalist id="billReferenceNoSuggestions"></datalist>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                id="billReferenceNoSearch" data-bs-toggle="modal"
+                                                data-bs-target="#searchBillReferenceModal" title="Search Reference"
+                                                aria-label="Search Reference">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="accountedDate" class="form-label">
+                                            Accounted Date<span class="req">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" id="accountedDate" required>
+                                    </div>
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
                                         <label for="expenseType" class="form-label">Expense Type</label>
                                         <input type="text" class="form-control" id="expenseType" list="expenseTypeList"
                                             autocomplete="off" placeholder="Select Expense Type" autofocus>
                                         <datalist id="expenseTypeList"></datalist>
                                     </div>
 
-                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
                                         <label for="expenseFor" class="form-label">Expense For</label>
                                         <input type="text" class="form-control" id="expenseFor" list="expenseForList"
                                             autocomplete="off" placeholder="Select Expense For">
                                         <datalist id="expenseForList"></datalist>
                                     </div>
+                                </div>
 
-                                    <div class="col-lg-2 col-md-3 col-sm-6">
-                                        <label for="billReferenceNo" class="form-label">Reference No</label>
-                                        <input list="billReferenceNoSuggestions" class="form-control invoice-bg"
-                                            id="billReferenceNo" required autocomplete="off" tabindex="-1"
-                                            placeholder="Auto">
-                                        <datalist id="billReferenceNoSuggestions"></datalist>
+                                <!-- ============ VENDOR & BILL DETAILS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-building"></i> Vendor &amp; Bill Details
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                                        <label for="partyName" class="form-label">
+                                            Vendor Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i
+                                                    class="bi bi-building"></i></span>
+                                            <input list="partySuggestions" class="form-control" id="partyName" required
+                                                placeholder="Choose Vendor..." autocomplete="off">
+                                            <datalist id="partySuggestions"></datalist>
+                                        </div>
                                     </div>
 
-                                    <div class="col-lg-2 col-md-3 col-sm-6">
-                                        <label for="accountedDate" class="form-label">Accounted Date</label>
-                                        <input type="date" class="form-control" id="accountedDate" required>
-                                    </div>
-
-                                    <div class="col-lg-4 col-md-6 col-sm-12">
-                                        <label for="partyName" class="form-label">Vendor Name</label>
-                                        <input list="partySuggestions" class="form-control" id="partyName" required
-                                            placeholder="Choose Vendor..." autocomplete="off">
-                                        <datalist id="partySuggestions"></datalist>
-                                    </div>
-
-                                    <div class="col-lg-2 col-md-3 col-sm-6">
-                                        <label for="vendorBillNo" class="form-label">Bill No</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
+                                        <label for="vendorBillNo" class="form-label">
+                                            Bill No<span class="req">*</span>
+                                        </label>
                                         <input list="vendorBillNoSuggestions" class="form-control invoice-bg"
                                             id="vendorBillNo" required autocomplete="off" placeholder="Bill No">
                                         <datalist id="vendorBillNoSuggestions"></datalist>
                                     </div>
 
-                                    <div class="col-lg-2 col-md-3 col-sm-6">
-                                        <label for="vendorBillDate" class="form-label">Bill Date</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
+                                        <label for="vendorBillDate" class="form-label">
+                                            Bill Date<span class="req">*</span>
+                                        </label>
                                         <input type="date" class="form-control" id="vendorBillDate" required>
                                     </div>
 
-                                    <div class="col-lg-2 col-md-3 col-sm-6">
-                                        <label for="vendorBilledAmount" class="form-label">Billed Amount</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
+                                        <label for="vendorBilledAmount" class="form-label">
+                                            Billed Amount<span class="req">*</span>
+                                        </label>
                                         <input type="number" class="form-control text-end" id="vendorBilledAmount"
                                             required min="0" placeholder="0.00" step="0.01">
                                     </div>
 
-                                    <div class="col-lg-2 col-md-3 col-sm-6">
-                                        <label for="vendorDueDate" class="form-label">Due Date</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
+                                        <label for="vendorDueDate" class="form-label">
+                                            Due Date<span class="req">*</span>
+                                        </label>
                                         <input type="date" class="form-control" id="vendorDueDate" required>
                                     </div>
+                                </div>
 
-                                    <div class="col-lg-8 col-md-6 col-sm-12">
+                                <!-- ============ INFORMATION ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-info-circle"></i> Information
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-12">
                                         <label for="vendorBillInformation" class="form-label">Information</label>
                                         <input type="text" class="form-control" id="vendorBillInformation"
                                             placeholder="Enter additional information">
                                     </div>
                                 </div>
 
-                            </form>
-
-                            <!-- Tabs — directly under form, no gap -->
-                            <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="shipmentDetails-tab" data-bs-toggle="tab"
-                                        data-bs-target="#shipmentDetails" type="button" role="tab"
-                                        aria-controls="shipmentDetails" aria-selected="true">
-                                        Billing Details
-                                    </button>
-                                </li>
-                            </ul>
-
-                            <!-- Tab Content -->
-                            <div class="tab-content">
-                                <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
-                                    aria-labelledby="shipmentDetails-tab">
-
-                                    <!-- Charge Input Row -->
-                                    <div class="row g-3 align-items-end mb-4">
-                                        <div class="col-lg-2 col-md-4 col-sm-6">
-                                            <label for="chargesType" class="form-label">Charges Type</label>
-                                            <input type="text" class="form-control" id="chargesType"
-                                                list="chargesTypeList" autocomplete="off"
-                                                placeholder="Select Charges Type">
-                                            <datalist id="chargesTypeList"></datalist>
-                                        </div>
-
-                                        <div class="col-lg-2 col-md-4 col-sm-6">
-                                            <label for="shipmentNo" class="form-label">Shipment No</label>
-                                            <input type="text" class="form-control" id="shipmentNo"
-                                                list="shipmentNoList" autocomplete="off"
-                                                placeholder="Select Shipment No">
-                                            <datalist id="shipmentNoList"></datalist>
-                                        </div>
-
-                                        <div class="col-lg-2 col-md-4 col-sm-6">
-                                            <label for="nonTaxableAmount" class="form-label">Non-Taxable Amount</label>
-                                            <input type="number" class="form-control text-end" id="nonTaxableAmount"
-                                                autocomplete="off" placeholder="0.00" min="0" step="0.01">
-                                        </div>
-
-                                        <div class="col-lg-2 col-md-4 col-sm-6">
-                                            <label for="taxableAmount" class="form-label">Taxable Amount</label>
-                                            <input type="number" class="form-control text-end" id="taxableAmount"
-                                                autocomplete="off" placeholder="0.00" min="0" step="0.01">
-                                        </div>
-
-                                        <div class="col-lg-2 col-md-4 col-sm-6">
-                                            <label for="partyDefaultTax" class="form-label">Tax Rate</label>
-                                            <select id="partyDefaultTax" class="form-select">
-                                                <option value="" disabled selected>Select Tax</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-lg-2 col-md-4 col-sm-6">
-                                            <button type="button" class="btn btn-outline-primary btn-sm w-100"
-                                                id="addChargesDetails">
-                                                <i class="bi bi-plus-circle"></i> Add
+                                <!-- ============ TABBED SECTIONS ============ -->
+                                <div class="mt-4">
+                                    <ul class="nav nav-tabs vm-tabs" id="partyTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="shipmentDetails-tab"
+                                                data-bs-toggle="tab" data-bs-target="#shipmentDetails" type="button"
+                                                role="tab" aria-controls="shipmentDetails" aria-selected="true">
+                                                <i class="bi bi-list-check me-1"></i> Billing Details
                                             </button>
-                                        </div>
-                                    </div>
+                                        </li>
+                                    </ul>
 
-                                    <!-- Shipment Details Table -->
-                                    <div class="table-responsive">
-                                        <table class="table table-hover" id="pendingShipmentTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>Sl.No</th>
-                                                    <th>Charges Type</th>
-                                                    <th>Shipment No</th>
-                                                    <th>GST %</th>
-                                                    <th>Non-Taxable Amt</th>
-                                                    <th>Taxable Amt</th>
-                                                    <th>SGST<br>Amount</th>
-                                                    <th>CGST<br>Amount</th>
-                                                    <th>IGST<br>Amount</th>
-                                                    <th>Total GST<br>Amount</th>
-                                                    <th>Total<br>Amount</th>
-                                                    <th class="text-center">Action</th>
-                                                    <th class="d-none">Tax ID</th>
-                                                    <th class="d-none">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                            <tfoot>
-                                                <tr id="totalsRow">
-                                                    <th colspan="4" class="text-end">Totals:</th>
-                                                    <th class="text-end" id="totalNonTaxableAmount">0.00</th>
-                                                    <th class="text-end" id="totalTaxableAmount">0.00</th>
-                                                    <th class="text-end" id="totalSGSTAmount">0.00</th>
-                                                    <th class="text-end" id="totalCGSTAmount">0.00</th>
-                                                    <th class="text-end" id="totalIGSTAmount">0.00</th>
-                                                    <th class="text-end" id="totalGSTAmount">0.00</th>
-                                                    <th class="text-end" id="grandTotalAmount">0.00</th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
+                                    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white"
+                                        id="partyTabsContent">
 
-                                </div>
-                            </div>
+                                        <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
+                                            aria-labelledby="shipmentDetails-tab" tabindex="0">
+
+                                            <!-- Charge Input Row -->
+                                            <div class="row g-3 align-items-end mb-3">
+                                                <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+                                                    <label for="chargesType" class="form-label">Charges Type</label>
+                                                    <input type="text" class="form-control" id="chargesType"
+                                                        list="chargesTypeList" autocomplete="off"
+                                                        placeholder="Select Charges Type">
+                                                    <datalist id="chargesTypeList"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+                                                    <label for="shipmentNo" class="form-label">Shipment No</label>
+                                                    <input type="text" class="form-control" id="shipmentNo"
+                                                        list="shipmentNoList" autocomplete="off"
+                                                        placeholder="Select Shipment No">
+                                                    <datalist id="shipmentNoList"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+                                                    <label for="nonTaxableAmount" class="form-label">Non-Taxable
+                                                        Amount</label>
+                                                    <input type="number" class="form-control text-end"
+                                                        id="nonTaxableAmount" autocomplete="off" placeholder="0.00"
+                                                        min="0" step="0.01">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+                                                    <label for="taxableAmount" class="form-label">Taxable Amount</label>
+                                                    <input type="number" class="form-control text-end"
+                                                        id="taxableAmount" autocomplete="off" placeholder="0.00" min="0"
+                                                        step="0.01">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
+                                                    <label for="partyDefaultTax" class="form-label">Tax Rate</label>
+                                                    <select id="partyDefaultTax" class="form-select">
+                                                        <option value="" disabled selected>Select Tax</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6 d-grid">
+                                                    <button type="button" class="btn btn-primary"
+                                                        id="addChargesDetails">
+                                                        <i class="bi bi-plus-circle"></i> Add
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Billing Details Table -->
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0"
+                                                    id="pendingShipmentTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Sl.No</th>
+                                                            <th scope="col">Charges Type</th>
+                                                            <th scope="col">Shipment No</th>
+                                                            <th scope="col" class="text-end">GST %</th>
+                                                            <th scope="col" class="text-end">Non-Taxable Amt</th>
+                                                            <th scope="col" class="text-end">Taxable Amt</th>
+                                                            <th scope="col" class="text-end">SGST Amount</th>
+                                                            <th scope="col" class="text-end">CGST Amount</th>
+                                                            <th scope="col" class="text-end">IGST Amount</th>
+                                                            <th scope="col" class="text-end">Total GST Amount</th>
+                                                            <th scope="col" class="text-end">Total Amount</th>
+                                                            <th scope="col" class="text-center">Action</th>
+                                                            <th class="d-none">Tax ID</th>
+                                                            <th class="d-none">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="12" class="vm-empty">
+                                                                <i class="bi bi-list-check"></i>
+                                                                No billing details added
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr id="totalsRow" class="table-light fw-bold">
+                                                            <th colspan="4" class="text-end" scope="row">Totals:</th>
+                                                            <th class="text-end" id="totalNonTaxableAmount">0.00</th>
+                                                            <th class="text-end" id="totalTaxableAmount">0.00</th>
+                                                            <th class="text-end" id="totalSGSTAmount">0.00</th>
+                                                            <th class="text-end" id="totalCGSTAmount">0.00</th>
+                                                            <th class="text-end" id="totalIGSTAmount">0.00</th>
+                                                            <th class="text-end" id="totalGSTAmount">0.00</th>
+                                                            <th class="text-end" id="grandTotalAmount">0.00</th>
+                                                            <th></th>
+                                                            <th class="d-none"></th>
+                                                            <th class="d-none"></th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+
+                                        </div><!-- tab-pane -->
+
+                                    </div><!-- tab-content -->
+                                </div><!-- mt-4 -->
+
+                            </form>
 
                         </div>
                     </div>
@@ -590,7 +682,7 @@
                 <!-- Loading Spinner -->
                 <div id="loadingSpinner"
                     class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
-                    style="z-index: 1060;">
+                    aria-live="polite" style="z-index: 1060;">
                     <div class="spinner-border text-light" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -601,11 +693,11 @@
                     aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
-                            <div class="modal-header">
+                            <div class="modal-header bg-primary text-white">
                                 <h5 class="modal-title" id="addressModalLabel">
-                                    <i class="bi bi-geo-alt"></i> Select Invoice Address
+                                    <i class="bi bi-geo-alt me-1"></i> Select Invoice Address
                                 </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                             </div>
                             <div class="modal-body" id="addressListContainer"></div>
@@ -617,14 +709,88 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert">
-            <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage">
-                    Error message here...
+    <!-- ============ SEARCH SAVED REFERENCE MODAL ============ -->
+    <div class="modal fade" id="searchBillReferenceModal" tabindex="-1" aria-labelledby="searchBillReferenceModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="searchBillReferenceModalLabel">
+                        <i class="bi bi-search me-1"></i> Search Saved Reference
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchSavedBillReferenceInput" class="form-control"
+                            placeholder="Search by Reference No, Vendor Name, or Movement Type..." autocomplete="off"
+                            aria-label="Search Reference">
+                        <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
+                            Search
+                        </button>
+                    </div>
+
+                    <div class="table-responsive"
+                        style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 60px;">Sl No</th>
+                                    <th scope="col">Reference No</th>
+                                    <th scope="col" style="width: 120px;">Reference Date</th>
+                                    <th scope="col" class="text-start">Customer Name</th>
+                                    <th scope="col" style="width: 160px;">Movement Type</th>
+                                    <th scope="col" class="text-end" style="width: 130px;">Bill Amount</th>
+                                    <th scope="col" style="width: 110px;" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="searchBillReferenceTableBody">
+                                <tr>
+                                    <td colspan="7" class="vm-empty">
+                                        <i class="bi bi-receipt"></i>
+                                        Enter search criteria to find references…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here...</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>

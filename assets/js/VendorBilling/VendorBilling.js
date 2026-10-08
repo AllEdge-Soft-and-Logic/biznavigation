@@ -1045,3 +1045,157 @@ async function lockVendorBill() {
 
     return true;
 }
+
+// ============================================================
+//     SEARCH SAVED BILL REFERENCE(modal wiring)
+//         ============================================================
+const searchBillReferenceModalEl = document.getElementById('searchBillReferenceModal');
+const searchSavedBillReferenceInput = document.getElementById('searchSavedBillReferenceInput');
+const btnTriggerSearch = document.getElementById('btnTriggerSearch');
+const searchBillReferenceTableBody = document.getElementById('searchBillReferenceTableBody');
+
+/* Small HTML escaper (defence-in-depth; DOMPurify also loaded) */
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/* ---------- Load results ---------- */
+async function loadSavedBillReferences(keyword = '') {
+    searchBillReferenceTableBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="vm-empty">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Loading references…
+            </td>
+        </tr>`;
+
+    try {
+        let query = supabaseClient
+            .from('VendorBillingDetails')
+            .select(`
+                BillReferenceNo,
+                AccountedDate,
+                PartyName,
+                ExpenseType,
+                BilledAmount
+            `)
+            .eq('company_id', CompanyID)
+            .order('AccountedDate', { ascending: false })
+            .limit(100);
+
+        if (keyword) {
+            // Strip characters that break the PostgREST `or` filter
+            const safe = keyword.replace(/[,()%*]/g, ' ').trim();
+
+            if (safe) {
+                query = query.or(
+                    [
+                        `BillReferenceNo.ilike.%${safe}%`,
+                        `PartyName.ilike.%${safe}%`,
+                        `ExpenseType.ilike.%${safe}%`
+                    ].join(',')
+                );
+            }
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        renderSavedBillReferences(data || []);
+
+    } catch (err) {
+        console.error('loadSavedBillReferences Error:', err);
+
+        searchBillReferenceTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="vm-empty text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Failed to load references. Please try again.
+                </td>
+            </tr>`;
+    }
+}
+
+/* ---------- Render results ---------- */
+function renderSavedBillReferences(rows) {
+    if (!rows.length) {
+        searchBillReferenceTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="vm-empty">
+                    <i class="bi bi-receipt"></i>
+                    No saved references found.
+                </td>
+            </tr>`;
+        return;
+    }
+
+    searchBillReferenceTableBody.innerHTML = rows.map((row, index) => `
+        <tr>
+            <td>${index + 1}</td>
+            <td class="fw-semibold text-primary">${escapeHtml(row.BillReferenceNo)}</td>
+            <td>${escapeHtml(row.AccountedDate || '-')}</td>
+            <td class="text-start">${escapeHtml(row.PartyName || '-')}</td>
+            <td>${escapeHtml(row.ExpenseType || '-')}</td>
+            <td class="text-end">${Number(row.BilledAmount || 0).toFixed(2)}</td>
+            <td class="text-center">
+                <button type="button"
+                        class="btn btn-primary btn-sm select-bill-ref"
+                        data-ref="${escapeHtml(row.BillReferenceNo)}"
+                        title="Load this reference">
+                    <i class="bi bi-box-arrow-in-down"></i> Select
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+/* ---------- Select a reference → load into the form ---------- */
+async function selectBillReference(billReferenceNo) {
+    if (!billReferenceNo) return;
+
+    const modalInstance = bootstrap.Modal.getInstance(searchBillReferenceModalEl);
+    if (modalInstance) modalInstance.hide();
+
+    document.getElementById('billReferenceNo').value = billReferenceNo;
+
+    await getVendorBillingDetails('BillReferenceNo', billReferenceNo);
+}
+
+/* ---------- Event wiring ---------- */
+searchBillReferenceTableBody.addEventListener('click', (e) => {
+    const btn = e.target.closest('.select-bill-ref');
+    if (!btn) return;
+
+    selectBillReference(btn.dataset.ref);
+});
+
+btnTriggerSearch.addEventListener('click', () => {
+    loadSavedBillReferences(searchSavedBillReferenceInput.value.trim());
+});
+
+searchSavedBillReferenceInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        loadSavedBillReferences(searchSavedBillReferenceInput.value.trim());
+    }
+});
+
+/* Live search (debounced) */
+searchSavedBillReferenceInput.addEventListener(
+    'input',
+    debounce(() => {
+        loadSavedBillReferences(searchSavedBillReferenceInput.value.trim());
+    }, 400)
+);
+
+/* On open → reset + load recent 100 records */
+searchBillReferenceModalEl.addEventListener('shown.bs.modal', () => {
+    searchSavedBillReferenceInput.value = '';
+    loadSavedBillReferences();
+    searchSavedBillReferenceInput.focus();
+});

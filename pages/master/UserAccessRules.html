@@ -4,153 +4,342 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BizNavigation - User Access Rules</title>
+    <meta name="description" content="User Access Rules – manage role-based permissions per user and form.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>User Access Rules · BizNavigation</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
+    <!-- Shared app theme -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
+    <!-- Page-scoped polish -->
+    <style>
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
+        /* Permission checkboxes as compact pills */
+        .perm-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+
+        .perm-check {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .35rem .75rem;
+            border: 1px solid var(--bs-border-color-translucent, #e9ecef);
+            border-radius: .5rem;
+            background: #fff;
+            font-size: .85rem;
+            cursor: pointer;
+            transition: background-color .15s ease, border-color .15s ease;
+            user-select: none;
+        }
+
+        .perm-check:hover {
+            border-color: var(--bs-primary, #0d6efd);
+            background: rgba(13, 110, 253, .05);
+        }
+
+        .perm-check input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .perm-check label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-light">
-    <!-- 🔥 APP LAYOUT -->
+    <!-- APP LAYOUT -->
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <!-- fallback -->
-            <div class="text-center text-white p-3">Loading...</div>
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
-
-            <!-- 🔥 PAGE CONTENT -->
             <div class="page-content">
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
 
-                <!-- YOUR EXISTING UI (UNCHANGED) -->
-                <div class="container-fluid mt-2">
-                    <div class="card shadow-lg rounded">
+                            <form id="userAccessForm" autocomplete="off" novalidate>
 
-                        <div class="card-body">
-                            <form id="userAccessForm" novalidate>
-                                <!-- Button Group -->
-                                <div class="d-flex flex-wrap gap-2 mb-3">
-                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
-                                        aria-label="New Role"><i class="bi bi-file-earmark-plus"></i> New Role</button>
-                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton"
-                                        aria-label="Edit Role"><i class="bi bi-pencil"></i> Edit Role</button>
-                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton"
-                                        aria-label="Delete Role"><i class="bi bi-trash"></i> Delete</button>
-                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
-                                        <i class="bi bi-printer"></i> Print </button>
-                                    <button type="button" class="btn btn-success btn-sm" id="saveButton"
-                                        aria-label="Save Role">
-                                        <span class="spinner-border spinner-border-sm d-none" id="saveSpinner"></span>
-                                        <i class="bi bi-save"></i> Save
-                                    </button>
-                                    <!-- Hidden Fields -->
+                                <!-- ============ ACTION BAR ============ -->
+                                <div
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-shield-lock text-primary"></i>
+                                        User Access Rules
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="New role" aria-label="New Role">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New Role</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" title="Edit role" aria-label="Edit Role">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Edit Role</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" title="Delete role" aria-label="Delete Role">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
+                                            id="reportButton" disabled title="Print" aria-label="Print">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            id="saveButton" title="Save Role" aria-label="Save Role">
+                                            <span class="spinner-border spinner-border-sm d-none"
+                                                id="saveSpinner"></span>
+                                            <i class="bi bi-check2-circle"></i> Save
+                                        </button>
+                                    </div>
+
+                                    <!-- Hidden fields -->
                                     <input type="hidden" id="tempFormID" />
                                     <input type="hidden" id="partyCode" />
                                     <input type="hidden" id="vendorCode" />
                                 </div>
 
-                                <!-- User Info & Form Access -->
-                                <fieldset class="mb-3">
-                                    <legend class="h6">User & Form Access</legend>
-                                    <div class="row g-3">
-                                        <!-- User Info -->
-                                        <div class="col-md-4 col-sm-6">
-                                            <label for="userID" class="form-label small">User Name</label>
-                                            <input type="text" class="form-control" id="userID" required
-                                                autocomplete="off" list="userLoginSuggestions" />
+                                <!-- ============ USER & FORM ACCESS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-person-badge"></i> User &amp; Form Access
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                                        <label for="userID" class="form-label">
+                                            User Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                            <input type="text" class="form-control input-highlight fw-bold" id="userID"
+                                                required autocomplete="off" list="userLoginSuggestions" />
                                             <datalist id="userLoginSuggestions"></datalist>
                                             <div class="invalid-feedback">User Login ID is required.</div>
                                         </div>
-                                        <div class="col-md-4 col-sm-6 d-none">
-                                            <label for="userName" class="form-label small">User Login ID</label>
-                                            <input type="text" class="form-control bg-secondary text-white"
-                                                id="userName" readonly />
-                                        </div>
+                                    </div>
 
-                                        <!-- Form Access -->
-                                        <div class="col-md-4 col-sm-6">
-                                            <label for="userAccessFormName" class="form-label small">Form Name</label>
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12 d-none">
+                                        <label for="userName" class="form-label">User Login ID</label>
+                                        <input type="text" class="form-control bg-secondary text-white" id="userName"
+                                            readonly />
+                                    </div>
+
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                                        <label for="userAccessFormName" class="form-label">
+                                            Form Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i
+                                                    class="bi bi-window-stack"></i></span>
                                             <input type="text" class="form-control" id="userAccessFormName" required
                                                 autocomplete="off" list="formNameListSuggestion" />
                                             <datalist id="formNameListSuggestion"></datalist>
                                             <div class="invalid-feedback">Form Name is required.</div>
                                         </div>
-                                        <div class="col-md-4 col-sm-6 d-none">
-                                            <label for="userAccessFormID" class="form-label small">Form ID</label>
-                                            <input type="text" class="form-control bg-secondary text-white"
-                                                id="userAccessFormID" readonly />
-                                        </div>
                                     </div>
-                                </fieldset>
 
-                                <!-- Roles -->
-                                <fieldset class="mb-3">
-                                    <legend class="h6">Role Permissions</legend>
-                                    <div class="row g-3 align-items-center">
-                                        <div class="col-3 col-md-1 text-center">
-                                            <div class="form-check">
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12 d-none">
+                                        <label for="userAccessFormID" class="form-label">Form ID</label>
+                                        <input type="text" class="form-control bg-secondary text-white"
+                                            id="userAccessFormID" readonly />
+                                    </div>
+                                </div>
+
+                                <!-- ============ ROLE PERMISSIONS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-key"></i> Role Permissions
+                                </p>
+
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-xl-6 col-lg-8 col-md-12">
+                                        <div class="perm-group" role="group" aria-label="Role permissions">
+                                            <label class="perm-check" for="roleRead">
                                                 <input type="checkbox" class="form-check-input" id="roleRead" />
-                                                <label for="roleRead" class="form-check-label small">Read</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-3 col-md-1 text-center">
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input" id="roleWrite" />
-                                                <label for="roleWrite" class="form-check-label small">Write</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-3 col-md-1 text-center">
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input" id="roleDelete" />
-                                                <label for="roleDelete" class="form-check-label small">Delete</label>
-                                            </div>
-                                        </div>
-                                        <div class="col-3 col-md-1 text-center">
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input" id="roleUpdate" />
-                                                <label for="roleUpdate" class="form-check-label small">Update</label>
-                                            </div>
-                                        </div>
+                                                <label for="roleRead" class="form-check-label">Read</label>
+                                            </label>
 
-                                        <div class="col-12 col-md-2 mt-2 mt-md-0 text-center">
-                                            <button type="button" class="btn btn-primary w-100" id="addUserRole"
-                                                aria-label="Add Role">Add Role</button>
+                                            <label class="perm-check" for="roleWrite">
+                                                <input type="checkbox" class="form-check-input" id="roleWrite" />
+                                                <label for="roleWrite" class="form-check-label">Write</label>
+                                            </label>
+
+                                            <label class="perm-check" for="roleDelete">
+                                                <input type="checkbox" class="form-check-input" id="roleDelete" />
+                                                <label for="roleDelete" class="form-check-label">Delete</label>
+                                            </label>
+
+                                            <label class="perm-check" for="roleUpdate">
+                                                <input type="checkbox" class="form-check-input" id="roleUpdate" />
+                                                <label for="roleUpdate" class="form-check-label">Update</label>
+                                            </label>
                                         </div>
                                     </div>
-                                </fieldset>
 
-                                <!-- Roles Table -->
-                                <div class="mt-4 table-responsive">
-                                    <table class="table table-striped align-middle">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 d-grid">
+                                        <button type="button" class="btn btn-primary" id="addUserRole"
+                                            aria-label="Add Role">
+                                            <i class="bi bi-plus-circle"></i> Add Role
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- ============ ROLES TABLE ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-list-check"></i> Assigned Roles
+                                </p>
+
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Form Name</th>
-                                                <th class="d-none">Form ID</th>
-                                                <th>Read</th>
-                                                <th>Write</th>
-                                                <th>Delete</th>
-                                                <th>Update</th>
-                                                <th>Action</th>
+                                                <th scope="col">Form Name</th>
+                                                <th scope="col" class="d-none">Form ID</th>
+                                                <th scope="col" class="text-center">Read</th>
+                                                <th scope="col" class="text-center">Write</th>
+                                                <th scope="col" class="text-center">Delete</th>
+                                                <th scope="col" class="text-center">Update</th>
+                                                <th scope="col" class="text-center">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody id="roleTableBody">
                                             <tr id="emptyRoleRow">
-                                                <td colspan="7" class="text-center">No roles created</td>
+                                                <td colspan="7" class="vm-empty">
+                                                    <i class="bi bi-shield-lock"></i>
+                                                    No roles created
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
+
                             </form>
+
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here...</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>

@@ -4,7 +4,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Party Registration</title>
+    <meta name="description"
+        content="Party Registration – manage customers and vendors with billing addresses, tariffs and charges.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Party Registration · BizNavigation</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- CDN Links -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -12,14 +24,94 @@
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
+    <!-- Shared app theme -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
+    <!-- Page-scoped polish -->
     <style>
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
+        .tab-content {
+            min-height: 300px;
+        }
+
+        .text-upper {
+            text-transform: uppercase;
+        }
+
+        .text-cap {
+            text-transform: capitalize;
+        }
+
+        /* Toggle switch */
         .toggle-container {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        /* Style the checkbox into a toggle switch */
         .toggle-input {
             appearance: none;
             -webkit-appearance: none;
@@ -32,7 +124,6 @@
             transition: background-color 0.2s ease;
         }
 
-        /* The sliding circle inside the toggle */
         .toggle-input::after {
             content: "";
             position: absolute;
@@ -45,176 +136,222 @@
             transition: left 0.2s ease;
         }
 
-        /* Checked state (ON) */
         .toggle-input:checked {
             background-color: #4f46e5;
-            /* Primary accent color */
         }
 
         .toggle-input:checked::after {
             left: 22px;
         }
 
-        /* Label styling */
         .toggle-label {
             cursor: pointer;
             user-select: none;
+        }
+
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
+            }
         }
     </style>
 </head>
 
 <body class="bg-light">
-    <!-- 🔥 APP LAYOUT -->
+    <!-- APP LAYOUT -->
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <!-- fallback -->
-            <div class="text-center text-white p-3">Loading...</div>
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
-
-
-            <!-- 🔥 PAGE CONTENT -->
             <div class="page-content">
-                <div class="container-fluid mt-2">
-                    <div class="card shadow-lg rounded">
-                        <!-- Card Body -->
-                        <div class="card-body">
-                            <form class="needs-validation" novalidate>
-                                <!-- Action Buttons -->
-                                <div class="d-flex flex-wrap gap-1 mb-2">
-                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
-                                        aria-label="New"><i class="bi bi-file-earmark-plus"></i> New</button>
-                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton"
-                                        aria-label="Modify"><i class="bi bi-pencil"></i> Modify</button>
-                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton"
-                                        aria-label="Delete" disabled><i class="bi bi-trash"></i> Delete</button>
-                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
-                                        <i class="bi bi-printer"></i> Print </button>
-                                    <button type="button" class="btn btn-success btn-sm" id="saveButton"
-                                        data-mode="insert" aria-label="Save"><i class="bi bi-save"></i> Save</button>
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
+                            <form id="partyRegistrationForm" class="needs-validation" autocomplete="off" novalidate>
+
+                                <!-- ============ ACTION BAR ============ -->
+                                <div
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-people text-primary"></i>
+                                        Party Registration
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="Create new party" aria-label="New">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" disabled title="Modify party" aria-label="Modify">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" disabled title="Delete party" aria-label="Delete">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
+                                            id="reportButton" disabled title="Print party" aria-label="Print">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            id="saveButton" data-mode="insert" title="Save party">
+                                            <i class="bi bi-check2-circle"></i> Save
+                                        </button>
+                                    </div>
+
+                                    <!-- Hidden meta -->
                                     <input type="hidden" id="tempFormID">
                                     <input type="hidden" id="partyCode">
                                     <input type="hidden" id="vendorCode">
                                     <input type="hidden" id="billingAddressID">
                                 </div>
 
-                                <!-- Main Form Sections -->
-                                <div class="row g-1">
-                                    <!-- Party Type -->
-                                    <div class="col-md-2">
-                                        <label for="partyType" class="form-label">Party Type</label>
+                                <!-- ============ IDENTIFICATION ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-person-badge"></i> Identification
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="partyType" class="form-label">
+                                            Party Type<span class="req">*</span>
+                                        </label>
                                         <select id="partyType" class="form-select" required>
                                             <option value="" disabled selected>Select Party Type</option>
                                             <option value="Customer">Customer</option>
                                             <option value="Vendor">Vendor</option>
                                         </select>
-                                        <div class="invalid-feedback">Please select party type</div>
+                                        <div class="invalid-feedback">Please select party type.</div>
                                     </div>
 
-                                    <!-- Party Code -->
-                                    <div class="col-md-2">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="partyCodes" class="form-label">Party Code</label>
-                                        <input type="text" class="form-control bg-light" id="partyCodes" readonly>
+                                        <input type="text" class="form-control text-upper bg-light" id="partyCodes"
+                                            readonly aria-readonly="true">
                                     </div>
 
-                                    <!-- Party Name -->
-                                    <div class="col-md-4">
-                                        <label for="partyNameReg" class="form-label">Party Name</label>
-                                        <input list="partySuggestions" class="form-control" id="partyNameReg" required
-                                            autocomplete="off">
-                                        <datalist id="partySuggestions"></datalist>
-                                        <div class="invalid-feedback">Please enter party name</div>
+                                    <div class="col-xl-4 col-lg-6 col-md-8 col-sm-12">
+                                        <label for="partyNameReg" class="form-label">
+                                            Party Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                            <input list="partySuggestions" class="form-control input-highlight fw-bold"
+                                                id="partyNameReg" required autocomplete="off">
+                                            <datalist id="partySuggestions"></datalist>
+                                            <div class="invalid-feedback">Please enter party name.</div>
+                                        </div>
                                     </div>
 
-                                    <!-- Party Status -->
-                                    <div class="col-md-2">
-                                        <label for="partyCurrentStatus" class="form-label">Status</label>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="partyCurrentStatus" class="form-label">
+                                            Status<span class="req">*</span>
+                                        </label>
                                         <select class="form-select" id="partyCurrentStatus" required>
                                             <option value="" disabled selected>Select Current Status</option>
                                             <option value="Active">Active</option>
                                             <option value="DeActive">De-Active</option>
                                         </select>
+                                        <div class="invalid-feedback">Select a status.</div>
                                     </div>
 
-                                    <!-- De-Active Date -->
-                                    <div class="col-md-2">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="partyDeActiveDate" class="form-label">De-Active Date</label>
                                         <input type="date" class="form-control" id="partyDeActiveDate" disabled>
                                     </div>
+                                </div>
 
-                                    <!-- Address -->
-                                    <div class="col-md-5">
+                                <!-- ============ ADDRESS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-geo-alt"></i> Address
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-5 col-lg-6 col-md-8 col-sm-12">
                                         <label for="partyAddress" class="form-label">Address</label>
-                                        <textarea class="form-control text-capitalize" id="partyAddress" rows="1"
-                                            autocomplete="street-address" required></textarea>
+                                        <textarea class="form-control text-cap" id="partyAddress" rows="1"
+                                            autocomplete="street-address"></textarea>
                                     </div>
 
-                                    <!-- Pin Code -->
-                                    <div class="col-md-1">
+                                    <div class="col-xl-1 col-lg-2 col-md-4 col-sm-6">
                                         <label for="pinCode" class="form-label">Pin Code</label>
-                                        <input type="text" class="form-control" id="pinCode" required>
+                                        <input type="text" class="form-control" id="pinCode">
                                     </div>
 
-                                    <!-- City -->
-                                    <div class="col-md-2">
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
                                         <label for="city" class="form-label">City</label>
-                                        <input type="text" class="form-control text-capitalize" id="city" required>
+                                        <input type="text" class="form-control text-cap" id="city">
                                     </div>
 
-                                    <!-- State -->
-                                    <div class="col-md-2">
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
                                         <label for="state" class="form-label">State</label>
-                                        <input type="text" class="form-control text-capitalize" id="state" required>
+                                        <input type="text" class="form-control text-cap" id="state">
                                     </div>
 
-                                    <!-- Country -->
-                                    <div class="col-md-2">
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
                                         <label for="country" class="form-label">Country</label>
-                                        <input type="text" class="form-control text-capitalize" id="country" required>
+                                        <input type="text" class="form-control text-cap" id="country">
+                                    </div>
+                                </div>
+
+                                <!-- ============ STATUTORY & CONTACT ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-shield-check"></i> Statutory &amp; Contact
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="panNumber" class="form-label">PAN Number</label>
+                                        <input type="text" class="form-control text-upper" id="panNumber">
                                     </div>
 
-                                    <!-- Pan Number -->
-                                    <div class="col-md-2">
-                                        <label for="panNumber" class="form-label">Pan Number</label>
-                                        <input type="text" class="form-control text-uppercase" id="panNumber" required>
-                                    </div>
-
-                                    <!-- GST Number -->
-                                    <div class="col-md-3">
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
                                         <label for="gSTNumber" class="form-label">GST Number</label>
-                                        <input type="text" class="form-control text-uppercase" id="gSTNumber" required>
+                                        <input type="text" class="form-control text-upper" id="gSTNumber">
                                     </div>
 
-                                    <!-- Contact Person -->
-                                    <div class="col-md-2">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="partyContactPerson" class="form-label">Contact Person</label>
-                                        <input type="text" class="form-control" id="partyContactPerson" required>
+                                        <input type="text" class="form-control" id="partyContactPerson">
                                     </div>
 
-                                    <!-- Phone Number -->
-                                    <div class="col-md-2">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="partyContactNumber" class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-control" id="partyContactNumber" required>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-phone"></i></span>
+                                            <input type="tel" class="form-control" id="partyContactNumber">
+                                        </div>
                                     </div>
 
-                                    <!-- Email ID -->
-                                    <div class="col-md-3">
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
                                         <label for="partyEmailID" class="form-label">Email ID</label>
-                                        <input type="email" class="form-control" id="partyEmailID" required>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i
+                                                    class="bi bi-envelope"></i></span>
+                                            <input type="email" class="form-control" id="partyEmailID">
+                                        </div>
                                     </div>
 
-                                    <!-- Default Tax -->
-                                    <div class="col-md-4">
+                                    <div class="col-xl-4 col-lg-5 col-md-6 col-sm-6">
                                         <label for="defaultTax" class="form-label">Default Tax</label>
                                         <select id="defaultTax" class="form-select">
                                             <option value="" disabled selected>Select Default Tax</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-2">
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="rcm" class="form-label">RCM</label>
                                         <select name="rcm" id="rcm" class="form-select" required>
                                             <option value="" selected disabled>Choose...</option>
@@ -224,631 +361,651 @@
                                     </div>
                                 </div>
 
-                                <!-- Tab Navigation -->
-                                <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="billing-tab" data-bs-toggle="tab"
-                                            data-bs-target="#billing" type="button" role="tab" aria-controls="billing"
-                                            aria-selected="true">
-                                            Billing Address
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="tariff-tab" data-bs-toggle="tab"
-                                            data-bs-target="#tariff" type="button" role="tab" aria-controls="tariff"
-                                            aria-selected="false">
-                                            Tariff
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="ftlFclTariff-tab" data-bs-toggle="tab"
-                                            data-bs-target="#ftlFclTariff" type="button" role="tab"
-                                            aria-controls="ftlFclTariff" aria-selected="false">
-                                            FTL/FCL Tariff
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="fixedCharges-tab" data-bs-toggle="tab"
-                                            data-bs-target="#fixedCharges" type="button" role="tab"
-                                            aria-controls="fixedCharges" aria-selected="false">
-                                            Fixed Charges
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="fuelSurcharge-tab" data-bs-toggle="tab"
-                                            data-bs-target="#fuelSurcharge" type="button" role="tab"
-                                            aria-controls="fuelSurcharge" aria-selected="false">
-                                            Fuel Surcharge
-                                        </button>
-                                    </li>
-                                </ul>
+                                <!-- ============ TABBED SECTIONS ============ -->
+                                <div class="mt-4">
+                                    <ul class="nav nav-tabs vm-tabs" id="partyTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="billing-tab" data-bs-toggle="tab"
+                                                data-bs-target="#billing" type="button" role="tab"
+                                                aria-controls="billing" aria-selected="true">
+                                                <i class="bi bi-geo me-1"></i> Billing Address
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="tariff-tab" data-bs-toggle="tab"
+                                                data-bs-target="#tariff" type="button" role="tab" aria-controls="tariff"
+                                                aria-selected="false">
+                                                <i class="bi bi-currency-rupee me-1"></i> Tariff
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="ftlFclTariff-tab" data-bs-toggle="tab"
+                                                data-bs-target="#ftlFclTariff" type="button" role="tab"
+                                                aria-controls="ftlFclTariff" aria-selected="false">
+                                                <i class="bi bi-truck me-1"></i> FTL/FCL Tariff
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="fixedCharges-tab" data-bs-toggle="tab"
+                                                data-bs-target="#fixedCharges" type="button" role="tab"
+                                                aria-controls="fixedCharges" aria-selected="false">
+                                                <i class="bi bi-receipt me-1"></i> Fixed Charges
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="fuelSurcharge-tab" data-bs-toggle="tab"
+                                                data-bs-target="#fuelSurcharge" type="button" role="tab"
+                                                aria-controls="fuelSurcharge" aria-selected="false">
+                                                <i class="bi bi-fuel-pump me-1"></i> Fuel Surcharge
+                                            </button>
+                                        </li>
+                                    </ul>
 
-                                <!-- Tab Content -->
-                                <div class="tab-content p-3 border border-top-0 bg-white">
-                                    <!-- Billing Address Tab -->
-                                    <div class="tab-pane fade show active" id="billing" role="tabpanel"
-                                        aria-labelledby="billing-tab">
-                                        <div class="row g-1">
-                                            <div class="col-md-2">
-                                                <label for="billingContactPerson" class="form-label">Contact
-                                                    Person</label>
-                                                <input type="text" class="form-control text-capitalize"
-                                                    id="billingContactPerson">
-                                            </div>
+                                    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white"
+                                        id="partyTabsContent">
 
-                                            <div class="col-md-2">
-                                                <label for="billingContactNumber" class="form-label">Contact
-                                                    Number</label>
-                                                <input type="tel" class="form-control" id="billingContactNumber">
-                                            </div>
+                                        <!-- ===== Billing Address ===== -->
+                                        <div class="tab-pane fade show active" id="billing" role="tabpanel"
+                                            aria-labelledby="billing-tab" tabindex="0">
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="billingContactPerson" class="form-label">Contact
+                                                        Person</label>
+                                                    <input type="text" class="form-control text-cap"
+                                                        id="billingContactPerson">
+                                                </div>
 
-                                            <div class="col-md-4">
-                                                <label for="partyBillingAddress" class="form-label">Address</label>
-                                                <textarea class="form-control text-capitalize" id="partyBillingAddress"
-                                                    rows="1"></textarea>
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="billingContactNumber" class="form-label">Contact
+                                                        Number</label>
+                                                    <input type="tel" class="form-control" id="billingContactNumber">
+                                                </div>
 
-                                            <div class="col-md-2">
-                                                <label for="billingPinCode" class="form-label">Pin Code</label>
-                                                <input type="text" class="form-control" id="billingPinCode">
-                                            </div>
+                                                <div class="col-xl-4 col-lg-4 col-md-8 col-sm-12">
+                                                    <label for="partyBillingAddress" class="form-label">Address</label>
+                                                    <textarea class="form-control text-cap" id="partyBillingAddress"
+                                                        rows="1"></textarea>
+                                                </div>
 
-                                            <div class="col-md-2">
-                                                <label for="billingCity" class="form-label">City</label>
-                                                <input type="text" class="form-control text-capitalize"
-                                                    id="billingCity">
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="billingPinCode" class="form-label">Pin Code</label>
+                                                    <input type="text" class="form-control" id="billingPinCode">
+                                                </div>
 
-                                            <div class="col-md-2">
-                                                <label for="billingState" class="form-label">State</label>
-                                                <input type="text" class="form-control text-capitalize"
-                                                    id="billingState">
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="billingCity" class="form-label">City</label>
+                                                    <input type="text" class="form-control text-cap" id="billingCity">
+                                                </div>
 
-                                            <div class="col-md-2">
-                                                <label for="billingCountry" class="form-label">Country</label>
-                                                <input type="text" class="form-control text-capitalize"
-                                                    id="billingCountry">
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="billingState" class="form-label">State</label>
+                                                    <input type="text" class="form-control text-cap" id="billingState">
+                                                </div>
 
-                                            <div class="col-md-2">
-                                                <div class="form-check mt-4 pt-2">
-                                                    <input class="form-check-input" type="checkbox" id="defaultBilling">
-                                                    <label class="form-check-label" for="defaultBilling">Default
-                                                        Address</label>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="billingCountry" class="form-label">Country</label>
+                                                    <input type="text" class="form-control text-cap"
+                                                        id="billingCountry">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <div class="form-check mt-4 pt-2">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="defaultBilling">
+                                                        <label class="form-check-label" for="defaultBilling">Default
+                                                            Address</label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="billingAddressStatus" class="form-label">Status</label>
+                                                    <select class="form-select" id="billingAddressStatus">
+                                                        <option value="" disabled selected>Select Status</option>
+                                                        <option value="Active">Active</option>
+                                                        <option value="Inactive">Inactive</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 d-grid">
+                                                    <button type="button" class="btn btn-primary"
+                                                        id="addbillingAddress">
+                                                        <i class="bi bi-plus-circle"></i> Add Address
+                                                    </button>
+                                                    <button type="button" class="btn btn-success mt-2 d-none"
+                                                        id="updateBillingAddress">
+                                                        <i class="bi bi-save"></i> Update Address
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-2">
-                                                <label for="billingAddressStatus" class="form-label">Status</label>
-                                                <select class="form-select" id="billingAddressStatus">
-                                                    <option value="" disabled selected>Select Status</option>
-                                                    <option value="Active">Active</option>
-                                                    <option value="Inactive">Inactive</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-2 d-grid">
-                                                <button type="button" class="btn btn-primary mt-4"
-                                                    id="addbillingAddress">
-                                                    <i class="bi bi-plus-circle"></i> Add Address
-                                                </button>
-                                                <!-- ①  ADD THIS BUTTON just once below your form;
-                                                    it’s hidden until the user chooses “Edit”. -->
-                                                <button type="button" class="btn btn-success mt-4 d-none"
-                                                    id="updateBillingAddress">
-                                                    <i class="bi bi-save"></i> Update Address
-                                                </button>
-
-                                            </div>
-
-                                        </div>
-
-                                        <!-- Billing Address Table -->
-                                        <div class="table-responsive mt-3">
-                                            <table class="table table-sm table-bordered text-center align-middle"
-                                                id="billingAddressTable">
-                                                <thead class="table-dark">
-                                                    <tr>
-                                                        <th>Contact Person</th>
-                                                        <th>Contact Number</th>
-                                                        <th>Address</th>
-                                                        <th>Pin Code</th>
-                                                        <th>City</th>
-                                                        <th>State</th>
-                                                        <th>Country</th>
-                                                        <th>Default</th>
-                                                        <th>Status</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody> <!--id="billingAddressTable"-->
-                                                    <tr>
-                                                        <td colspan="10" class="text-center text-muted">No billing
-                                                            addresses added
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <!-- Tariff Tab -->
-                                    <div class="tab-pane fade" id="tariff" role="tabpanel" aria-labelledby="tariff-tab">
-                                        <div class="row g-3">
-                                            <div class="col-md-2">
-                                                <label for="effectiveDate" class="form-label">Effective Date</label>
-                                                <input type="date" class="form-control" id="effectiveDate" required>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="movementType" class="form-label">Movement Type</label>
-                                                <select id="movementType" class="form-select"></select>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="transitType" class="form-label">Transit Type</label>
-                                                <select id="transitType" class="form-select"></select>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="modeType" class="form-label">Mode Type</label>
-                                                <select id="modeType" class="form-select"></select>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <label for="carrierName" class="form-label">Carrier</label>
-                                                <select id="carrierName" class="form-select"></select>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="shippingType" class="form-label">Shipping Type</label>
-                                                <select id="shippingType" class="form-select"></select>
-                                            </div>
-
-                                            <div class="col-md-2 d-none">
-                                                <label for="containerType" class="form-label">Container Type</label>
-                                                <select id="containerType" class="form-select"></select>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="originList" class="form-label">Origin</label>
-                                                <input type="text" id="originList" list="originListDatalist"
-                                                    class="form-control" required autocomplete="off">
-                                                <datalist id="originListDatalist"></datalist>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="portOfLoading" class="form-label">Port of Loading</label>
-                                                <input type="text" id="portOfLoading" list="portOfLoadingDatalist"
-                                                    class="form-control" required autocomplete="off">
-                                                <datalist id="portOfLoadingDatalist"></datalist>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="destinationList" class="form-label">Destination</label>
-                                                <input type="text" id="destinationList" list="destinationListDatalist"
-                                                    autocomplete="off" class="form-control" required>
-                                                <datalist id="destinationListDatalist"></datalist>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="portOfDischarge" class="form-label">Port of
-                                                    Discharge</label>
-                                                <input type="text" id="portOfDischarge" list="portOfDischargeDatalist"
-                                                    class="form-control" required autocomplete="off">
-                                                <datalist id="portOfDischargeDatalist"></datalist>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="uomType" class="form-label">UOM</label>
-                                                <select id="uomType" class="form-select" required></select>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="minimumWeight" class="form-label">Minimum Weight</label>
-                                                <input type="number" class="form-control" id="minimumWeight">
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="uptoWeight" class="form-label">Up To Weight</label>
-                                                <input type="number" class="form-control" id="uptoWeight" step="0.01">
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="rate" class="form-label">Rate</label>
-                                                <input type="number" class="form-control" id="rate">
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="tariffType" class="form-label">Type</label>
-                                                <select id="tariffType" class="form-select" required>
-                                                    <option value="" disabled selected>Select type</option>
-                                                    <option value="Buy">Buy</option>
-                                                    <option value="Sell">Sell</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="currencyCode" class="form-label">Currency</label>
-                                                <input type="text" id="currencyCode" list="currencyListDatalist"
-                                                    autocomplete="off" class="form-control text-capitalize" required>
-                                                <datalist id="currencyListDatalist"></datalist>
-                                            </div>
-
-                                            <div class="col-md-2 d-grid">
-                                                <button type="button" class="btn btn-primary mt-4" id="addTariffButton">
-                                                    <i class="bi bi-plus-circle"></i> Add Tariff
-                                                </button>
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-hover align-middle mb-0"
+                                                    id="billingAddressTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Contact Person</th>
+                                                            <th scope="col">Contact Number</th>
+                                                            <th scope="col">Address</th>
+                                                            <th scope="col">Pin Code</th>
+                                                            <th scope="col">City</th>
+                                                            <th scope="col">State</th>
+                                                            <th scope="col">Country</th>
+                                                            <th scope="col">Default</th>
+                                                            <th scope="col">Status</th>
+                                                            <th scope="col" class="text-center">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="10" class="vm-empty">
+                                                                <i class="bi bi-geo"></i>
+                                                                No billing addresses added
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
 
-                                        <!-- Tariff Table -->
-                                        <div class="table-responsive mt-3">
-                                            <table class="table table-sm table-bordered text-center align-middle"
-                                                id="tariffTable">
-                                                <thead class="table-dark">
-                                                    <tr>
-                                                        <th>S.No</th>
-                                                        <th>Effective Date</th>
-                                                        <th>Movement Type</th>
-                                                        <th>Transit Type</th>
-                                                        <th>Mode Type</th>
-                                                        <th>Shipping Type</th>
-                                                        <th>Container Type</th>
-                                                        <th>Carrier</th>
-                                                        <th>Origin</th>
-                                                        <th>Port of Loading</th>
-                                                        <th>Destination</th>
-                                                        <th>Port of Discharge</th>
-                                                        <th>UOM</th>
-                                                        <th>Min Weight</th>
-                                                        <th>Up To Weight</th>
-                                                        <th>Rate</th>
-                                                        <th>Type</th>
-                                                        <th>Currency</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="tariffTableBody">
-                                                    <tr>
-                                                        <td colspan="14" class="text-center text-muted">No tariff rates
-                                                            added</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
+                                        <!-- ===== Tariff ===== -->
+                                        <div class="tab-pane fade" id="tariff" role="tabpanel"
+                                            aria-labelledby="tariff-tab" tabindex="0">
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="effectiveDate" class="form-label">Effective Date</label>
+                                                    <input type="date" class="form-control" id="effectiveDate">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="movementType" class="form-label">Movement Type</label>
+                                                    <select id="movementType" class="form-select"></select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="transitType" class="form-label">Transit Type</label>
+                                                    <select id="transitType" class="form-select"></select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="modeType" class="form-label">Mode Type</label>
+                                                    <select id="modeType" class="form-select"></select>
+                                                </div>
+
+                                                <div class="col-xl-4 col-lg-4 col-md-8 col-sm-12">
+                                                    <label for="carrierName" class="form-label">Carrier</label>
+                                                    <select id="carrierName" class="form-select"></select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="shippingType" class="form-label">Shipping Type</label>
+                                                    <select id="shippingType" class="form-select"></select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6 d-none">
+                                                    <label for="containerType" class="form-label">Container Type</label>
+                                                    <select id="containerType" class="form-select"></select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="originList" class="form-label">Origin</label>
+                                                    <input type="text" id="originList" list="originListDatalist"
+                                                        class="form-control" autocomplete="off">
+                                                    <datalist id="originListDatalist"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="portOfLoading" class="form-label">Port of
+                                                        Loading</label>
+                                                    <input type="text" id="portOfLoading" list="portOfLoadingDatalist"
+                                                        class="form-control" autocomplete="off">
+                                                    <datalist id="portOfLoadingDatalist"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="destinationList" class="form-label">Destination</label>
+                                                    <input type="text" id="destinationList"
+                                                        list="destinationListDatalist" autocomplete="off"
+                                                        class="form-control">
+                                                    <datalist id="destinationListDatalist"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="portOfDischarge" class="form-label">Port of
+                                                        Discharge</label>
+                                                    <input type="text" id="portOfDischarge"
+                                                        list="portOfDischargeDatalist" class="form-control"
+                                                        autocomplete="off">
+                                                    <datalist id="portOfDischargeDatalist"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="uomType" class="form-label">UOM</label>
+                                                    <select id="uomType" class="form-select"></select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="minimumWeight" class="form-label">Minimum Weight</label>
+                                                    <input type="number" class="form-control" id="minimumWeight">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="uptoWeight" class="form-label">Up To Weight</label>
+                                                    <input type="number" class="form-control" id="uptoWeight"
+                                                        step="0.01">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="rate" class="form-label">Rate</label>
+                                                    <input type="number" class="form-control" id="rate">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="tariffType" class="form-label">Type</label>
+                                                    <select id="tariffType" class="form-select">
+                                                        <option value="" disabled selected>Select type</option>
+                                                        <option value="Buy">Buy</option>
+                                                        <option value="Sell">Sell</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="currencyCode" class="form-label">Currency</label>
+                                                    <input type="text" id="currencyCode" list="currencyListDatalist"
+                                                        autocomplete="off" class="form-control text-cap">
+                                                    <datalist id="currencyListDatalist"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 d-grid">
+                                                    <button type="button" class="btn btn-primary" id="addTariffButton">
+                                                        <i class="bi bi-plus-circle"></i> Add Tariff
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-hover align-middle mb-0" id="tariffTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">S.No</th>
+                                                            <th scope="col">Effective Date</th>
+                                                            <th scope="col">Movement Type</th>
+                                                            <th scope="col">Transit Type</th>
+                                                            <th scope="col">Mode Type</th>
+                                                            <th scope="col">Shipping Type</th>
+                                                            <th scope="col">Container Type</th>
+                                                            <th scope="col">Carrier</th>
+                                                            <th scope="col">Origin</th>
+                                                            <th scope="col">Port of Loading</th>
+                                                            <th scope="col">Destination</th>
+                                                            <th scope="col">Port of Discharge</th>
+                                                            <th scope="col">UOM</th>
+                                                            <th scope="col">Min Weight</th>
+                                                            <th scope="col">Up To Weight</th>
+                                                            <th scope="col">Rate</th>
+                                                            <th scope="col">Type</th>
+                                                            <th scope="col">Currency</th>
+                                                            <th scope="col" class="text-center">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tariffTableBody">
+                                                        <tr>
+                                                            <td colspan="19" class="vm-empty">
+                                                                <i class="bi bi-currency-rupee"></i>
+                                                                No tariff rates added
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <!-- FTL/FCL Tariff Tab -->
-                                    <div class="tab-pane fade" id="ftlFclTariff" role="tabpanel"
-                                        aria-labelledby="ftlFclTariff-tab">
-                                        <div class="row g-3">
 
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlEffectiveDate" class="form-label">Effective Date</label>
-                                                <input type="date" class="form-control" id="ftlEffectiveDate"
-                                                    name="ftlEffectiveDate" required>
-                                            </div>
+                                        <!-- ===== FTL/FCL Tariff ===== -->
+                                        <div class="tab-pane fade" id="ftlFclTariff" role="tabpanel"
+                                            aria-labelledby="ftlFclTariff-tab" tabindex="0">
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlEffectiveDate" class="form-label">Effective
+                                                        Date</label>
+                                                    <input type="date" class="form-control" id="ftlEffectiveDate"
+                                                        name="ftlEffectiveDate">
+                                                </div>
 
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlMovementType" class="form-label">Movement Type</label>
-                                                <select class="form-select" id="ftlMovementType" name="ftlMovementType"
-                                                    required>
-                                                    <option value="">Choose...</option>
-                                                    <option value="Domestic">Domestic</option>
-                                                    <option value="Export">Export</option>
-                                                    <option value="Import">Import</option>
-                                                </select>
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlMovementType" class="form-label">Movement
+                                                        Type</label>
+                                                    <select class="form-select" id="ftlMovementType"
+                                                        name="ftlMovementType">
+                                                        <option value="">Choose...</option>
+                                                        <option value="Domestic">Domestic</option>
+                                                        <option value="Export">Export</option>
+                                                        <option value="Import">Import</option>
+                                                    </select>
+                                                </div>
 
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlTransitType" class="form-label">Transit Type</label>
-                                                <select class="form-select" id="ftlTransitType" name="ftlTransitType"
-                                                    required>
-                                                    <option value="">Choose...</option>
-                                                    <option value="By Air">By Air</option>
-                                                    <option value="By Sea">By Sea</option>
-                                                    <option value="By Road">By Road</option>
-                                                    <option value="By Rail">By Rail</option>
-                                                </select>
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlTransitType" class="form-label">Transit Type</label>
+                                                    <select class="form-select" id="ftlTransitType"
+                                                        name="ftlTransitType">
+                                                        <option value="">Choose...</option>
+                                                        <option value="By Air">By Air</option>
+                                                        <option value="By Sea">By Sea</option>
+                                                        <option value="By Road">By Road</option>
+                                                        <option value="By Rail">By Rail</option>
+                                                    </select>
+                                                </div>
 
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlModeType" class="form-label">Mode Type</label>
-                                                <select class="form-select" id="ftlModeType" name="ftlModeType"
-                                                    required>
-                                                    <option value="">Choose...</option>
-                                                    <option value="FCL">FCL</option>
-                                                    <option value="FTL">FTL</option>
-                                                </select>
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlModeType" class="form-label">Mode Type</label>
+                                                    <select class="form-select" id="ftlModeType" name="ftlModeType">
+                                                        <option value="">Choose...</option>
+                                                        <option value="FCL">FCL</option>
+                                                        <option value="FTL">FTL</option>
+                                                    </select>
+                                                </div>
 
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlVehicleType" class="form-label">Vehicle Type</label>
-                                                <select class="form-select" id="ftlVehicleType" name="ftlVehicleType">
-                                                    <option value="">Choose...</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlCargoWeight" class="form-label">Cargo Weight</label>
-                                                <input type="number" class="form-control text-end" id="ftlCargoWeight"
-                                                    name="ftlCargoWeight" min="0" step="0.01" value="0.00" required>
-                                            </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlVehicleType" class="form-label">Vehicle Type</label>
+                                                    <select class="form-select" id="ftlVehicleType"
+                                                        name="ftlVehicleType">
+                                                        <option value="">Choose...</option>
+                                                    </select>
+                                                </div>
 
-                                            <div class="col-12 col-md-4">
-                                                <label for="ftlRouteDetails" class="form-label">Route Details</label>
-                                                <input list="routeSuggestions" type="text" class="form-control"
-                                                    id="ftlRouteDetails" name="ftlRouteDetails" autocomplete="off"
-                                                    required>
-                                                <datalist id="routeSuggestions"></datalist>
-                                            </div>
-
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlUomType" class="form-label">UOM</label>
-                                                <select class="form-select" id="ftlUomType" name="ftlUomType" required>
-                                                    <!-- <option value="">Choose...</option> -->
-                                                    <option value="Per Vehicle">Per Vehicle</option>
-                                                    <option value="Per Ton">Per Ton</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-12 col-md-2">
-                                                <label for="ftlRate" class="form-label">Rate</label>
-                                                <input type="number" class="form-control text-end" id="ftlRate"
-                                                    name="ftlRate" min="0" step="0.01" value="0.00" required>
-                                            </div>
-
-                                            <div class="col-12 col-md-1">
-                                                <label for="ftlTariffType" class="form-label">Type</label>
-                                                <select class="form-select" id="ftlTariffType" name="ftlTariffType"
-                                                    required>
-                                                    <option value="Sell">Sell</option>
-                                                    <option value="Buy">Buy</option>
-
-                                                </select>
-                                            </div>
-                                            <div class="col-12 col-md-1">
-                                                <label for="ftlCurrencyCode" class="form-label">Currency</label>
-                                                <input type="text" id="ftlCurrencyCode" name="ftlCurrencyCode"
-                                                    list="ftlCurrencyListDatalist" autocomplete="off"
-                                                    class="form-control text-capitalize" required value="INR">
-                                                <datalist id="ftlCurrencyListDatalist"></datalist>
-                                            </div>
-                                            <div class="col-12 col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-primary w-100"
-                                                    id="addFtlFCLButton">
-                                                    <i class="bi bi-plus-circle"></i> Add Tariff
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="table-responsive mt-3">
-                                            <table id="ftlFCLTable"
-                                                class="table table-sm table-bordered table-hover table-striped text-center align-middle">
-                                                <thead class="table-dark">
-                                                    <tr>
-                                                        <th>S.No</th>
-                                                        <th>Effective Date</th>
-                                                        <th>Movement Type</th>
-                                                        <th>Transit Type</th>
-                                                        <th>Mode Type</th>
-                                                        <th>Vehicle Type</th>
-                                                        <th>Route Details</th>
-                                                        <th>UOM</th>
-                                                        <th>Cargo Weight</th>
-                                                        <th>Rate</th>
-                                                        <th>Type</th>
-                                                        <th>Currency</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="ftlFCLTariffTableBody">
-                                                    <tr>
-                                                        <td colspan="13" class="text-center text-muted">No tariff rates
-                                                            added
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    <!-- Fixed Charges -->
-                                    <div class="tab-pane fade" id="fixedCharges" role="tabpanel"
-                                        aria-labelledby="fixedCharges-tab">
-                                        <div class="row g-3">
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesEffectiveDate" class="form-label">Effective
-                                                    Date</label>
-                                                <input type="date" class="form-control" id="fixedChargesEffectiveDate"
-                                                    required>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesMovementType" class="form-label">Movement
-                                                    Type</label>
-                                                <select class="form-control" id="fixedChargesMovementType" required>
-                                                    <option value="">Choose...</option>
-                                                    <option value="Customs Clearance">Customs Clearance</option>
-                                                    <option value="Domestic">Domestic</option>
-                                                    <option value="Export">Export</option>
-                                                    <option value="Forwarding">Forwarding</option>
-                                                    <option value="Import">Import</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesTransitType" class="form-label">Transit
-                                                    Type</label>
-                                                <input list="transitTypeList" class="form-control"
-                                                    id="fixedChargesTransitType" name="fixedChargesTransitType" required
-                                                    autocomplete="off">
-                                                <datalist id="transitTypeList"></datalist>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesModeType" class="form-label">Mode Type</label>
-                                                <input list="fixedChargesModeTypeList" class="form-control"
-                                                    id="fixedChargesModeType" name="fixedChargesModeType" required
-                                                    autocomplete="off">
-                                                <datalist id="fixedChargesModeTypeList"></datalist>
-
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesShippingType" class="form-label">Shipping
-                                                    Type</label>
-                                                <input list="fixedChargesShippingTypeList" class="form-control"
-                                                    id="fixedChargesShippingType" name="fixedChargesShippingType"
-                                                    required autocomplete="off">
-                                                <datalist id="fixedChargesShippingTypeList"></datalist>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <label for="fixedChargesType" class="form-label">Charges Type</label>
-                                                <input type="text" id="fixedChargesType" list="fixedChargesTypelist"
-                                                    class="form-control" required autocomplete="off">
-                                                <datalist id="fixedChargesTypelist"></datalist>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesPercentage"
-                                                    class="form-label">Percentage</label>
-                                                <div class="input-group">
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlCargoWeight" class="form-label">Cargo Weight</label>
                                                     <input type="number" class="form-control text-end"
-                                                        id="fixedChargesPercentage" step="0.01" min="0" max="100"
-                                                        placeholder="0.00">
-                                                    <span class="input-group-text">%</span>
+                                                        id="ftlCargoWeight" name="ftlCargoWeight" min="0" step="0.01"
+                                                        value="0.00">
+                                                </div>
+
+                                                <div class="col-xl-4 col-lg-4 col-md-8 col-sm-12">
+                                                    <label for="ftlRouteDetails" class="form-label">Route
+                                                        Details</label>
+                                                    <input list="routeSuggestions" type="text" class="form-control"
+                                                        id="ftlRouteDetails" name="ftlRouteDetails" autocomplete="off">
+                                                    <datalist id="routeSuggestions"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlUomType" class="form-label">UOM</label>
+                                                    <select class="form-select" id="ftlUomType" name="ftlUomType">
+                                                        <option value="Per Vehicle">Per Vehicle</option>
+                                                        <option value="Per Ton">Per Ton</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlRate" class="form-label">Rate</label>
+                                                    <input type="number" class="form-control text-end" id="ftlRate"
+                                                        name="ftlRate" min="0" step="0.01" value="0.00">
+                                                </div>
+
+                                                <div class="col-xl-1 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlTariffType" class="form-label">Type</label>
+                                                    <select class="form-select" id="ftlTariffType" name="ftlTariffType">
+                                                        <option value="Sell">Sell</option>
+                                                        <option value="Buy">Buy</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-1 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="ftlCurrencyCode" class="form-label">Currency</label>
+                                                    <input type="text" id="ftlCurrencyCode" name="ftlCurrencyCode"
+                                                        list="ftlCurrencyListDatalist" autocomplete="off"
+                                                        class="form-control text-cap" value="INR">
+                                                    <datalist id="ftlCurrencyListDatalist"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 d-grid">
+                                                    <button type="button" class="btn btn-primary" id="addFtlFCLButton">
+                                                        <i class="bi bi-plus-circle"></i> Add Tariff
+                                                    </button>
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesAmount" class="form-label">Amount</label>
-                                                <input type="number" class="form-control text-end"
-                                                    id="fixedChargesAmount" step="0.01">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="fixedChargesFor" class="form-label">Fixed For</label>
-                                                <select id="fixedChargesFor" class="form-select" required>
-                                                    <option value="" disabled selected>Select type</option>
-                                                    <option value="Buy">Buy</option>
-                                                    <option value="Sell">Sell</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-2 d-grid">
-                                                <button type="button" class="btn btn-primary mt-4"
-                                                    id="addFixedChargesButton">
-                                                    <i class="bi bi-plus-circle"></i> Add Fixed Charges
-                                                </button>
+                                            <div class="table-responsive mt-3">
+                                                <table id="ftlFCLTable" class="table table-hover align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">S.No</th>
+                                                            <th scope="col">Effective Date</th>
+                                                            <th scope="col">Movement Type</th>
+                                                            <th scope="col">Transit Type</th>
+                                                            <th scope="col">Mode Type</th>
+                                                            <th scope="col">Vehicle Type</th>
+                                                            <th scope="col">Route Details</th>
+                                                            <th scope="col">UOM</th>
+                                                            <th scope="col">Cargo Weight</th>
+                                                            <th scope="col">Rate</th>
+                                                            <th scope="col">Type</th>
+                                                            <th scope="col">Currency</th>
+                                                            <th scope="col" class="text-center">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="ftlFCLTariffTableBody">
+                                                        <tr>
+                                                            <td colspan="13" class="vm-empty">
+                                                                <i class="bi bi-truck"></i>
+                                                                No tariff rates added
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
 
-                                        <!-- Fixed Charges Table -->
-                                        <div class="table-responsive mt-3">
-                                            <table class="table table-sm table-bordered text-center align-middle"
-                                                id="fixedChargesTable">
-                                                <thead class="table-dark">
-                                                    <tr>
-                                                        <th>S.No</th>
-                                                        <th>Effective Date</th>
-                                                        <th>Movement Type</th>
-                                                        <th>Transit Type</th>
-                                                        <th>Mode Type</th>
-                                                        <th>Shipping Type</th>
-                                                        <th>Charges Type</th>
-                                                        <th>Fixed Percentage</th>
-                                                        <th>Fixed Amount</th>
-                                                        <th>Fixed For</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="fixedChargesTableBody">
-                                                    <tr>
-                                                        <td colspan="14" class="text-center text-muted">No fixed charges
-                                                            added
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    <!-- Fuel Surcharge -->
-                                    <div class="tab-pane fade" id="fuelSurcharge" role="tabpanel"
-                                        aria-labelledby="fuelSurcharge-tab">
-                                        <div class="row g-3">
-                                            <div class="col-md-2">
-                                                <label for="fuelEffectiveDate" class="form-label">Effective
-                                                    Date</label>
-                                                <input type="date" class="form-control" id="fuelEffectiveDate" required>
-                                            </div>
+                                        <!-- ===== Fixed Charges ===== -->
+                                        <div class="tab-pane fade" id="fixedCharges" role="tabpanel"
+                                            aria-labelledby="fixedCharges-tab" tabindex="0">
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesEffectiveDate" class="form-label">Effective
+                                                        Date</label>
+                                                    <input type="date" class="form-control"
+                                                        id="fixedChargesEffectiveDate">
+                                                </div>
 
-                                            <div class="col-md-2">
-                                                <label for="fuelMovementType" class="form-label">Movement
-                                                    Type</label>
-                                                <select class="form-control" id="fuelMovementType" required>
-                                                    <option value="">Choose...</option>
-                                                    <option value="Domestic">Domestic</option>
-                                                    <option value="Export">Export</option>
-                                                    <option value="Import">Import</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="fuelModeType" class="form-label">Mode Type</label>
-                                                <select class="form-control" id="fuelModeType" required>
-                                                    <option value="">Choose...</option>
-                                                    <option value="Dox">Dox</option>
-                                                    <option value="Non-Dox">Non-Dox</option>
-                                                    <option value="LTL">LTL</option>
-                                                    <option value="LCL">LCL</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label for="fuelPercentage" class="form-label">Fuel %</label>
-                                                <div class="input-group">
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesMovementType" class="form-label">Movement
+                                                        Type</label>
+                                                    <select class="form-control" id="fixedChargesMovementType">
+                                                        <option value="">Choose...</option>
+                                                        <option value="Customs Clearance">Customs Clearance</option>
+                                                        <option value="Domestic">Domestic</option>
+                                                        <option value="Export">Export</option>
+                                                        <option value="Forwarding">Forwarding</option>
+                                                        <option value="Import">Import</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesTransitType" class="form-label">Transit
+                                                        Type</label>
+                                                    <input list="transitTypeList" class="form-control"
+                                                        id="fixedChargesTransitType" name="fixedChargesTransitType"
+                                                        autocomplete="off">
+                                                    <datalist id="transitTypeList"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesModeType" class="form-label">Mode
+                                                        Type</label>
+                                                    <input list="fixedChargesModeTypeList" class="form-control"
+                                                        id="fixedChargesModeType" name="fixedChargesModeType"
+                                                        autocomplete="off">
+                                                    <datalist id="fixedChargesModeTypeList"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesShippingType" class="form-label">Shipping
+                                                        Type</label>
+                                                    <input list="fixedChargesShippingTypeList" class="form-control"
+                                                        id="fixedChargesShippingType" name="fixedChargesShippingType"
+                                                        autocomplete="off">
+                                                    <datalist id="fixedChargesShippingTypeList"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-4 col-lg-4 col-md-8 col-sm-12">
+                                                    <label for="fixedChargesType" class="form-label">Charges
+                                                        Type</label>
+                                                    <input type="text" id="fixedChargesType" list="fixedChargesTypelist"
+                                                        class="form-control" autocomplete="off">
+                                                    <datalist id="fixedChargesTypelist"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesPercentage"
+                                                        class="form-label">Percentage</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control text-end"
+                                                            id="fixedChargesPercentage" step="0.01" min="0" max="100"
+                                                            placeholder="0.00">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesAmount" class="form-label">Amount</label>
                                                     <input type="number" class="form-control text-end"
-                                                        id="fuelPercentage" step="0.01" min="0" max="100"
-                                                        placeholder="0.00">
-                                                    <span class="input-group-text">%</span>
+                                                        id="fixedChargesAmount" step="0.01">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fixedChargesFor" class="form-label">Fixed For</label>
+                                                    <select id="fixedChargesFor" class="form-select">
+                                                        <option value="" disabled selected>Select type</option>
+                                                        <option value="Buy">Buy</option>
+                                                        <option value="Sell">Sell</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 d-grid">
+                                                    <button type="button" class="btn btn-primary"
+                                                        id="addFixedChargesButton">
+                                                        <i class="bi bi-plus-circle"></i> Add Fixed Charges
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div class="col-md-2">
-                                                <label for="fuelType" class="form-label">Fuel Type</label>
-                                                <select id="fuelType" class="form-select" required>
-                                                    <option value="" disabled selected>Select type</option>
-                                                    <option value="Buy">Buy</option>
-                                                    <option value="Sell">Sell</option>
-                                                </select>
-                                            </div>
 
-                                            <div class="col-md-2 d-grid">
-                                                <button type="button" class="btn btn-primary mt-4"
-                                                    id="addFuelSurchargeButton">
-                                                    <i class="bi bi-plus-circle"></i> Add Fuel Charges
-                                                </button>
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-hover align-middle mb-0"
+                                                    id="fixedChargesTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">S.No</th>
+                                                            <th scope="col">Effective Date</th>
+                                                            <th scope="col">Movement Type</th>
+                                                            <th scope="col">Transit Type</th>
+                                                            <th scope="col">Mode Type</th>
+                                                            <th scope="col">Shipping Type</th>
+                                                            <th scope="col">Charges Type</th>
+                                                            <th scope="col">Fixed Percentage</th>
+                                                            <th scope="col">Fixed Amount</th>
+                                                            <th scope="col">Fixed For</th>
+                                                            <th scope="col" class="text-center">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="fixedChargesTableBody">
+                                                        <tr>
+                                                            <td colspan="11" class="vm-empty">
+                                                                <i class="bi bi-receipt"></i>
+                                                                No fixed charges added
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
 
-                                        <!-- Fixed Charges Table -->
-                                        <div class="table-responsive mt-3">
-                                            <table class="table table-sm table-bordered text-center align-middle"
-                                                id="fuelSurchargesTable">
-                                                <thead class="table-dark">
-                                                    <tr>
-                                                        <th>S.No</th>
-                                                        <th>Effective Date</th>
-                                                        <th>Movement Type</th>
-                                                        <th>Mode Type</th>
-                                                        <th>Description</th>
-                                                        <th>Fuel %</th>
-                                                        <th>Fuel Type</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="fuelSurchargesTableBody">
-                                                    <tr>
-                                                        <td colspan="14" class="text-center text-muted">No Fuel
-                                                            Surcharges Found</td>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                        <!-- ===== Fuel Surcharge ===== -->
+                                        <div class="tab-pane fade" id="fuelSurcharge" role="tabpanel"
+                                            aria-labelledby="fuelSurcharge-tab" tabindex="0">
+                                            <div class="row g-3 align-items-end">
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fuelEffectiveDate" class="form-label">Effective
+                                                        Date</label>
+                                                    <input type="date" class="form-control" id="fuelEffectiveDate">
+                                                </div>
 
-                                </div>
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fuelMovementType" class="form-label">Movement
+                                                        Type</label>
+                                                    <select class="form-control" id="fuelMovementType">
+                                                        <option value="">Choose...</option>
+                                                        <option value="Domestic">Domestic</option>
+                                                        <option value="Export">Export</option>
+                                                        <option value="Import">Import</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fuelModeType" class="form-label">Mode Type</label>
+                                                    <select class="form-control" id="fuelModeType">
+                                                        <option value="">Choose...</option>
+                                                        <option value="Dox">Dox</option>
+                                                        <option value="Non-Dox">Non-Dox</option>
+                                                        <option value="LTL">LTL</option>
+                                                        <option value="LCL">LCL</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fuelPercentage" class="form-label">Fuel %</label>
+                                                    <div class="input-group">
+                                                        <input type="number" class="form-control text-end"
+                                                            id="fuelPercentage" step="0.01" min="0" max="100"
+                                                            placeholder="0.00">
+                                                        <span class="input-group-text">%</span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                                    <label for="fuelType" class="form-label">Fuel Type</label>
+                                                    <select id="fuelType" class="form-select">
+                                                        <option value="" disabled selected>Select type</option>
+                                                        <option value="Buy">Buy</option>
+                                                        <option value="Sell">Sell</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 d-grid">
+                                                    <button type="button" class="btn btn-primary"
+                                                        id="addFuelSurchargeButton">
+                                                        <i class="bi bi-plus-circle"></i> Add Fuel Charges
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-hover align-middle mb-0"
+                                                    id="fuelSurchargesTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">S.No</th>
+                                                            <th scope="col">Effective Date</th>
+                                                            <th scope="col">Movement Type</th>
+                                                            <th scope="col">Mode Type</th>
+                                                            <th scope="col">Description</th>
+                                                            <th scope="col">Fuel %</th>
+                                                            <th scope="col">Fuel Type</th>
+                                                            <th scope="col" class="text-center">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="fuelSurchargesTableBody">
+                                                        <tr>
+                                                            <td colspan="8" class="vm-empty">
+                                                                <i class="bi bi-fuel-pump"></i>
+                                                                No Fuel Surcharges Found
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                    </div><!-- tab-content -->
+                                </div><!-- mt-4 -->
+
                             </form>
                         </div>
                     </div>
@@ -861,18 +1018,33 @@
                         <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
-                <!-- Toast Container -->
-                <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-                    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
-                        <div class="d-flex">
-                            <div class="toast-body" id="errorToastMessage">
-                                Error message here...
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto"
-                                data-bs-dismiss="toast"></button>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here...</span>
                 </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
@@ -904,7 +1076,6 @@
 
     <!-- Form Validation -->
     <script>
-        // Example validation - implement as needed
         (function () {
             'use strict';
             const forms = document.querySelectorAll('.needs-validation');

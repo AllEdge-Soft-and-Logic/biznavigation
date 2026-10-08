@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payment Details - Credit</title>
+    <meta name="description"
+        content="Payment Details - Credit – record customer payments, allocate against invoices and track suspense amounts.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Payment Details - Credit · BizNavigation</title>
 
     <!-- Resource Hints -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -23,7 +26,10 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
-    <!-- Upgraded Modern Form Styles (Unified) -->
+    <!-- Upgraded Modern Form Styles -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
+    <!-- Page-scoped polish -->
     <style>
         :root {
             --primary-color: #2563eb;
@@ -42,13 +48,75 @@
             --transition: all 0.2s ease-in-out;
         }
 
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
         body {
             background-color: var(--bg-color);
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
         }
 
-        /* Card Styling */
         .card {
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: var(--radius-lg);
@@ -58,13 +126,6 @@
 
         .card-body {
             padding: 1.5rem 2rem !important;
-        }
-
-        /* Action Bar */
-        .action-bar {
-            padding-bottom: 1.25rem;
-            margin-bottom: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
         }
 
         .btn {
@@ -81,7 +142,6 @@
             font-size: 0.85rem;
         }
 
-        /* Form Controls */
         .form-label {
             margin-bottom: 0.3rem !important;
             font-size: 0.75rem;
@@ -89,10 +149,6 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        .form-label.small {
-            font-size: 0.72rem !important;
         }
 
         .form-control,
@@ -142,41 +198,6 @@
             resize: none;
         }
 
-        /* Section Wrapper (replaces .border.p-3.rounded) */
-        .form-section {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1.25rem 1.5rem;
-            background-color: var(--surface-color);
-            margin-bottom: 1.25rem;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-        }
-
-        /* Section Headers */
-        .section-header {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-main);
-            padding: 0 0 0.65rem 0;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .section-header::before {
-            content: "";
-            display: inline-block;
-            width: 4px;
-            height: 14px;
-            border-radius: 2px;
-            background-color: var(--primary-color);
-        }
-
-        /* Input group */
         .input-group-sm>.form-control,
         .input-group-sm>.form-select {
             padding: 0.4rem 0.7rem !important;
@@ -195,43 +216,6 @@
             border-color: #bfdbfe;
         }
 
-        /* Modern Tabs */
-        .nav-tabs {
-            border-bottom: 1px solid var(--border-color);
-            gap: 1.5rem;
-            padding-bottom: 0px;
-        }
-
-        .nav-tabs .nav-link {
-            border: none;
-            color: var(--text-muted);
-            background-color: transparent;
-            font-weight: 600;
-            padding: 0.75rem 0.25rem !important;
-            font-size: 0.875rem;
-            border-bottom: 2px solid transparent;
-            border-radius: 0;
-            transition: var(--transition);
-        }
-
-        .nav-tabs .nav-link:hover {
-            color: var(--text-main);
-            border-bottom-color: #cbd5e1;
-        }
-
-        .nav-tabs .nav-link.active {
-            color: var(--primary-color) !important;
-            background-color: transparent !important;
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .tab-content {
-            padding-top: 1.25rem;
-            background: transparent;
-            border: none !important;
-        }
-
-        /* Modern Tables */
         .table-responsive {
             max-height: 320px;
             overflow: auto;
@@ -280,13 +264,15 @@
             background-color: #f8fafc;
         }
 
-        .table tfoot td {
+        .table tfoot td,
+        .table tfoot th {
             background-color: #f1f5f9;
             font-weight: 700;
             font-size: 0.82rem;
             padding: 0.7rem 0.75rem !important;
             border-top: 1px solid var(--border-color);
             color: var(--text-main);
+            text-align: center;
         }
 
         .table tfoot tr.text-danger td,
@@ -295,7 +281,6 @@
             color: var(--danger-color) !important;
         }
 
-        /* Modals */
         .modal-content {
             border: none;
             border-radius: var(--radius-lg);
@@ -340,7 +325,6 @@
             background-color: #f8fafc;
         }
 
-        /* Modal Tables */
         .modal .table {
             font-size: 0.85rem;
         }
@@ -369,7 +353,6 @@
             background-color: #f8fafc;
         }
 
-        /* Select2 unified look */
         .select2-container--default .select2-selection--single,
         .select2-container--default .select2-selection--multiple {
             border: 1px solid var(--border-color);
@@ -402,21 +385,21 @@
             background-color: var(--primary-color) !important;
         }
 
-        /* Toast */
         .toast {
             border: none;
             border-radius: var(--radius-md);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
-        /* Mobile tweaks */
         @media (max-width: 768px) {
             .card-body {
                 padding: 1rem 1.25rem !important;
             }
+        }
 
-            .form-section {
-                padding: 1rem 1.25rem;
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
             }
         }
     </style>
@@ -434,31 +417,42 @@
         <div class="main-content">
             <div class="page-content">
                 <div class="container-fluid mt-3 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <form autocomplete="off">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
+                            <form autocomplete="off" novalidate>
 
-                                <!-- Action Bar -->
+                                <!-- ============ ACTION BAR ============ -->
                                 <div
-                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Payment Details - Credit</h5>
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-credit-card text-primary"></i>
+                                        Payment Details - Credit
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
 
                                     <div class="d-flex flex-wrap gap-2">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
-                                            id="newButton" title="Create new payment">
-                                            <i class="bi bi-file-earmark-plus"></i> New
+                                            id="newButton" title="Create new payment" aria-label="New payment">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-warning btn-sm bg-white"
-                                            id="modifyButton" disabled title="Modify payment">
-                                            <i class="bi bi-pencil"></i> Modify
+                                            id="modifyButton" disabled title="Modify payment"
+                                            aria-label="Modify payment">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm bg-white"
-                                            id="deleteButton" disabled title="Delete payment">
-                                            <i class="bi bi-trash"></i> Delete
+                                            id="deleteButton" disabled title="Delete payment"
+                                            aria-label="Delete payment">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-info btn-sm bg-white"
-                                            id="reportButton" disabled title="Print payment">
-                                            <i class="bi bi-printer"></i> Print
+                                            id="reportButton" disabled title="Print payment" aria-label="Print payment">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
                                         </button>
                                         <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
                                             id="saveButton" data-mode="insert" title="Save payment">
@@ -466,210 +460,244 @@
                                         </button>
                                     </div>
 
-                                    <input type="text" class="d-none" id="status" value="New" readonly>
+                                    <input type="text" class="d-none" id="status" value="New" readonly
+                                        aria-hidden="true">
                                     <input type="hidden" id="tempFormID">
                                     <input type="hidden" id="bankIDs">
                                     <input type="hidden" id="partyCode">
                                 </div>
 
-                                <!-- PAYMENT MAIN DETAILS -->
-                                <div class="form-section">
-                                    <h6 class="section-header">
-                                        <i class="bi bi-wallet2"></i> Payment Main Details
-                                    </h6>
+                                <!-- ============ PAYMENT MAIN DETAILS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-wallet2"></i> Payment Main Details
+                                </p>
 
-                                    <div class="row g-3">
-                                        <div class="col-md-2">
-                                            <label class="form-label" for="paymentID">Payment ID</label>
-                                            <div class="input-group input-group-sm">
-                                                <input list="paymentIDSuggestions" id="paymentID"
-                                                    class="form-control bg-light-input" required
-                                                    placeholder="Select...">
-                                                <datalist id="paymentIDSuggestions"></datalist>
-                                                <button type="button" class="btn btn-secondary btn-sm"
-                                                    data-bs-toggle="modal" data-bs-target="#searchPaymentModal"
-                                                    title="Search payment">
-                                                    <i class="bi bi-search"></i>
-                                                </button>
-                                            </div>
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="paymentID">Payment ID</label>
+                                        <div class="input-group">
+                                            <input list="paymentIDSuggestions" id="paymentID"
+                                                class="form-control bg-light-input" required placeholder="Select...">
+                                            <datalist id="paymentIDSuggestions"></datalist>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#searchPaymentModal"
+                                                title="Search payment" aria-label="Search payment">
+                                                <i class="bi bi-search"></i>
+                                            </button>
                                         </div>
+                                    </div>
 
-                                        <div class="col-md-2">
-                                            <label class="form-label" for="receiptOn">Receipt On</label>
-                                            <input type="date" id="receiptOn" class="form-control" required>
-                                        </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="receiptOn">
+                                            Receipt On<span class="req">*</span>
+                                        </label>
+                                        <input type="date" id="receiptOn" class="form-control" required>
+                                    </div>
 
-                                        <div class="col-md-4">
-                                            <label class="form-label" for="partyName">Customer Name</label>
+                                    <div class="col-xl-4 col-lg-6 col-md-4 col-sm-12">
+                                        <label class="form-label" for="partyName">
+                                            Customer Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
                                             <input list="partySuggestions" id="partyName" class="form-control" required
                                                 placeholder="Choose...">
                                             <datalist id="partySuggestions"></datalist>
                                         </div>
+                                    </div>
 
-                                        <div class="col-md-2">
-                                            <label class="form-label" for="transactionType">Transaction Type</label>
-                                            <input type="text" id="transactionType" class="form-control" disabled
-                                                placeholder="—">
-                                        </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="transactionType">Transaction Type</label>
+                                        <input type="text" id="transactionType" class="form-control" disabled
+                                            placeholder="—">
+                                    </div>
 
-                                        <div class="col-md-2">
-                                            <label class="form-label" for="paymentMode">Payment Mode</label>
-                                            <select id="paymentMode" class="form-select" required>
-                                                <option value="" disabled selected>Choose...</option>
-                                                <option value="Cash">Cash</option>
-                                                <option value="Cheque">Cheque</option>
-                                                <option value="Card">Card</option>
-                                                <option value="IMPS">IMPS</option>
-                                                <option value="NEFT">NEFT</option>
-                                                <option value="RTGS">RTGS</option>
-                                                <option value="UPI">UPI</option>
-                                                <option value="Net Settlement">Net Settlement</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-md-2">
-                                            <label class="form-label" for="inputBankName">Bank Name</label>
-                                            <input list="bankNameSuggestions" id="inputBankName" class="form-control"
-                                                required placeholder="Select Bank...">
-                                            <datalist id="bankNameSuggestions"></datalist>
-                                        </div>
-
-                                        <div class="col-md-2">
-                                            <label class="form-label" id="referenceNoLabel" for="referenceNo">Reference
-                                                No</label>
-                                            <input type="text" id="referenceNo" class="form-control" required
-                                                placeholder="Reference">
-                                        </div>
-
-                                        <div class="col-md-4">
-                                            <label class="form-label" for="information">Narration</label>
-                                            <input type="text" id="information" class="form-control"
-                                                placeholder="Enter narration">
-                                        </div>
-
-                                        <div class="col-md-2">
-                                            <label class="form-label" for="paymentAmount">Amount</label>
-                                            <input type="number" id="paymentAmount" class="form-control text-end"
-                                                min="0" step="0.01" placeholder="0.00" required>
-                                        </div>
-
-                                        <div class="col-md-2">
-                                            <label class="form-label" for="deductionAmount">Deduction Amount</label>
-                                            <input type="number" id="deductionAmount" class="form-control text-end"
-                                                min="0" step="0.01" placeholder="0.00">
-                                        </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="paymentMode">
+                                            Payment Mode<span class="req">*</span>
+                                        </label>
+                                        <select id="paymentMode" class="form-select" required>
+                                            <option value="" disabled selected>Choose...</option>
+                                            <option value="Cash">Cash</option>
+                                            <option value="Cheque">Cheque</option>
+                                            <option value="Card">Card</option>
+                                            <option value="IMPS">IMPS</option>
+                                            <option value="NEFT">NEFT</option>
+                                            <option value="RTGS">RTGS</option>
+                                            <option value="UPI">UPI</option>
+                                            <option value="Net Settlement">Net Settlement</option>
+                                        </select>
                                     </div>
                                 </div>
 
-                                <!-- TABS -->
-                                <ul class="nav nav-tabs" id="bookingTabs">
-                                    <li class="nav-item">
-                                        <button class="nav-link active" data-bs-toggle="tab"
-                                            data-bs-target="#invoiceDetails">
-                                            Payment Allocation Details
-                                        </button>
-                                    </li>
-                                </ul>
+                                <div class="row g-3 mt-1">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="inputBankName">
+                                            Bank Name<span class="req">*</span>
+                                        </label>
+                                        <input list="bankNameSuggestions" id="inputBankName" class="form-control"
+                                            required placeholder="Select Bank...">
+                                        <datalist id="bankNameSuggestions"></datalist>
+                                    </div>
 
-                                <!-- TAB CONTENT -->
-                                <div class="tab-content">
-                                    <div class="tab-pane fade show active" id="invoiceDetails">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" id="referenceNoLabel" for="referenceNo">
+                                            Reference No<span class="req">*</span>
+                                        </label>
+                                        <input type="text" id="referenceNo" class="form-control text-upper" required
+                                            placeholder="Reference">
+                                    </div>
 
-                                        <!-- PAYMENT ALLOCATION INPUT -->
-                                        <div class="row g-3 align-items-end mb-3">
-                                            <div class="col-md-3">
-                                                <label class="form-label" for="invoiceNumberInput">Invoice No</label>
-                                                <input type="text" list="invoiceNumberList" id="invoiceNumberInput"
-                                                    class="form-control" placeholder="Invoice No" autocomplete="off">
-                                                <datalist id="invoiceNumberList"></datalist>
-                                            </div>
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                                        <label class="form-label" for="information">Narration</label>
+                                        <input type="text" id="information" class="form-control"
+                                            placeholder="Enter narration">
+                                    </div>
 
-                                            <div class="col-md-2">
-                                                <label class="form-label" for="invoiceDate">Invoice Date</label>
-                                                <input type="date" id="invoiceDate" class="form-control bg-light-input"
-                                                    readonly>
-                                            </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="paymentAmount">
+                                            Amount<span class="req">*</span>
+                                        </label>
+                                        <input type="number" id="paymentAmount" class="form-control text-end" min="0"
+                                            step="0.01" placeholder="0.00" required>
+                                    </div>
 
-                                            <div class="col-md-2">
-                                                <label class="form-label" for="invoiceAmount">Invoice Amount</label>
-                                                <input type="number" id="invoiceAmount" min="0" step="0.01" readonly
-                                                    class="form-control bg-light-input text-end" placeholder="0.00">
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label class="form-label" for="invoiceBalance">Invoice Balance</label>
-                                                <input type="number" id="invoiceBalance" min="0" step="0.01" readonly
-                                                    class="form-control bg-light-input text-end" placeholder="0.00">
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label class="form-label" for="accountedAmount">Accounted Amount</label>
-                                                <input type="number" id="accountedAmount" min="0" step="0.01"
-                                                    class="form-control text-end" placeholder="0.00">
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label class="form-label" for="otherDeductionAmount">Other
-                                                    Deduction</label>
-                                                <input type="number" id="otherDeductionAmount" min="0" step="0.01"
-                                                    class="form-control text-end" placeholder="0.00">
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <label class="form-label" for="tdsDeductionAmount">TDS Deduction</label>
-                                                <input type="number" id="tdsDeductionAmount" min="0" step="0.01"
-                                                    class="form-control text-end" placeholder="0.00">
-                                            </div>
-
-                                            <div class="col-md-8">
-                                                <label class="form-label" for="narration">Narration</label>
-                                                <input type="text" id="narration" class="form-control"
-                                                    placeholder="Enter narration">
-                                            </div>
-
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" id="addInvoiceDetailsButton"
-                                                    class="btn btn-outline-primary btn-sm w-100">
-                                                    <i class="bi bi-plus-circle"></i> Add
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <!-- ALLOCATION TABLE -->
-                                        <div class="table-responsive">
-                                            <table class="table table-hover" id="paymentDetails">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Sr No</th>
-                                                        <th>Invoice No</th>
-                                                        <th>Narration</th>
-                                                        <th>Allocated Amount</th>
-                                                        <th>Other Deduction</th>
-                                                        <th>TDS Deduction</th>
-                                                        <th>Total Payment</th>
-                                                        <th class="text-center">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                                <tfoot>
-                                                    <tr>
-                                                        <td colspan="3" class="text-end">Total:</td>
-                                                        <td id="totalAllocatedAmount" class="text-end">0.00</td>
-                                                        <td id="totalOtherDeductionAmount" class="text-end">0.00</td>
-                                                        <td id="totalTDSDeductionAmount" class="text-end">0.00</td>
-                                                        <td id="totalPaymentAmount" class="text-end">0.00</td>
-                                                        <td></td>
-                                                    </tr>
-                                                    <tr class="text-danger fw-bold">
-                                                        <td colspan="6" class="text-end">Suspense Amount :</td>
-                                                        <td id="suspenseAmount" class="text-end">0.00</td>
-                                                        <td></td>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
-                                        </div>
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label class="form-label" for="deductionAmount">Deduction Amount</label>
+                                        <input type="number" id="deductionAmount" class="form-control text-end" min="0"
+                                            step="0.01" placeholder="0.00">
                                     </div>
                                 </div>
+
+                                <!-- ============ TABBED SECTIONS ============ -->
+                                <div class="mt-4">
+                                    <ul class="nav nav-tabs vm-tabs" id="bookingTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="invoiceDetails-tab" data-bs-toggle="tab"
+                                                data-bs-target="#invoiceDetails" type="button" role="tab"
+                                                aria-controls="invoiceDetails" aria-selected="true">
+                                                <i class="bi bi-list-check me-1"></i> Payment Allocation Details
+                                            </button>
+                                        </li>
+                                    </ul>
+
+                                    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white"
+                                        id="bookingTabsContent">
+
+                                        <div class="tab-pane fade show active" id="invoiceDetails" role="tabpanel"
+                                            aria-labelledby="invoiceDetails-tab" tabindex="0">
+
+                                            <!-- Payment Allocation Input -->
+                                            <div class="row g-3 align-items-end mb-3">
+                                                <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12">
+                                                    <label class="form-label" for="invoiceNumberInput">Invoice
+                                                        No</label>
+                                                    <input type="text" list="invoiceNumberList" id="invoiceNumberInput"
+                                                        class="form-control text-upper" placeholder="Invoice No"
+                                                        autocomplete="off">
+                                                    <datalist id="invoiceNumberList"></datalist>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-6 col-sm-6">
+                                                    <label class="form-label" for="invoiceDate">Invoice Date</label>
+                                                    <input type="date" id="invoiceDate"
+                                                        class="form-control bg-light-input" readonly>
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-6 col-sm-6">
+                                                    <label class="form-label" for="invoiceAmount">Invoice Amount</label>
+                                                    <input type="number" id="invoiceAmount" min="0" step="0.01" readonly
+                                                        class="form-control bg-light-input text-end" placeholder="0.00">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-2 col-md-6 col-sm-6">
+                                                    <label class="form-label" for="invoiceBalance">Invoice
+                                                        Balance</label>
+                                                    <input type="number" id="invoiceBalance" min="0" step="0.01"
+                                                        readonly class="form-control bg-light-input text-end"
+                                                        placeholder="0.00">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                                    <label class="form-label" for="accountedAmount">Accounted
+                                                        Amount</label>
+                                                    <input type="number" id="accountedAmount" min="0" step="0.01"
+                                                        class="form-control text-end" placeholder="0.00">
+                                                </div>
+
+                                                <div class="col-xl-1 col-lg-2 col-md-4 col-sm-6">
+                                                    <label class="form-label" for="otherDeductionAmount">Other
+                                                        Ded.</label>
+                                                    <input type="number" id="otherDeductionAmount" min="0" step="0.01"
+                                                        class="form-control text-end" placeholder="0.00">
+                                                </div>
+
+                                                <div class="col-xl-1 col-lg-2 col-md-4 col-sm-6">
+                                                    <label class="form-label" for="tdsDeductionAmount">TDS Ded.</label>
+                                                    <input type="number" id="tdsDeductionAmount" min="0" step="0.01"
+                                                        class="form-control text-end" placeholder="0.00">
+                                                </div>
+
+                                                <div class="col-xl-8 col-lg-8 col-md-9 col-sm-12">
+                                                    <label class="form-label" for="narration">Narration</label>
+                                                    <input type="text" id="narration" class="form-control"
+                                                        placeholder="Enter narration">
+                                                </div>
+
+                                                <div class="col-xl-2 col-lg-3 col-md-3 col-sm-12 d-grid">
+                                                    <button type="button" id="addInvoiceDetailsButton"
+                                                        class="btn btn-primary">
+                                                        <i class="bi bi-plus-circle"></i> Add
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Allocation Table -->
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0" id="paymentDetails">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th scope="col">Sr No</th>
+                                                            <th scope="col">Invoice No</th>
+                                                            <th scope="col">Narration</th>
+                                                            <th scope="col" class="text-end">Allocated Amount</th>
+                                                            <th scope="col" class="text-end">Other Deduction</th>
+                                                            <th scope="col" class="text-end">TDS Deduction</th>
+                                                            <th scope="col" class="text-end">Total Payment</th>
+                                                            <th scope="col" class="text-center">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td colspan="8" class="vm-empty">
+                                                                <i class="bi bi-list-check"></i>
+                                                                No allocation details added
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr class="table-light fw-bold">
+                                                            <td colspan="3" class="text-end">Total:</td>
+                                                            <td id="totalAllocatedAmount" class="text-end">0.00</td>
+                                                            <td id="totalOtherDeductionAmount" class="text-end">0.00
+                                                            </td>
+                                                            <td id="totalTDSDeductionAmount" class="text-end">0.00</td>
+                                                            <td id="totalPaymentAmount" class="text-end">0.00</td>
+                                                            <td></td>
+                                                        </tr>
+                                                        <tr class="text-danger fw-bold">
+                                                            <td colspan="6" class="text-end">Suspense Amount :</td>
+                                                            <td id="suspenseAmount" class="text-end">0.00</td>
+                                                            <td></td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                    </div><!-- tab-content -->
+                                </div><!-- mt-4 -->
+
                             </form>
                         </div>
                     </div>
@@ -678,15 +706,15 @@
         </div>
     </div>
 
-    <!-- SUSPENSE MODAL -->
-    <div class="modal fade" id="suspenseModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+    <!-- ============ SUSPENSE MODAL ============ -->
+    <div class="modal fade" id="suspenseModal" tabindex="-1" aria-labelledby="suspenseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header bg-warning">
-                    <h5 class="modal-title">
-                        <i class="bi bi-exclamation-triangle-fill"></i> Pending Suspense Payments
+                    <h5 class="modal-title" id="suspenseModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Pending Suspense Payments
                     </h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                    <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-danger fw-bold mb-3">
@@ -697,18 +725,25 @@
                     <div class="table-responsive"
                         style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
                         <table class="table table-hover align-middle mb-0">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Payment ID</th>
-                                    <th>Receipt Date</th>
-                                    <th>Reference No</th>
-                                    <th class="text-end">Payment</th>
-                                    <th class="text-end">Deduction</th>
-                                    <th class="text-end text-danger">Suspense</th>
-                                    <th>Select</th>
+                                    <th scope="col">Payment ID</th>
+                                    <th scope="col">Receipt Date</th>
+                                    <th scope="col">Reference No</th>
+                                    <th scope="col" class="text-end">Payment</th>
+                                    <th scope="col" class="text-end">Deduction</th>
+                                    <th scope="col" class="text-end">Suspense</th>
+                                    <th scope="col" class="text-center">Select</th>
                                 </tr>
                             </thead>
-                            <tbody id="suspenseTableBody"></tbody>
+                            <tbody id="suspenseTableBody">
+                                <tr>
+                                    <td colspan="7" class="vm-empty">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        No pending suspense payments
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -716,51 +751,48 @@
         </div>
     </div>
 
-    <!-- SEARCH SAVED PAYMENTS MODAL -->
+    <!-- ============ SEARCH SAVED PAYMENTS MODAL ============ -->
     <div class="modal fade" id="searchPaymentModal" tabindex="-1" aria-labelledby="searchPaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
 
-                <!-- Modal Header -->
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="searchPaymentModalLabel">
-                        <i class="bi bi-search"></i> Search Saved Payments
+                        <i class="bi bi-search me-1"></i> Search Saved Payments
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
 
-                <!-- Modal Body -->
                 <div class="modal-body">
-                    <!-- Search Input Box -->
                     <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="searchSavedPaymentInput" class="form-control"
                             placeholder="Search by Payment ID, Customer Name, or Reference No..." autocomplete="off">
                         <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
-                            <i class="bi bi-search"></i> Search
+                            Search
                         </button>
                     </div>
 
-                    <!-- Search Results Table -->
                     <div class="table-responsive"
                         style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
                         <table class="table table-hover align-middle mb-0">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Payment ID</th>
-                                    <th>Receipt Date</th>
-                                    <th class="text-start">Customer Name</th>
-                                    <th>Mode</th>
-                                    <th class="text-end">Amount</th>
-                                    <th>Action</th>
+                                    <th scope="col">Payment ID</th>
+                                    <th scope="col">Receipt Date</th>
+                                    <th scope="col" class="text-start">Customer Name</th>
+                                    <th scope="col">Mode</th>
+                                    <th scope="col" class="text-end">Amount</th>
+                                    <th scope="col" class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="searchPaymentTableBody">
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted fst-italic py-4">
-                                        <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
-                                        Enter search criteria to find payments...
+                                    <td colspan="6" class="vm-empty">
+                                        <i class="bi bi-search"></i>
+                                        Enter search criteria to find payments…
                                     </td>
                                 </tr>
                             </tbody>
@@ -768,27 +800,42 @@
                     </div>
                 </div>
 
-                <!-- Modal Footer -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                        data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert">
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage"></div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here...</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
 
-    <!-- JS Libraries (Deferred for Performance) -->
+    <!-- JS Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>

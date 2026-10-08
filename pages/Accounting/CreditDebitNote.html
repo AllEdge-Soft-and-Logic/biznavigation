@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credit or Debit Note</title>
+    <meta name="description"
+        content="Credit or Debit Note – issue credit/debit notes against customer invoices or vendor bills.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Credit or Debit Note · BizNavigation</title>
 
     <!-- Resource Hints -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -25,10 +28,13 @@
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
+    <!-- Upgraded Modern Form Styles -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Upgraded Modern Form Styles (Unified) -->
+    <!-- Page-scoped polish -->
     <style>
         :root {
             --primary-color: #2563eb;
@@ -47,13 +53,71 @@
             --transition: all 0.2s ease-in-out;
         }
 
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
         body {
             background-color: var(--bg-color);
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
         }
 
-        /* Card Styling */
         .card {
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: var(--radius-lg);
@@ -63,13 +127,6 @@
 
         .card-body {
             padding: 1.5rem 2rem !important;
-        }
-
-        /* Action Bar */
-        .action-bar {
-            padding-bottom: 1.25rem;
-            margin-bottom: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
         }
 
         .btn {
@@ -86,7 +143,6 @@
             font-size: 0.85rem;
         }
 
-        /* Form Controls */
         .form-label {
             margin-bottom: 0.3rem !important;
             font-size: 0.75rem;
@@ -94,10 +150,6 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        .form-label.small {
-            font-size: 0.72rem !important;
         }
 
         .form-control,
@@ -146,60 +198,6 @@
             resize: none;
         }
 
-        /* Section Headers */
-        .section-header {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: var(--text-main);
-            padding: 0.75rem 0 0.65rem 0;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .section-header::before {
-            content: "";
-            display: inline-block;
-            width: 4px;
-            height: 14px;
-            border-radius: 2px;
-            background-color: var(--primary-color);
-        }
-
-        /* Section Wrapper (replaces .border.rounded.p-2) */
-        .form-section {
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1.25rem 1.5rem;
-            background-color: var(--surface-color);
-            margin-bottom: 1.25rem;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-        }
-
-        /* Input group */
-        .input-group-sm>.form-control,
-        .input-group-sm>.form-select {
-            padding: 0.4rem 0.7rem !important;
-            font-size: 0.85rem !important;
-        }
-
-        .input-group .btn-secondary {
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-        }
-
-        .input-group .btn-secondary:hover {
-            background-color: #eff6ff;
-            color: var(--primary-color);
-            border-color: #bfdbfe;
-        }
-
-        /* Modern Tables */
         .table-responsive {
             max-height: 320px;
             overflow: auto;
@@ -236,8 +234,8 @@
             font-size: 0.82rem;
             vertical-align: middle;
             color: var(--text-main);
-            border-bottom: 1px solid var(--border-color);
             border-color: var(--border-color);
+            text-align: center;
         }
 
         .table tbody tr:last-child td {
@@ -248,20 +246,21 @@
             background-color: #f8fafc;
         }
 
-        .table tfoot td {
+        .table tfoot td,
+        .table tfoot th {
             background-color: #f1f5f9;
             font-weight: 700;
             font-size: 0.82rem;
             padding: 0.7rem 0.75rem !important;
             border-top: 1px solid var(--border-color);
             color: var(--text-main);
+            text-align: center;
         }
 
         .table tfoot td#totalGrand {
             color: var(--primary-color) !important;
         }
 
-        /* Reference suggestions dropdown */
         #referenceSuggestions {
             border: 1px solid var(--border-color);
             border-top: none;
@@ -288,7 +287,6 @@
             color: var(--primary-color);
         }
 
-        /* Modals */
         .modal-content {
             border: none;
             border-radius: var(--radius-lg);
@@ -298,12 +296,6 @@
 
         .modal-header {
             padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .modal-header.bg-light {
-            background-color: #f1f5f9 !important;
-            color: var(--text-main);
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -357,7 +349,6 @@
             background-color: #f8fafc;
         }
 
-        /* Address selection list */
         #addressListContainer .address-item {
             padding: 0.75rem 1rem;
             border: 1px solid var(--border-color);
@@ -373,7 +364,6 @@
             border-color: #bfdbfe;
         }
 
-        /* Status Badges */
         .badge.bg-secondary {
             background-color: #e2e8f0 !important;
             color: #475569 !important;
@@ -392,7 +382,6 @@
             border-radius: 20px;
         }
 
-        /* Select2 unified look */
         .select2-container--default .select2-selection--single,
         .select2-container--default .select2-selection--multiple {
             border: 1px solid var(--border-color);
@@ -425,21 +414,21 @@
             background-color: var(--primary-color) !important;
         }
 
-        /* Toast */
         .toast {
             border: none;
             border-radius: var(--radius-md);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
-        /* Mobile tweaks */
         @media (max-width: 768px) {
             .card-body {
                 padding: 1rem 1.25rem !important;
             }
+        }
 
-            .form-section {
-                padding: 1rem 1.25rem;
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
             }
         }
     </style>
@@ -457,40 +446,49 @@
         <div class="main-content">
             <div class="page-content">
                 <div class="container-fluid mt-3 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <form class="invoiceForm" id="creditDebitForm" autocomplete="off">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
+                            <form class="invoiceForm" id="creditDebitForm" autocomplete="off" novalidate>
 
-                                <!-- Action Bar -->
+                                <!-- ============ ACTION BAR ============ -->
                                 <div
-                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Credit / Debit Note</h5>
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-file-earmark-text text-primary"></i>
+                                        Credit / Debit Note
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
 
                                     <div class="d-flex flex-wrap gap-2 align-items-center">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
-                                            id="newButton" title="Create new note">
-                                            <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> New
+                                            id="newButton" title="Create new note" aria-label="New note">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
                                         </button>
 
                                         <button type="button" class="btn btn-outline-warning btn-sm bg-white"
-                                            id="modifyButton" disabled title="Modify note">
-                                            <i class="bi bi-pencil" aria-hidden="true"></i> Modify
+                                            id="modifyButton" disabled title="Modify note" aria-label="Modify note">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
                                         </button>
 
                                         <button type="button" class="btn btn-outline-danger btn-sm bg-white"
-                                            id="deleteButton" disabled title="Delete note">
-                                            <i class="bi bi-trash" aria-hidden="true"></i> Delete
+                                            id="deleteButton" disabled title="Delete note" aria-label="Delete note">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
                                         </button>
 
                                         <button type="button" class="btn btn-outline-info btn-sm bg-white"
-                                            id="reportButton" disabled title="Print report">
-                                            <i class="bi bi-printer" aria-hidden="true"></i> Print
+                                            id="reportButton" disabled title="Print report" aria-label="Print report">
+                                            <i class="bi bi-printer"></i>
+                                            <span class="d-none d-lg-inline ms-1">Print</span>
                                         </button>
 
-                                        <!-- Approve Button -->
                                         <button type="button" class="btn btn-outline-success btn-sm bg-white"
-                                            id="approveButton" disabled title="Approve note">
-                                            <i class="bi bi-check-circle" aria-hidden="true"></i> Approve
+                                            id="approveButton" disabled title="Approve note" aria-label="Approve note">
+                                            <i class="bi bi-check-circle"></i>
+                                            <span class="d-none d-lg-inline ms-1">Approve</span>
                                         </button>
 
                                         <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
@@ -498,10 +496,10 @@
                                             <span id="saveSpinnerBtn"
                                                 class="spinner-border spinner-border-sm me-2 d-none" role="status"
                                                 aria-hidden="true"></span>
-                                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Save
+                                            <i class="bi bi-check2-circle"></i> Save
                                         </button>
 
-                                        <!-- Status Indicator & Approval Badge -->
+                                        <!-- Status / Approval badges -->
                                         <div class="d-flex align-items-center gap-2 ms-2">
                                             <span class="badge bg-secondary d-none" id="statusBadge">New</span>
                                             <input type="hidden" id="status" value="New">
@@ -518,222 +516,216 @@
                                     <input type="hidden" id="bankIDs">
                                 </div>
 
-                                <!-- ===================== CREDIT / DEBIT NOTE DETAILS ===================== -->
-                                <div class="form-section">
-                                    <h6 class="section-header">
-                                        <i class="bi bi-file-earmark-text"></i> Credit or Debit Note Details
-                                    </h6>
+                                <!-- ============ CREDIT / DEBIT NOTE DETAILS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-file-earmark-text"></i> Credit / Debit Note Details
+                                </p>
 
-                                    <div class="row g-3">
-                                        <!-- Note Type -->
-                                        <div class="col-md-2">
-                                            <label for="noteType" class="form-label">Note Type <span
-                                                    class="text-danger">*</span></label>
-                                            <select class="form-select form-select-sm" id="noteType" required>
-                                                <option value="" selected disabled>Choose...</option>
-                                                <option value="Credit Note">Credit Note</option>
-                                                <option value="Debit Note">Debit Note</option>
-                                            </select>
-                                        </div>
-
-                                        <!-- Note Number -->
-                                        <div class="col-md-2">
-                                            <label for="noteNo" class="form-label">Note No</label>
-                                            <div class="input-group input-group-sm">
-                                                <input list="noteNoSuggestions" class="form-control form-control-sm"
-                                                    id="noteNo" disabled autocomplete="off">
-                                                <datalist id="noteNoSuggestions"></datalist>
-                                                <button type="button" class="btn btn-secondary btn-sm px-2"
-                                                    data-bs-toggle="modal" data-bs-target="#searchPaymentModal"
-                                                    aria-label="Search Notes" title="Search Notes">
-                                                    <i class="bi bi-search" aria-hidden="true"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <!-- Note Date -->
-                                        <div class="col-md-2">
-                                            <label for="noteDate" class="form-label">Note Date <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="date" class="form-control form-control-sm" id="noteDate"
-                                                required>
-                                        </div>
-
-                                        <!-- Party Name -->
-                                        <div class="col-lg-4">
-                                            <label for="partyName" class="form-label">Party Name <span
-                                                    class="text-danger">*</span></label>
-                                            <input list="partySuggestions" class="form-control form-control-sm"
-                                                id="partyName" required placeholder="Choose..." autocomplete="off">
-                                            <datalist id="partySuggestions"></datalist>
-                                        </div>
-
-                                        <!-- Reference Type -->
-                                        <div class="col-md-2">
-                                            <label for="referenceType" class="form-label">Reference Type <span
-                                                    class="text-danger">*</span></label>
-                                            <select class="form-select form-select-sm" id="referenceType" required>
-                                                <option value="" selected disabled>Choose...</option>
-                                                <option value="Customer Invoice">Customer Invoice</option>
-                                                <option value="Vendor Bill">Vendor Bill</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
-
-                                        <!-- Reason -->
-                                        <div class="col-md-6">
-                                            <label for="reason" class="form-label">Reason <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" id="reason" required
-                                                autocomplete="off" placeholder="Enter reason">
-                                        </div>
-
-                                        <!-- Remarks -->
-                                        <div class="col-md-6">
-                                            <label for="remarks" class="form-label">Remarks</label>
-                                            <input type="text" class="form-control form-control-sm" id="remarks"
-                                                autocomplete="off" placeholder="Optional">
-                                        </div>
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="noteType" class="form-label">
+                                            Note Type<span class="req">*</span>
+                                        </label>
+                                        <select class="form-select" id="noteType" required>
+                                            <option value="" selected disabled>Choose...</option>
+                                            <option value="Credit Note">Credit Note</option>
+                                            <option value="Debit Note">Debit Note</option>
+                                        </select>
                                     </div>
-                                </div>
 
-                                <!-- ===================== ITEM DETAILS ===================== -->
-                                <div class="form-section">
-                                    <h6 class="section-header">
-                                        <i class="bi bi-box-seam"></i> Item Details
-                                    </h6>
-
-                                    <div class="row g-3 align-items-end">
-                                        <!-- Reference Invoice / Bill -->
-                                        <div class="col-md-2 position-relative">
-                                            <label for="referenceInvoice" class="form-label">Ref. Invoice/Bill <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm"
-                                                id="referenceInvoice" autocomplete="off" required
-                                                placeholder="Type Invoice No...">
-                                            <div id="referenceSuggestions"
-                                                class="list-group position-absolute w-100 shadow"
-                                                style="z-index: 1055; max-height: 200px; overflow-y: auto; display: none;">
-                                            </div>
-                                        </div>
-
-                                        <!-- Item -->
-                                        <div class="col-md-2">
-                                            <label for="item" class="form-label">Item <span
-                                                    class="text-danger">*</span></label>
-                                            <input list="itemSuggestions" class="form-control form-control-sm" id="item"
-                                                required autocomplete="off" placeholder="Select item">
-                                            <datalist id="itemSuggestions"></datalist>
-                                        </div>
-
-                                        <!-- Description -->
-                                        <div class="col-md-4">
-                                            <label for="description" class="form-label">Description <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" id="description"
-                                                required autocomplete="off" placeholder="Description">
-                                        </div>
-
-                                        <!-- HSN Code -->
-                                        <div class="col-md-2">
-                                            <label for="hsnCode" class="form-label">HSN Code <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" id="hsnCode"
-                                                required autocomplete="off" placeholder="HSN">
-                                        </div>
-
-                                        <!-- Quantity -->
-                                        <div class="col-md-2">
-                                            <label for="quantity" class="form-label">Quantity <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="number" class="form-control form-control-sm text-end"
-                                                id="quantity" required min="0.01" step="any" placeholder="0.00">
-                                        </div>
-
-                                        <!-- Full Amount -->
-                                        <div class="col-md-3">
-                                            <label for="fullAmount" id="fullAmountLabel" class="form-label">Amount <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="number" class="form-control form-control-sm text-end"
-                                                id="fullAmount" required min="0" step="0.01" placeholder="0.00">
-                                        </div>
-
-                                        <!-- Tax Rate -->
-                                        <div class="col-md-3">
-                                            <label for="partyDefaultTax" class="form-label">Tax Rate</label>
-                                            <select id="partyDefaultTax" class="form-select form-select-sm">
-                                                <option value="" disabled selected>Select Tax</option>
-                                            </select>
-                                        </div>
-
-                                        <!-- Total Amount -->
-                                        <div class="col-md-3">
-                                            <label for="totalAmount" class="form-label">Total Amount</label>
-                                            <input type="number" id="totalAmount"
-                                                class="form-control form-control-sm bg-light text-end" readonly
-                                                placeholder="0.00">
-                                        </div>
-
-                                        <!-- Add Row Button -->
-                                        <div class="col-md-3">
-                                            <button type="button" id="addCreditDebitRow"
-                                                class="btn btn-outline-primary btn-sm w-100">
-                                                <i class="bi bi-plus-circle" aria-hidden="true"></i> Add Item
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="noteNo" class="form-label">Note No</label>
+                                        <div class="input-group">
+                                            <input list="noteNoSuggestions" class="form-control" id="noteNo" disabled
+                                                autocomplete="off">
+                                            <datalist id="noteNoSuggestions"></datalist>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#searchPaymentModal"
+                                                aria-label="Search Notes" title="Search Notes">
+                                                <i class="bi bi-search"></i>
                                             </button>
                                         </div>
                                     </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="noteDate" class="form-label">
+                                            Note Date<span class="req">*</span>
+                                        </label>
+                                        <input type="date" class="form-control" id="noteDate" required>
+                                    </div>
+
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                                        <label for="partyName" class="form-label">
+                                            Party Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                            <input list="partySuggestions" class="form-control" id="partyName" required
+                                                placeholder="Choose..." autocomplete="off">
+                                            <datalist id="partySuggestions"></datalist>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="referenceType" class="form-label">
+                                            Reference Type<span class="req">*</span>
+                                        </label>
+                                        <select class="form-select" id="referenceType" required>
+                                            <option value="" selected disabled>Choose...</option>
+                                            <option value="Customer Invoice">Customer Invoice</option>
+                                            <option value="Vendor Bill">Vendor Bill</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                                        <label for="reason" class="form-label">
+                                            Reason<span class="req">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="reason" required autocomplete="off"
+                                            placeholder="Enter reason">
+                                    </div>
+
+                                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-12">
+                                        <label for="remarks" class="form-label">Remarks</label>
+                                        <input type="text" class="form-control" id="remarks" autocomplete="off"
+                                            placeholder="Optional">
+                                    </div>
                                 </div>
 
-                                <!-- ===================== CREDIT / DEBIT DETAILS TABLE ===================== -->
-                                <div class="form-section mb-0">
-                                    <h6 class="section-header">
-                                        <i class="bi bi-list-check"></i> Credit / Debit Summary
-                                    </h6>
+                                <!-- ============ ITEM DETAILS ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-box-seam"></i> Item Details
+                                </p>
 
-                                    <div class="table-responsive">
-                                        <table class="table table-hover text-center align-middle" id="creditDebitTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>Sr No</th>
-                                                    <th>Item ID</th>
-                                                    <th>Item Reference</th>
-                                                    <th>Description</th>
-                                                    <th>HSN / SAC</th>
-                                                    <th>GST %</th>
-                                                    <th>CESS %</th>
-                                                    <th>No. of Units</th>
-                                                    <th>Non-Taxable Amt</th>
-                                                    <th>Taxable Amt</th>
-                                                    <th>SGST Amt</th>
-                                                    <th>CGST Amt</th>
-                                                    <th>IGST Amt</th>
-                                                    <th>CESS Amt</th>
-                                                    <th>Total GST</th>
-                                                    <th>Total Amt</th>
-                                                    <th class="text-center">Action</th>
-                                                    <th class="d-none">cgst_percent</th>
-                                                    <th class="d-none">sgst_percent</th>
-                                                    <th class="d-none">igst_percent</th>
-                                                    <th class="d-none">Tax ID</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                            <tfoot>
-                                                <tr id="totalsRow">
-                                                    <td colspan="8" class="text-end">Totals:</td>
-                                                    <td class="text-end" id="totalNonTaxAmt">0.00</td>
-                                                    <td class="text-end" id="totalTaxAmt">0.00</td>
-                                                    <td class="text-end" id="totalSGST">0.00</td>
-                                                    <td class="text-end" id="totalCGST">0.00</td>
-                                                    <td class="text-end" id="totalIGST">0.00</td>
-                                                    <td class="text-end" id="totalCESSAmt">0.00</td>
-                                                    <td class="text-end" id="totalGST">0.00</td>
-                                                    <td class="text-end" id="totalGrand">0.00</td>
-                                                    <td></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 position-relative">
+                                        <label for="referenceInvoice" class="form-label">
+                                            Ref. Invoice/Bill<span class="req">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="referenceInvoice" autocomplete="off"
+                                            required placeholder="Type Invoice No...">
+                                        <div id="referenceSuggestions" class="list-group position-absolute w-100 shadow"
+                                            style="z-index: 1055; max-height: 200px; overflow-y: auto; display: none;">
+                                        </div>
                                     </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="item" class="form-label">
+                                            Item<span class="req">*</span>
+                                        </label>
+                                        <input list="itemSuggestions" class="form-control" id="item" required
+                                            autocomplete="off" placeholder="Select item">
+                                        <datalist id="itemSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-xl-4 col-lg-6 col-md-8 col-sm-12">
+                                        <label for="description" class="form-label">
+                                            Description<span class="req">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="description" required
+                                            autocomplete="off" placeholder="Description">
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="hsnCode" class="form-label">
+                                            HSN Code<span class="req">*</span>
+                                        </label>
+                                        <input type="text" class="form-control text-upper" id="hsnCode" required
+                                            autocomplete="off" placeholder="HSN">
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="quantity" class="form-label">
+                                            Quantity<span class="req">*</span>
+                                        </label>
+                                        <input type="number" class="form-control text-end" id="quantity" required
+                                            min="0.01" step="any" placeholder="0.00">
+                                    </div>
+
+                                    <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6">
+                                        <label for="fullAmount" id="fullAmountLabel" class="form-label">
+                                            Amount<span class="req">*</span>
+                                        </label>
+                                        <input type="number" class="form-control text-end" id="fullAmount" required
+                                            min="0" step="0.01" placeholder="0.00">
+                                    </div>
+
+                                    <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6">
+                                        <label for="partyDefaultTax" class="form-label">Tax Rate</label>
+                                        <select id="partyDefaultTax" class="form-select">
+                                            <option value="" disabled selected>Select Tax</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-2 col-md-4 col-sm-6">
+                                        <label for="totalAmount" class="form-label">Total Amount</label>
+                                        <input type="number" id="totalAmount" class="form-control bg-light text-end"
+                                            readonly placeholder="0.00">
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 d-grid">
+                                        <button type="button" id="addCreditDebitRow" class="btn btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Add Item
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- ============ CREDIT / DEBIT SUMMARY ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-list-check"></i> Credit / Debit Summary
+                                </p>
+
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" id="creditDebitTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th scope="col">Sr No</th>
+                                                <th scope="col">Item ID</th>
+                                                <th scope="col">Item Reference</th>
+                                                <th scope="col">Description</th>
+                                                <th scope="col">HSN / SAC</th>
+                                                <th scope="col" class="text-end">GST %</th>
+                                                <th scope="col" class="text-end">CESS %</th>
+                                                <th scope="col" class="text-end">No. of Units</th>
+                                                <th scope="col" class="text-end">Non-Taxable Amt</th>
+                                                <th scope="col" class="text-end">Taxable Amt</th>
+                                                <th scope="col" class="text-end">SGST Amt</th>
+                                                <th scope="col" class="text-end">CGST Amt</th>
+                                                <th scope="col" class="text-end">IGST Amt</th>
+                                                <th scope="col" class="text-end">CESS Amt</th>
+                                                <th scope="col" class="text-end">Total GST</th>
+                                                <th scope="col" class="text-end">Total Amt</th>
+                                                <th scope="col" class="text-center">Action</th>
+                                                <th class="d-none">cgst_percent</th>
+                                                <th class="d-none">sgst_percent</th>
+                                                <th class="d-none">igst_percent</th>
+                                                <th class="d-none">Tax ID</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="17" class="vm-empty">
+                                                    <i class="bi bi-list-check"></i>
+                                                    No items added to this note
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr id="totalsRow" class="table-light fw-bold">
+                                                <td colspan="8" class="text-end">Totals:</td>
+                                                <td class="text-end" id="totalNonTaxAmt">0.00</td>
+                                                <td class="text-end" id="totalTaxAmt">0.00</td>
+                                                <td class="text-end" id="totalSGST">0.00</td>
+                                                <td class="text-end" id="totalCGST">0.00</td>
+                                                <td class="text-end" id="totalIGST">0.00</td>
+                                                <td class="text-end" id="totalCESSAmt">0.00</td>
+                                                <td class="text-end" id="totalGST">0.00</td>
+                                                <td class="text-end" id="totalGrand">0.00</td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
 
                             </form>
@@ -741,7 +733,7 @@
                             <!-- Loading Spinner -->
                             <div id="loadingSpinner"
                                 class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
-                                style="z-index: 1060;">
+                                aria-live="polite" style="z-index: 1060;">
                                 <div class="spinner-border text-light" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
@@ -752,12 +744,12 @@
                                 aria-labelledby="addressModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
-                                        <div class="modal-header bg-light">
+                                        <div class="modal-header bg-primary text-white">
                                             <h6 class="modal-title" id="addressModalLabel">
-                                                <i class="bi bi-geo-alt"></i> Select Invoice Address
+                                                <i class="bi bi-geo-alt me-1"></i> Select Invoice Address
                                             </h6>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body" id="addressListContainer"></div>
                                     </div>
@@ -771,43 +763,44 @@
         </div>
     </div>
 
-    <!-- SEARCH SAVED PAYMENTS MODAL -->
+    <!-- ============ SEARCH SAVED NOTES MODAL ============ -->
     <div class="modal fade" id="searchPaymentModal" tabindex="-1" aria-labelledby="searchPaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h6 class="modal-title" id="searchPaymentModalLabel">
-                        <i class="bi bi-search" aria-hidden="true"></i> Search Saved Payments
+                        <i class="bi bi-search me-1"></i> Search Saved Notes
                     </h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="input-group input-group-sm mb-3">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="searchSavedPaymentInput" class="form-control"
                             placeholder="Search by Note No, Party Name, or Reference No..." autocomplete="off">
                         <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
-                            <i class="bi bi-search" aria-hidden="true"></i> Search
+                            Search
                         </button>
                     </div>
                     <div class="table-responsive"
                         style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-                        <table class="table table-hover align-middle text-center text-nowrap mb-0">
-                            <thead>
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Note No</th>
-                                    <th>Note Date</th>
-                                    <th class="text-start">Party Name</th>
-                                    <th class="text-end">Amount</th>
-                                    <th>Action</th>
+                                    <th scope="col">Note No</th>
+                                    <th scope="col">Note Date</th>
+                                    <th scope="col" class="text-start">Party Name</th>
+                                    <th scope="col" class="text-end">Amount</th>
+                                    <th scope="col" class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="searchPaymentTableBody">
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted fst-italic py-4">
-                                        <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
-                                        Enter search criteria to find payments...
+                                    <td colspan="5" class="vm-empty">
+                                        <i class="bi bi-search"></i>
+                                        Enter search criteria to find notes…
                                     </td>
                                 </tr>
                             </tbody>
@@ -815,19 +808,33 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                        data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1070;">
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1070;" aria-live="polite" aria-atomic="true">
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage">Error message here...</div>
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here...</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
                     aria-label="Close"></button>
             </div>

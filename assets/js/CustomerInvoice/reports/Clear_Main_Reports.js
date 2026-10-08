@@ -1,9 +1,11 @@
+// Clear_Main_Reports.js
 // ==========================================
 // GENERATE CLEARANCE INVOICE PDF
 // ==========================================
 async function generate_Clear_InvoicePDF_Main(
     header,
-    lines = []
+    lines = [],
+    reportType = null        // ← NEW: accept report type from caller
 ) {
 
     try {
@@ -15,6 +17,18 @@ async function generate_Clear_InvoicePDF_Main(
             PDF_CONFIG;
 
         let y = 9;
+
+        // ==========================================
+        // RESOLVE EFFECTIVE REPORT TYPE
+        // Priority: explicit arg → DOM select → "Main"
+        // ==========================================
+        const effectiveReportType =
+            reportType ||
+            document.getElementById("reportType")?.value ||
+            "Main";
+
+        const isDutyInvoice =
+            String(effectiveReportType).trim().toLowerCase() === "duty invoice";
 
         // ==========================================
         // FETCH DATA (PARALLEL)
@@ -65,12 +79,11 @@ async function generate_Clear_InvoicePDF_Main(
         y = await drawHeader(doc, PAGE, FONT, company, y);
 
         // ==========================================
-        // TITLE
+        // TITLE  →  DUTY INVOICE  or  TAX INVOICE
         // ==========================================
-        y =
-            reportType === "Duty Invoice"
-                ? drawTitle_Duty_Invoice(doc, PAGE, FONT, y)
-                : drawTitle(doc, PAGE, FONT, y);
+        y = isDutyInvoice
+            ? drawTitle_Duty_Invoice(doc, PAGE, FONT, y)
+            : drawTitle(doc, PAGE, FONT, y);
 
         // ==========================================
         // PARTY DETAILS

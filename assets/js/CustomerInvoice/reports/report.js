@@ -1,3 +1,4 @@
+// report.js
 const footerY = 272;
 const PDF_CONFIG = {
     PAGE: { x: 5, y: 5, w: 200, h: 287 },
@@ -55,14 +56,33 @@ async function fetchCompanyDetails(header) {
 }
 
 async function fetchPartyDetails(header) {
-    if (!header?.PartyCode) return { name: "-", rcm: "Yes", address: "-", gst: "-", state: "-" };
+    if (!header?.PartyCode) {
+        return { name: "-", rcm: "Yes", address: "-", gst: "-", state: "-" };
+    }
 
     const data = await getPartyProfile(header.PartyCode);
 
+    // 🔍 DEBUG — remove once confirmed
+    console.log("[fetchPartyDetails] raw party row:", data);
+    console.log("[fetchPartyDetails] RCM field:", {
+        "data.RCM": data?.RCM,
+        "data.rcm": data?.rcm,
+        typeofRCM: typeof data?.RCM,
+        typeofrcm: typeof data?.rcm
+    });
+
+    const rawRcm = data?.RCM ?? data?.rcm;
+
+    let rcmValue = "Yes";                                // default
+    if (rawRcm === false) rcmValue = "No";               // boolean column
+    else if (rawRcm === true) rcmValue = "Yes";
+    else if (rawRcm != null && String(rawRcm).trim() !== "") {
+        rcmValue = String(rawRcm).trim();                // "Yes" / "No" / any string
+    }
+
     return {
         name: data?.PartyName || "-",
-        // ✅ Fix: Check both uppercase RCM and lowercase rcm, and default to 'Yes'
-        rcm: data?.RCM || data?.rcm || "Yes",
+        rcm: rcmValue,
         address: [
             data?.Address,
             data?.City && `${data.City} - ${data.PinCode}`,
@@ -311,15 +331,18 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
         { text: `GST No: ${safe(party?.gst || party?.GSTNo || party?.GSTIN, "")}`.trim(), isBold: true, isName: false }
     ];
 
+    // ✅ Read whichever key exists — works with both fetchPartyDetails() and raw DB rows
+    const rcmValue = safe(party?.rcm ?? party?.RCM, "Yes");
+
     const rightData = [
         ["Invoice No. :", safe(header?.InvoiceNo)],
         ["Invoice Date :", (typeof formatDate === "function" ? formatDate(header?.InvoiceDate) : header?.InvoiceDate) || "-"],
-        ["Tax Payable under RCM :", safe(party?.rcm, "Yes")], // ✅ Uses safe helper with default fallback
+        ["Tax Payable under RCM :", rcmValue],   // ✅ now reads the actual value
         ["SAC Code :", safe(header?.SACCode)],
         ["PO No :", safe(opNo)]
     ];
 
-    const boldLabels = new Set(["Invoice No. :", "Invoice Date :"]);
+    const boldLabels = new Set(["Invoice No. :", "Invoice Date :", "Tax Payable under RCM :", "SAC Code :", "PO No :"]);
 
     // Calculate Row Height dynamically
     let leftLinesCount = 1; // 1 for Name

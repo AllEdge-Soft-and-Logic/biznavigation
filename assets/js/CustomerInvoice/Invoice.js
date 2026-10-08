@@ -1,12 +1,16 @@
+// Invoice.js
 /* =========================================================
    CONSTANTS & UTILITIES
 ========================================================= */
 const FORWARDING_TYPES = ['Forwarding', 'Import', 'Export'];
-const totalFreight = 0;
 
 // Safe Math Utilities: Convert to integers (paise/cents) before calculating
 const toCents = (amount) => Math.round((parseFloat(amount) || 0) * 100);
 const toCurrency = (cents) => cents / 100;
+
+// Fallback for formatAmount if utils.js doesn't provide it
+const safeFormatAmount = (v) =>
+    (typeof formatAmount === 'function' ? formatAmount : (x) => Number(x || 0).toFixed(2))(v);
 
 /* =========================================================
    STRATEGY CONFIGURATION (The Router)
@@ -69,7 +73,6 @@ MOVEMENT_STRATEGIES['Export'] = { ...MOVEMENT_STRATEGIES['Forwarding'] };
 ========================================================= */
 let invoiceData = {};
 let invoiceChargesData = {};
-
 /* =========================================================
    DOM READY
 ========================================================= */
@@ -409,15 +412,13 @@ async function newInvoice() {
         document.getElementById('addShipmentNo').disabled = true;
         document.getElementById('fetchPendingInvoices').disabled = true;
         document.getElementById('movementType').value = '';
-        const tbd = document.querySelector('#pendingShipmentTable tbody');
-        if (tbd) tbd.innerHTML = '';
         document.getElementById('invoiceInformation').value = '';
     } catch (e) {
         console.error('Unlock failed:', e);
     }
 
-    // 1. Reset the form container first
-    const form = document.getElementById('container');
+    // 1. Reset the form container first (correct id)
+    const form = document.getElementById('mainInvoiceForm');
     if (form) form.reset();
 
     // 2. Clear all line items, totals, and charges tables explicitly so they reset to 0.00
@@ -458,10 +459,18 @@ async function newInvoice() {
     showToast('🚀 New Invoice Ready');
 }
 
-// Comprehensive reset for all totals elements to "0.00"
+// Comprehensive reset for all totals elements to "0.00" + restore empty row
 function clearInvoiceTotals() {
     const table = document.getElementById('pendingShipmentTable');
-    if (table?.tBodies?.[0]) table.tBodies[0].innerHTML = '';
+    if (table?.tBodies?.[0]) {
+        table.tBodies[0].innerHTML = `
+            <tr class="vm-empty-row">
+                <td colspan="19" class="vm-empty">
+                    <i class="bi bi-box-seam"></i>
+                    No shipment details loaded
+                </td>
+            </tr>`;
+    }
 
     const totalIds = [
         'totalFreight', 'totalFSCAmt', 'totalOtherAmt', 'totalSGST',
@@ -485,7 +494,15 @@ function clearInvoiceTotals() {
 
 function clearChargesTable() {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
-    if (tbody) tbody.innerHTML = '';
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr class="vm-empty-row">
+                <td colspan="7" class="vm-empty">
+                    <i class="bi bi-currency-rupee"></i>
+                    No shipment charges loaded
+                </td>
+            </tr>`;
+    }
 
     ['totalFreightAmt', 'totalSGSTAmt', 'totalCGSTAmt', 'totalIGSTAmt', 'totalGSTAmt', 'totalGrandAmt'].forEach(id => {
         const el = document.getElementById(id);
@@ -545,12 +562,12 @@ function renderChargesTable(chargesMap) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${type}</td>
-            <td class="text-end">${formatAmount(amounts.TotalAmount)}</td>
-            <td class="text-end">${formatAmount(amounts.SGSTAmt)}</td>
-            <td class="text-end">${formatAmount(amounts.CGSTAmt)}</td>
-            <td class="text-end">${formatAmount(amounts.IGSTAmt)}</td>
-            <td class="text-end">${formatAmount(amounts.TotalGSTAmt)}</td>
-            <td class="text-end">${formatAmount(amounts.GrandTotalAmt)}</td>
+            <td class="text-end">${safeFormatAmount(amounts.TotalAmount)}</td>
+            <td class="text-end">${safeFormatAmount(amounts.SGSTAmt)}</td>
+            <td class="text-end">${safeFormatAmount(amounts.CGSTAmt)}</td>
+            <td class="text-end">${safeFormatAmount(amounts.IGSTAmt)}</td>
+            <td class="text-end">${safeFormatAmount(amounts.TotalGSTAmt)}</td>
+            <td class="text-end">${safeFormatAmount(amounts.GrandTotalAmt)}</td>
         `;
         tbody.appendChild(row);
 
@@ -562,12 +579,12 @@ function renderChargesTable(chargesMap) {
         totalGrandAmt += amounts.GrandTotalAmt;
     });
 
-    setSafeText('totalFreightAmt', formatAmount(totalAmount));
-    setSafeText('totalSGSTAmt', formatAmount(totalSGST));
-    setSafeText('totalCGSTAmt', formatAmount(totalCGST));
-    setSafeText('totalIGSTAmt', formatAmount(totalIGST));
-    setSafeText('totalGSTAmt', formatAmount(totalGSTAmt));
-    setSafeText('totalGrandAmt', formatAmount(Math.round(totalGrandAmt)));
+    setSafeText('totalFreightAmt', safeFormatAmount(totalAmount));
+    setSafeText('totalSGSTAmt', safeFormatAmount(totalSGST));
+    setSafeText('totalCGSTAmt', safeFormatAmount(totalCGST));
+    setSafeText('totalIGSTAmt', safeFormatAmount(totalIGST));
+    setSafeText('totalGSTAmt', safeFormatAmount(totalGSTAmt));
+    setSafeText('totalGrandAmt', safeFormatAmount(Math.round(totalGrandAmt)));
 }
 
 async function getInvoiceDetails(invoiceNo) {
@@ -630,8 +647,11 @@ async function loadInvoice(invoiceNo) {
     document.getElementById("invoiceDate").value = invoiceDetails.InvoiceDate || "";
     document.getElementById("invoiceAddress").value = invoiceDetails.InvoiceAddress || "";
     document.getElementById("movementType").value = invoiceDetails.InvoiceType || "";
-    document.getElementById("bankIDs").value = getBankNameByCode(invoiceDetails.BankID) || "";
-    document.getElementById("inputBankName").value = invoiceDetails.id || "";
+
+    // FIX: bankID (hidden) should hold the ID; inputBankName (visible) should hold the name
+    document.getElementById("bankIDs").value = invoiceDetails.BankID || "";
+    document.getElementById("inputBankName").value = getBankNameByCode(invoiceDetails.BankID) || "";
+
     document.getElementById("invoiceInformation").value = invoiceDetails.Remarks || "";
     document.getElementById("tempFormID").value = invoiceDetails.id || "";
 
@@ -713,71 +733,75 @@ if (modifyBtn) {
 const delBtn = document.getElementById('deleteButton');
 if (delBtn) delBtn.addEventListener('click', () => alert('Delete functionality not implemented yet.'));
 
-document.getElementById('reportButton').addEventListener('click', async function () {
 
-    const btn = this;
-    const originalText = btn.innerHTML;
+// ==========================================================================
+// Print Dropdown → Report Generation
+// ==========================================================================
+document.querySelectorAll('#reportButton + .dropdown-menu .dropdown-item[data-report-type]')
+    .forEach(function (item) {
+        item.addEventListener('click', async function (e) {
+            e.preventDefault();
 
-    try {
-        const invoiceNo = document.getElementById('invoiceNo').value.trim();
+            const btn = document.getElementById('reportButton');
+            if (!btn || btn.disabled || btn.classList.contains('disabled')) return;
 
-        if (!invoiceNo) {
-            alert('Please enter/select an Invoice Number.');
-            return;
-        }
+            const reportType = this.getAttribute('data-report-type');
 
-        // Show processing state
-        btn.disabled = true;
-        btn.innerHTML = `
-            <span class="spinner-border spinner-border-sm me-2"></span>
-            Processing...
-        `;
-
-        reportType = document.getElementById('reportType').value;
-
-        const invoiceDetails = await getInvoiceDetails(invoiceNo);
-
-        if (!invoiceDetails) return;
-
-        if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
-
-            if (reportType === 'Main') {
-                await generate_International_InvoicePDF_Main(invoiceDetails);
-            } else if (reportType === 'Print Annexure') {
-                await generate_International_InvoicePDF_Annexure(invoiceDetails);
+            // Update the #reportType select so it reflects the user's choice
+            const reportTypeSelect = document.getElementById('reportType');
+            if (reportTypeSelect) {
+                reportTypeSelect.value = reportType;
+                reportTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
-        } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+            const originalText = btn.innerHTML;
 
-            await generate_Clear_InvoicePDF_Main(invoiceDetails);
+            try {
+                const invoiceNo = document.getElementById('invoiceNo').value.trim();
+                if (!invoiceNo) {
+                    alert('Please enter/select an Invoice Number.');
+                    return;
+                }
 
-        } else if (invoiceDetails.InvoiceType === 'Domestic') {
+                btn.disabled = true;
+                btn.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Processing...
+                `;
 
-            await generate_DomesticReports_InvoicePDF(invoiceDetails);
+                const invoiceDetails = await getInvoiceDetails(invoiceNo);
+                if (!invoiceDetails) return;
 
-        } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
-
-            await generate_FullTruckReports_InvoicePDF(invoiceDetails);
-
-        } else {
-
-            console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
-
-        }
-
-    } catch (error) {
-        console.error("Invoice PDF Generation Failed:", error?.stack || error?.message || error);
-
-        if (typeof Swal !== "undefined") {
-            Swal.fire("Error", error?.message || "PDF generation failed", "error");
-        } else {
-            alert("Report generation failed: " + (error?.message || error));
-        }
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-    }
-});
+                // Route to correct PDF generator based on InvoiceType and reportType
+                if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
+                    if (reportType === 'Main') {
+                        await generate_International_InvoicePDF_Main(invoiceDetails);
+                    } else if (reportType === 'Print Annexure') {
+                        await generate_International_InvoicePDF_Annexure(invoiceDetails);
+                    }
+                } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+                    // ✅ FIX: pass reportType so "Duty Invoice" title works
+                    await generate_Clear_InvoicePDF_Main(invoiceDetails, [], reportType);
+                } else if (invoiceDetails.InvoiceType === 'Domestic') {
+                    await generate_DomesticReports_InvoicePDF(invoiceDetails);
+                } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
+                    await generate_FullTruckReports_InvoicePDF(invoiceDetails);
+                } else {
+                    console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
+                }
+            } catch (error) {
+                console.error("Invoice PDF Generation Failed:", error?.stack || error?.message || error);
+                if (typeof Swal !== "undefined") {
+                    Swal.fire("Error", error?.message || "PDF generation failed", "error");
+                } else {
+                    alert("Report generation failed: " + (error?.message || error));
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    });
 
 function showAddressSelectionModal(addresses) {
     const container = document.getElementById('addressListContainer');

@@ -1162,12 +1162,13 @@ async function getPartyProfile(partyCode) {
     try {
         const { data, error } = await supabaseClient
             .from('PartyDetails')
-            .select('*')
+            .select('*')                                  // ✅ returns RCM
             .eq('PartyCode', partyCode)
-            .single();
+            .eq('company_id', CompanyID)                  // ✅ scope to company
+            .maybeSingle();                               // ✅ no throw on 0 rows
 
         if (error) throw error;
-        if (data) return data;
+        return data || null;
     } catch (error) {
         console.error('Error fetching Party profile:', error.message);
         return null;

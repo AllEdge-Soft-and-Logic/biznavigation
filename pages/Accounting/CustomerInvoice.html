@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Customer Invoice Management System">
-    <title>Customer Invoice</title>
+    <meta name="theme-color" content="#0d6efd">
+    <title>Customer Invoice · BizNavigation</title>
 
     <!-- Resource Hints -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
@@ -29,7 +30,10 @@
         crossorigin="anonymous">
     <link href="../../assets/css/navbar.css" rel="stylesheet" />
 
-    <!-- Upgraded Modern Form Styles (Unified) -->
+    <!-- Upgraded Modern Form Styles -->
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
+
+    <!-- Page-scoped polish -->
     <style>
         :root {
             --primary-color: #2563eb;
@@ -48,13 +52,80 @@
             --transition: all 0.2s ease-in-out;
         }
 
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
+        /* Hide the empty-state row when real data is present */
+        tbody:has(tr:not(.vm-empty-row)) .vm-empty-row {
+            display: none !important;
+        }
+
         body {
             background-color: var(--bg-color);
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
         }
 
-        /* Card Styling */
         .card {
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: var(--radius-lg);
@@ -64,13 +135,6 @@
 
         .card-body {
             padding: 1.5rem 1.75rem !important;
-        }
-
-        /* Action Bar */
-        .action-bar {
-            padding-bottom: 1.25rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
         }
 
         .btn {
@@ -87,7 +151,6 @@
             font-size: 0.85rem;
         }
 
-        /* Form Controls */
         .form-label {
             margin-bottom: 0.35rem !important;
             font-size: 0.72rem;
@@ -136,7 +199,6 @@
             cursor: default;
         }
 
-        /* Auto-populated highlight (modernized) */
         .invoice-bg {
             background-color: #eff6ff !important;
             border-color: #bfdbfe !important;
@@ -160,13 +222,11 @@
             background-color: #ffffff !important;
         }
 
-        /* Form grid spacing — comfortable breathing room */
         .form-grid {
             --bs-gutter-x: 1rem;
             --bs-gutter-y: 1rem;
         }
 
-        /* Single-line address field with horizontal scroll */
         .single-line-address {
             min-height: 38px !important;
             height: 38px;
@@ -180,7 +240,6 @@
             scrollbar-color: #cbd5e1 #f1f5f9;
         }
 
-        /* Slim scrollbar for the address field */
         .single-line-address::-webkit-scrollbar {
             height: 4px;
         }
@@ -199,7 +258,6 @@
             background: #94a3b8;
         }
 
-        /* Input group with search button */
         .input-group .form-control {
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
@@ -230,44 +288,6 @@
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
-        /* Modern Tabs */
-        .nav-tabs {
-            border-bottom: 1px solid var(--border-color);
-            gap: 1.5rem;
-            padding-bottom: 0px;
-            margin-bottom: 0;
-        }
-
-        .nav-tabs .nav-link {
-            border: none;
-            color: var(--text-muted);
-            background-color: transparent;
-            font-weight: 600;
-            padding: 0.65rem 0.25rem !important;
-            font-size: 0.85rem;
-            border-bottom: 2px solid transparent;
-            border-radius: 0;
-            transition: var(--transition);
-        }
-
-        .nav-tabs .nav-link:hover {
-            color: var(--text-main);
-            border-bottom-color: #cbd5e1;
-        }
-
-        .nav-tabs .nav-link.active {
-            color: var(--primary-color) !important;
-            background-color: transparent !important;
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .tab-content {
-            padding-top: 1.25rem;
-            background: transparent;
-            border: none !important;
-        }
-
-        /* Modern Tables */
         .table-responsive {
             max-height: 400px;
             min-height: 150px;
@@ -280,7 +300,6 @@
             scroll-behavior: smooth;
         }
 
-        /* Custom scrollbar */
         .table-responsive::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -358,7 +377,6 @@
             color: var(--primary-color) !important;
         }
 
-        /* Modals */
         .modal-content {
             border: none;
             border-radius: var(--radius-lg);
@@ -390,7 +408,6 @@
             background-color: #f8fafc;
         }
 
-        /* Address selection list */
         #addressListContainer .address-item {
             padding: 0.75rem 1rem;
             border: 1px solid var(--border-color);
@@ -406,7 +423,6 @@
             border-color: #bfdbfe;
         }
 
-        /* Select2 unified look */
         .select2-container--default .select2-selection--single,
         .select2-container--default .select2-selection--multiple {
             border: 1px solid var(--border-color);
@@ -439,26 +455,30 @@
             background-color: var(--primary-color) !important;
         }
 
-        /* Toast */
         .toast {
             border: none;
             border-radius: var(--radius-md);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
-        /* Mobile tweaks */
         @media (max-width: 768px) {
             .card-body {
                 padding: 1rem 1.25rem !important;
             }
 
-            .nav-tabs {
+            .vm-tabs {
                 gap: 1rem;
             }
 
             .form-grid {
                 --bs-gutter-x: 0.75rem;
                 --bs-gutter-y: 0.75rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
             }
         }
     </style>
@@ -474,36 +494,62 @@
 
         <!-- Main Content -->
         <main class="main-content">
-
-            <!-- PAGE CONTENT -->
             <section class="page-content">
                 <div class="container-fluid mt-3 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <form class="invoiceForm" id="mainInvoiceForm" autocomplete="off">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
+                            <form class="invoiceForm" id="mainInvoiceForm" autocomplete="off" novalidate>
 
-                                <!-- Action Bar -->
+                                <!-- ============ ACTION BAR ============ -->
                                 <div
-                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Customer Invoice</h5>
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-receipt text-primary"></i>
+                                        Customer Invoice
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge">New</span>
+                                    </h5>
 
                                     <div class="d-flex flex-wrap gap-2" role="group" aria-label="Form Actions">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
-                                            id="newButton" title="Create new booking">
-                                            <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> New
+                                            id="newButton" title="Create new invoice" aria-label="New invoice">
+                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-warning btn-sm bg-white"
-                                            id="modifyButton" disabled title="Modify booking">
-                                            <i class="bi bi-pencil" aria-hidden="true"></i> Modify
+                                            id="modifyButton" disabled title="Modify invoice"
+                                            aria-label="Modify invoice">
+                                            <i class="bi bi-pencil"></i>
+                                            <span class="d-none d-lg-inline ms-1">Modify</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm bg-white"
-                                            id="deleteButton" disabled title="Delete booking">
-                                            <i class="bi bi-trash" aria-hidden="true"></i> Delete
+                                            id="deleteButton" disabled title="Delete invoice"
+                                            aria-label="Delete invoice">
+                                            <i class="bi bi-trash"></i>
+                                            <span class="d-none d-lg-inline ms-1">Delete</span>
                                         </button>
-                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
-                                            id="reportButton" disabled aria-label="Print Report">
-                                            <i class="bi bi-printer" aria-hidden="true"></i> Print
-                                        </button>
+
+                                        <!-- Print Dropdown (replaces old Print button) -->
+                                        <div class="dropdown d-inline-block">
+                                            <button type="button"
+                                                class="btn btn-outline-info btn-sm bg-white dropdown-toggle"
+                                                id="reportButton" disabled aria-label="Print Report"
+                                                data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-printer"></i>
+                                                <span class="d-none d-lg-inline ms-1">Print</span>
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="reportButton">
+                                                <li><a class="dropdown-item" href="#" data-report-type="Main">Main</a>
+                                                </li>
+                                                <li><a class="dropdown-item" href="#"
+                                                        data-report-type="Letter Head">Letter Head</a></li>
+                                                <li><a class="dropdown-item" href="#"
+                                                        data-report-type="Print Annexure">Print Annexure</a></li>
+                                                <li><a class="dropdown-item" href="#"
+                                                        data-report-type="Duty Invoice">Duty Invoice</a></li>
+                                            </ul>
+                                        </div>
+
                                         <button id="saveButton" class="btn btn-primary btn-sm px-4 shadow-sm"
                                             type="button" data-mode="insert" title="Save invoice">
                                             <span id="saveSpinnerBtn"
@@ -523,41 +569,63 @@
                                     <input type="hidden" id="bankIDs">
                                 </div>
 
-                                <!-- Form Inputs -->
+                                <!-- ============ INVOICE INFORMATION ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-journal-text"></i> Invoice Information
+                                </p>
+
                                 <div class="row g-3 form-grid">
-                                    <!-- Row 1: Customer & Invoice basics -->
-                                    <div class="col-lg-2 col-md-6 col-sm-6">
+                                    <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6">
                                         <label for="invoiceNo" class="form-label">Invoice No</label>
                                         <div class="input-group">
                                             <input list="invoiceNoSuggestions" class="form-control invoice-bg"
                                                 id="invoiceNo" required autocomplete="off" placeholder="Invoice No">
                                             <datalist id="invoiceNoSuggestions"></datalist>
-                                            <button type="button" class="btn btn-secondary btn-sm"
+                                            <button type="button" class="btn btn-secondary btn-sm" id="invoiceNoSearch"
                                                 data-bs-toggle="modal" data-bs-target="#searchInvoiceModal"
-                                                title="Search Invoice">
+                                                title="Search Invoice" aria-label="Search Invoice">
                                                 <i class="bi bi-search"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="col-lg-2 col-md-6 col-sm-6">
-                                        <label for="invoiceDate" class="form-label">Booked Date</label>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6">
+                                        <label for="invoiceDate" class="form-label">
+                                            Booked Date<span class="req">*</span>
+                                        </label>
                                         <input type="date" class="form-control" id="invoiceDate" required>
                                     </div>
-                                    <div class="col-lg-4 col-md-6 col-sm-12">
-                                        <label for="partyName" class="form-label">Customer Name</label>
-                                        <input list="partySuggestions" class="form-control" id="partyName" required
-                                            placeholder="Choose Customer..." autocomplete="off">
-                                        <datalist id="partySuggestions"></datalist>
+
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                                        <label for="partyName" class="form-label">
+                                            Customer Name<span class="req">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                            <input list="partySuggestions" class="form-control" id="partyName" required
+                                                placeholder="Choose Customer..." autocomplete="off">
+                                            <datalist id="partySuggestions"></datalist>
+                                        </div>
                                     </div>
-                                    <div class="col-lg-4 col-md-6 col-sm-12">
+
+                                    <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
                                         <label for="invoiceAddress" class="form-label">Invoice Address</label>
                                         <textarea class="form-control single-line-address" id="invoiceAddress" rows="1"
                                             readonly aria-readonly="true"
                                             placeholder="Invoice address will auto-fill based on customer"></textarea>
                                     </div>
-                                    <!-- Row 2: Movement & Transit -->
-                                    <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <label for="movementType" class="form-label">Movement Type</label>
+                                </div>
+
+                                <!-- ============ SHIPMENT & ROUTE ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-truck"></i> Shipment &amp; Route
+                                </p>
+
+                                <div class="row g-3 form-grid">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="movementType" class="form-label">
+                                            Movement Type<span class="req">*</span>
+                                        </label>
                                         <select class="form-select" id="movementType" required>
                                             <option value="" disabled selected>Choose...</option>
                                             <option value="Customs Clearance">Customs Clearance</option>
@@ -568,7 +636,8 @@
                                             <option value="Import">Import</option>
                                         </select>
                                     </div>
-                                    <div class="col-lg-2 col-md-4 col-sm-6">
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="transitType" class="form-label">Transit Type</label>
                                         <select class="form-select" id="transitType">
                                             <option value="" disabled selected>Choose...</option>
@@ -577,7 +646,8 @@
                                             <option value="By Sea Freight">By Sea Freight</option>
                                         </select>
                                     </div>
-                                    <div class="col-lg-2 col-md-4 col-sm-6">
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="modeType" class="form-label">Mode Type</label>
                                         <select class="form-select" id="modeType">
                                             <option value="" disabled selected>Choose...</option>
@@ -587,159 +657,198 @@
                                             <option value="LCL">LCL</option>
                                         </select>
                                     </div>
-                                    <div class="col-lg-2 col-md-4 col-sm-6">
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="startDate" class="form-label">Start Date</label>
                                         <input type="date" class="form-control" id="startDate">
                                     </div>
-                                    <div class="col-lg-2 col-md-4 col-sm-6">
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="endDate" class="form-label">End Date</label>
                                         <input type="date" class="form-control" id="endDate">
                                     </div>
-                                    <div class="col-lg-2 col-md-4 col-sm-6">
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label for="department" class="form-label">Department</label>
                                         <input list="departmentList" class="form-control bg-light-input" id="department"
                                             autocomplete="off" placeholder="Select Department">
                                         <datalist id="departmentList"></datalist>
                                     </div>
+                                </div>
 
-                                    <!-- Row 3: Information & Get Data -->
-                                    <div class="col-lg-10 col-md-8 col-sm-12">
+                                <!-- ============ INFORMATION & FETCH ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-info-circle"></i> Information
+                                </p>
+
+                                <div class="row g-3 form-grid">
+                                    <div class="col-xl-10 col-lg-9 col-md-8 col-sm-12">
                                         <label for="invoiceInformation" class="form-label">Information</label>
                                         <input type="text" class="form-control" id="invoiceInformation"
                                             placeholder="Enter additional information">
                                     </div>
-                                    <div class="col-lg-2 col-md-4 col-sm-12 d-grid align-items-end">
-                                        <button type="button" class="btn btn-outline-primary btn-sm"
-                                            id="fetchPendingInvoices">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-12 d-grid align-items-end">
+                                        <button type="button" class="btn btn-primary" id="fetchPendingInvoices">
                                             <i class="bi bi-plus-circle" aria-hidden="true"></i> Get Data
                                         </button>
                                     </div>
                                 </div>
 
-                                <!-- Divider + Tabs -->
-                                <div class="mt-4 pt-3 border-top">
-                                    <ul class="nav nav-tabs" id="partyTabs" role="tablist">
+                                <!-- ============ TABBED SECTIONS ============ -->
+                                <div class="mt-4">
+                                    <ul class="nav nav-tabs vm-tabs" id="partyTabs" role="tablist">
                                         <li class="nav-item" role="presentation">
                                             <button class="nav-link active" id="shipmentDetails-tab"
                                                 data-bs-toggle="tab" data-bs-target="#shipmentDetails" type="button"
                                                 role="tab" aria-controls="shipmentDetails" aria-selected="true">
-                                                Shipment Details
+                                                <i class="bi bi-box-seam me-1"></i> Shipment Details
                                             </button>
                                         </li>
                                         <li class="nav-item" role="presentation">
                                             <button class="nav-link" id="shipmentCharges-tab" data-bs-toggle="tab"
                                                 data-bs-target="#shipmentCharges" type="button" role="tab"
                                                 aria-controls="shipmentCharges" aria-selected="false">
-                                                Shipment Charges
+                                                <i class="bi bi-currency-rupee me-1"></i> Shipment Charges
                                             </button>
                                         </li>
                                     </ul>
-                                </div>
 
-                                <!-- Tab Content -->
-                                <div class="tab-content">
-                                    <!-- Shipment Details Table -->
-                                    <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
-                                        aria-labelledby="shipmentDetails-tab" tabindex="0">
-                                        <div class="table-responsive">
-                                            <table class="table table-hover" id="pendingShipmentTable">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Docket<br>No</th>
-                                                        <th scope="col">Booked<br>Date</th>
-                                                        <th scope="col">Movement<br>Type</th>
-                                                        <th scope="col">Transit<br>Type</th>
-                                                        <th scope="col">Mode<br>Type</th>
-                                                        <th scope="col">Origin</th>
-                                                        <th scope="col">Destination</th>
-                                                        <th scope="col">No.<br>of Units</th>
-                                                        <th scope="col">Actual<br>Weight</th>
-                                                        <th scope="col">Chargeable<br>Weight</th>
-                                                        <th scope="col">Basic<br>Freight</th>
-                                                        <th scope="col">FSC<br>Amount</th>
-                                                        <th scope="col">Other<br>Amount</th>
-                                                        <th scope="col">SGST<br>Amount</th>
-                                                        <th scope="col">CGST<br>Amount</th>
-                                                        <th scope="col">IGST<br>Amount</th>
-                                                        <th scope="col">Total GST<br>Amount</th>
-                                                        <th scope="col">Total<br>Amount</th>
-                                                        <th scope="col" class="text-center">Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                                <tfoot>
-                                                    <tr id="totalsRow">
-                                                        <th colspan="10" class="text-end" scope="row">Totals:</th>
-                                                        <th class="text-end" id="totalQuantity">0.00</th>
-                                                        <th class="text-end" id="totalChargeableWeight">0.00</th>
-                                                        <th class="text-end" id="totalFreight">0.00</th>
-                                                        <th class="text-end" id="totalFSCAmt">0.00</th>
-                                                        <th class="text-end" id="totalOtherAmt">0.00</th>
-                                                        <th class="text-end" id="totalSGST">0.00</th>
-                                                        <th class="text-end" id="totalCGST">0.00</th>
-                                                        <th class="text-end" id="totalIGST">0.00</th>
-                                                        <th class="text-end" id="totalGST">0.00</th>
-                                                        <th class="text-end" id="totalGrand">0.00</th>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
+                                    <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white"
+                                        id="partyTabsContent">
+
+                                        <!-- ===== Shipment Details Tab ===== -->
+                                        <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
+                                            aria-labelledby="shipmentDetails-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0"
+                                                    id="pendingShipmentTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Docket No</th>
+                                                            <th scope="col">Booked Date</th>
+                                                            <th scope="col">Movement Type</th>
+                                                            <th scope="col">Transit Type</th>
+                                                            <th scope="col">Mode Type</th>
+                                                            <th scope="col">Origin</th>
+                                                            <th scope="col">Destination</th>
+                                                            <th scope="col" class="text-end">No. of Units</th>
+                                                            <th scope="col" class="text-end">Actual Weight</th>
+                                                            <th scope="col" class="text-end">Chargeable Weight</th>
+                                                            <th scope="col" class="text-end">Basic Freight</th>
+                                                            <th scope="col" class="text-end">FSC Amount</th>
+                                                            <th scope="col" class="text-end">Other Amount</th>
+                                                            <th scope="col" class="text-end">SGST Amount</th>
+                                                            <th scope="col" class="text-end">CGST Amount</th>
+                                                            <th scope="col" class="text-end">IGST Amount</th>
+                                                            <th scope="col" class="text-end">Total GST Amount</th>
+                                                            <th scope="col" class="text-end">Total Amount</th>
+                                                            <th scope="col" class="text-center">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr class="vm-empty-row">
+                                                            <td colspan="19" class="vm-empty">
+                                                                <i class="bi bi-box-seam"></i>
+                                                                No shipment details loaded
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr id="totalsRow" class="table-light fw-bold">
+                                                            <th colspan="7" class="text-end" scope="row">Totals:</th>
+                                                            <th class="text-end" id="totalQuantity">0.00</th>
+                                                            <th class="text-end" id="totalActualWeight">0.00</th>
+                                                            <th class="text-end" id="totalChargeableWeight">0.00</th>
+                                                            <th class="text-end" id="totalFreight">0.00</th>
+                                                            <th class="text-end" id="totalFSCAmt">0.00</th>
+                                                            <th class="text-end" id="totalOtherAmt">0.00</th>
+                                                            <th class="text-end" id="totalSGST">0.00</th>
+                                                            <th class="text-end" id="totalCGST">0.00</th>
+                                                            <th class="text-end" id="totalIGST">0.00</th>
+                                                            <th class="text-end" id="totalGST">0.00</th>
+                                                            <th class="text-end" id="totalGrand">0.00</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Shipment Charges Table -->
-                                    <div class="tab-pane fade" id="shipmentCharges" role="tabpanel"
-                                        aria-labelledby="shipmentCharges-tab" tabindex="0">
-                                        <div class="table-responsive">
-                                            <table class="table table-hover" id="pendingShipmentCharges">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col">Charges Type</th>
-                                                        <th scope="col">Total Amount</th>
-                                                        <th scope="col">SGST Amt</th>
-                                                        <th scope="col">CGST Amt</th>
-                                                        <th scope="col">IGST Amt</th>
-                                                        <th scope="col">Total GST Amt</th>
-                                                        <th scope="col">Grand Total Amt</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                                <tfoot>
-                                                    <tr id="ChargestotalsRow">
-                                                        <th class="text-end" scope="row">Totals:</th>
-                                                        <th class="text-end" id="totalFreightAmt">0.00</th>
-                                                        <th class="text-end" id="totalSGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalCGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalIGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalGrandAmt">0.00</th>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
+                                        <!-- ===== Shipment Charges Tab ===== -->
+                                        <div class="tab-pane fade" id="shipmentCharges" role="tabpanel"
+                                            aria-labelledby="shipmentCharges-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle mb-0"
+                                                    id="pendingShipmentCharges">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">Charges Type</th>
+                                                            <th scope="col" class="text-end">Total Amount</th>
+                                                            <th scope="col" class="text-end">SGST Amt</th>
+                                                            <th scope="col" class="text-end">CGST Amt</th>
+                                                            <th scope="col" class="text-end">IGST Amt</th>
+                                                            <th scope="col" class="text-end">Total GST Amt</th>
+                                                            <th scope="col" class="text-end">Grand Total Amt</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr class="vm-empty-row">
+                                                            <td colspan="7" class="vm-empty">
+                                                                <i class="bi bi-currency-rupee"></i>
+                                                                No shipment charges loaded
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                    <tfoot>
+                                                        <tr id="ChargestotalsRow" class="table-light fw-bold">
+                                                            <th class="text-end" scope="row">Totals:</th>
+                                                            <th class="text-end" id="totalFreightAmt">0.00</th>
+                                                            <th class="text-end" id="totalSGSTAmt">0.00</th>
+                                                            <th class="text-end" id="totalCGSTAmt">0.00</th>
+                                                            <th class="text-end" id="totalIGSTAmt">0.00</th>
+                                                            <th class="text-end" id="totalGSTAmt">0.00</th>
+                                                            <th class="text-end" id="totalGrandAmt">0.00</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <!-- Bottom Actions -->
-                                <div class="row g-3 mt-4 pt-3 border-top">
-                                    <div class="col-md-4">
-                                        <label for="inputBankName" class="form-label">Bank Name</label>
+                                    </div><!-- tab-content -->
+                                </div><!-- mt-4 -->
+
+                                <!-- ============ BANK & SHIPMENT ============ -->
+                                <p class="vm-section-title">
+                                    <i class="bi bi-bank"></i> Bank &amp; Shipment
+                                </p>
+
+                                <div class="row g-3 form-grid">
+                                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                                        <label for="inputBankName" class="form-label">
+                                            Bank Name<span class="req">*</span>
+                                        </label>
                                         <input list="bankNameSuggestions" class="form-control bg-light-input"
                                             id="inputBankName" required autocomplete="off" placeholder="Select Bank">
                                         <datalist id="bankNameSuggestions"></datalist>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label for="shipmentNo" class="form-label">Shipment Number</label>
+
+                                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                                        <label for="shipmentNo" class="form-label">
+                                            Shipment Number<span class="req">*</span>
+                                        </label>
                                         <input list="shipmentNoSuggestions" class="form-control bg-light-input"
                                             id="shipmentNo" required autocomplete="off" placeholder="Select Shipment">
                                         <datalist id="shipmentNoSuggestions"></datalist>
                                     </div>
-                                    <div class="col-md-1 d-grid align-items-end">
-                                        <button type="button" class="btn btn-outline-primary btn-sm" id="addShipmentNo"
+
+                                    <div class="col-xl-1 col-lg-2 col-md-3 col-sm-6 d-grid">
+                                        <button type="button" class="btn btn-primary" id="addShipmentNo"
                                             aria-label="Add Shipment Number" title="Add Shipment Number">
-                                            <i class="bi bi-plus-circle" aria-hidden="true"></i>Add
+                                            <i class="bi bi-plus-circle" aria-hidden="true"></i> Add
                                         </button>
                                     </div>
-                                    <div class="col-md-3">
+
+                                    <div class="col-xl-3 col-lg-2 col-md-3 col-sm-6">
                                         <label for="reportType" class="form-label">Report Type</label>
                                         <select class="form-select" id="reportType">
                                             <option value="Main" selected>Choose...</option>
@@ -749,6 +858,7 @@
                                         </select>
                                     </div>
                                 </div>
+
                             </form>
 
                             <!-- Loading Spinner -->
@@ -765,12 +875,12 @@
                                 aria-labelledby="addressModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
-                                        <div class="modal-header">
+                                        <div class="modal-header bg-primary text-white">
                                             <h5 class="modal-title" id="addressModalLabel">
-                                                <i class="bi bi-geo-alt"></i> Select Invoice Address
+                                                <i class="bi bi-geo-alt me-1"></i> Select Invoice Address
                                             </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body" id="addressListContainer"></div>
                                     </div>
@@ -783,53 +893,50 @@
         </main>
     </div>
 
-    <!-- SEARCH SAVED INVOICE MODAL -->
+    <!-- ============ SEARCH SAVED INVOICE MODAL ============ -->
     <div class="modal fade" id="searchInvoiceModal" tabindex="-1" aria-labelledby="searchInvoiceModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
 
-                <!-- Modal Header -->
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="searchInvoiceModalLabel">
-                        <i class="bi bi-search"></i> Search Saved Invoice
+                        <i class="bi bi-search me-1"></i> Search Saved Invoice
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
 
-                <!-- Modal Body -->
                 <div class="modal-body">
-                    <!-- Search Input Box -->
                     <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="searchSavedInvoiceInput" class="form-control"
                             placeholder="Search by Invoice No, Customer Name, or Movement Type..." autocomplete="off"
                             aria-label="Search Invoice">
                         <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
-                            <i class="bi bi-search"></i> Search
+                            Search
                         </button>
                     </div>
 
-                    <!-- Search Results Table -->
                     <div class="table-responsive"
                         style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
                         <table class="table table-hover align-middle mb-0">
-                            <thead>
+                            <thead class="table-light">
                                 <tr>
-                                    <th style="width: 60px;">Sl No</th>
-                                    <th>Invoice No</th>
-                                    <th style="width: 120px;">Invoice Date</th>
-                                    <th class="text-start">Customer Name</th>
-                                    <th style="width: 160px;">Movement Type</th>
-                                    <th class="text-end" style="width: 130px;">Invoice Amount</th>
-                                    <th style="width: 110px;" class="text-center">Action</th>
+                                    <th scope="col" style="width: 60px;">Sl No</th>
+                                    <th scope="col">Invoice No</th>
+                                    <th scope="col" style="width: 120px;">Invoice Date</th>
+                                    <th scope="col" class="text-start">Customer Name</th>
+                                    <th scope="col" style="width: 160px;">Movement Type</th>
+                                    <th scope="col" class="text-end" style="width: 130px;">Invoice Amount</th>
+                                    <th scope="col" style="width: 110px;" class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="searchInvoiceTableBody">
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted fst-italic py-4">
-                                        <i class="bi bi-receipt fs-3 d-block mb-2 opacity-50"></i>
-                                        Loading invoices...
+                                    <td colspan="7" class="vm-empty">
+                                        <i class="bi bi-receipt"></i>
+                                        Enter search criteria to find invoices…
                                     </td>
                                 </tr>
                             </tbody>
@@ -837,22 +944,34 @@
                     </div>
                 </div>
 
-                <!-- Modal Footer -->
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                        data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="assertive" aria-atomic="true">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert">
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage">
-                    Error message here...
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <span id="errorToastMessage">Error message here...</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
                     aria-label="Close"></button>
@@ -896,6 +1015,25 @@
     <script src="../../assets/js/CustomerInvoice/reports/Clear_Main_Reports.js" defer></script>
     <script src="../../assets/js/CustomerInvoice/reports/DomesticReports.js" defer></script>
     <script src="../../assets/js/CustomerInvoice/reports/FTL_FCL_Reports.js" defer></script>
+
+    <!-- Inline script to sync dropdown selection with #reportType -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // When a dropdown item is clicked, update the #reportType select
+            document.querySelectorAll('.dropdown-menu .dropdown-item[data-report-type]').forEach(function (item) {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    var reportType = this.getAttribute('data-report-type');
+                    var select = document.getElementById('reportType');
+                    if (select) {
+                        select.value = reportType;
+                        // Trigger change event so any existing listeners react
+                        select.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

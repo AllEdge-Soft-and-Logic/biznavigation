@@ -311,7 +311,7 @@
                                         <strong id="linkedDriverCode">–</strong>
                                         <span class="text-muted">(<span id="linkedDriverStatus">–</span>)</span>
                                     </span>
-                                    <a href="../driver/driver-master.html" class="btn btn-sm btn-outline-info">
+                                    <a href="../DriverMaster.html" class="btn btn-sm btn-outline-info">
                                         <i class="bi bi-box-arrow-up-right"></i> Open Driver
                                     </a>
                                 </div>
@@ -914,7 +914,7 @@
                     const driverId = $('linkedDriverId') && $('linkedDriverId').value;
                     if (driverId) {
                         // already linked → jump to driver page
-                        window.location.href = `../driver/driver-master.html?id=${encodeURIComponent(driverId)}`;
+                        window.location.href = `../DriverMaster.html?id=${encodeURIComponent(driverId)}`;
                     } else {
                         // not linked yet → open driver page in "create from employee" mode
                         const empId = $('employeeId') && $('employeeId').value;
@@ -923,7 +923,7 @@
                             return;
                         }
                         window.location.href =
-                            `../driver/driver-master.html?employee_id=${encodeURIComponent(empId)}&mode=promote`;
+                            `../DriverMaster.html?employee_id=${encodeURIComponent(empId)}&mode=promote`;
                     }
                 });
             }

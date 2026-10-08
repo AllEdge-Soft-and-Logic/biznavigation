@@ -35,8 +35,8 @@ const Navbar = (() => {
             children: [
                 { label: "Customer Invoice", icon: "bi-receipt", href: "/pages/Accounting/CustomerInvoice.html" },
                 { label: "Vendor Billing", icon: "bi-file-earmark-spreadsheet", href: "/pages/Accounting/VendorBilling.html" },
-                { label: "Payments Credit", icon: "bi-arrow-down-square", href: "/pages/Accounting/PaymentDetails_Credit.html?type=Credit" },
-                { label: "Payment Debit", icon: "bi-arrow-up-square", href: "/pages/Accounting/PaymentDetails_Debit.html?type=Debit" },
+                { label: "Payments Credit", icon: "bi-arrow-down-square", href: "/pages/Accounting/PaymentDetails_Credit.html" },
+                { label: "Payment Debit", icon: "bi-arrow-up-square", href: "/pages/Accounting/PaymentDetails_Debit.html" },
                 { label: "Credit Debit Note", icon: "bi-file-earmark-diff", href: "/pages/Accounting/CreditDebitNote.html" },
                 { label: "Accounting Voucher", icon: "bi-cash-coin", href: "/pages/Accounting/AccountingVoucher.html" },
                 { label: "Tax Details", icon: "bi-calculator", href: "/pages/Accounting/TaxDetails.html" }
