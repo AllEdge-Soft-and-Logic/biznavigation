@@ -39,6 +39,12 @@ function getDateValue(id) {
  * Retrieves trimmed form data from input fields.
  */
 function getFormData() {
+    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    // Determine if the badge is visible and a valid request number exists
+    const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
+    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
     return {
         JobDate: getDateValue('jobDate'),
         PartyCode: document.getElementById('partyCode').value.trim(),
@@ -68,7 +74,7 @@ function getFormData() {
         CustomsBroker: document.getElementById('customsBroker').value.trim(),
         PONo: document.getElementById('poNo').value.trim(),
         AnyInformation: document.getElementById('information').value.trim(),
-        pickup_request_no: document.getElementById('headerPickupRequestNoText').textContent.trim()
+        pickup_request_no: finalPickupRequestNo
     };
 }
 
