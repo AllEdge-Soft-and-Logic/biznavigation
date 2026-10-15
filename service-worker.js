@@ -1,4 +1,4 @@
-const VERSION = 'v3.04.09.17';
+const VERSION = 'v3.04.09.18';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
 const API_CACHE = `biznav-api-${VERSION}`;
