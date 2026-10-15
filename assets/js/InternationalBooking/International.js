@@ -25,6 +25,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById('chargeableWeight').disabled = true;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const incomingRequestNo = urlParams.get('pickupRequestNo');
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+    const headerText = document.getElementById("headerPickupRequestNoText");
+
+    if (incomingRequestNo) {
+        headerText.textContent = incomingRequestNo;
+        headerBadge.classList.remove("d-none");
+    }
+
     populateContainerTypes();
     setupEventListeners();
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
@@ -107,6 +117,17 @@ document.getElementById('newButton').addEventListener('click', function () {
     // Clear Volumetric Table
     document.querySelector('#volumetricTable tbody').innerHTML = '';
 
+    // Hide the Request Number container / badge if it was visible
+    const requestNoEl = document.getElementById("headerPickupRequestNoText");
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    if (headerBadge) {
+        headerBadge.classList.add("d-none");
+    }
+
+    if (requestNoEl) {
+        requestNoEl.textContent = ""; // Correct way to clear text content of a span
+    }
     // Recalculate Totals
     recalcTotals();
     updateTotals(); // Reset totals display
@@ -340,6 +361,7 @@ async function saveOrUpdateInternationalBooking() {
     const actionType = document.getElementById("saveButton").textContent.trim();
     const updateID = document.getElementById('tempFormID').value;
     let uomType = document.getElementById("uOMType").value;
+    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
 
     if (uomType == "Gms") {
         uomType = "Kgs";
@@ -384,7 +406,8 @@ async function saveOrUpdateInternationalBooking() {
         ShippingType: document.getElementById("shippingType").value || 'NA',
         company_id: CompanyID,
         CreatedBy: UserLoginID,
-        created_at: localtimeStamp
+        created_at: localtimeStamp,
+        pickup_request_no: requestNoText
     };
 
     let result;
@@ -424,6 +447,7 @@ async function saveOrUpdateInternationalBooking() {
         alert("Invalid action type!");
         return;
     }
+    await updatePickupRequestStatus(requestNoText);
     // console.log("Inserted ID:", insertedID);
     if (result.error) {
         console.error("Save/Update failed:", result.error.message);

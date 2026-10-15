@@ -625,6 +625,7 @@
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th scope="col">Sr No</th>
+                                                            <th scope="col">Reference No</th>
                                                             <th scope="col">Bill No</th>
                                                             <th scope="col">Narration</th>
                                                             <th scope="col" class="text-end">Allocated Amount</th>
@@ -634,9 +635,10 @@
                                                             <th scope="col" class="text-center">Actions</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td colspan="8" class="vm-empty">
+                                                    <tbody id="paymentDetailsBody">
+                                                        <!-- Add an ID and the 'empty-state-row' class to the <tr> -->
+                                                        <tr id="emptyState_paymentDetailsBody" class="empty-state-row">
+                                                            <td colspan="9" class="vm-empty">
                                                                 <i class="bi bi-list-check"></i>
                                                                 No allocation details added
                                                             </td>
@@ -644,7 +646,7 @@
                                                     </tbody>
                                                     <tfoot>
                                                         <tr class="table-light fw-bold">
-                                                            <td colspan="3" class="text-end">Total:</td>
+                                                            <td colspan="4" class="text-end">Total:</td>
                                                             <td id="totalAllocatedAmount" class="text-end">0.00</td>
                                                             <td id="totalOtherDeductionAmount" class="text-end">0.00
                                                             </td>
@@ -653,7 +655,7 @@
                                                             <td></td>
                                                         </tr>
                                                         <tr class="text-danger fw-bold">
-                                                            <td colspan="6" class="text-end">Suspense Amount :</td>
+                                                            <td colspan="7" class="text-end">Suspense Amount :</td>
                                                             <td id="suspenseAmount" class="text-end">0.00</td>
                                                             <td></td>
                                                         </tr>

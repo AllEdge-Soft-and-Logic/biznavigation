@@ -10,7 +10,6 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://code.jquery.com">
-    <link rel="preconnect" href="https://unpkg.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -96,7 +95,8 @@
         }
 
         .form-control,
-        .form-select {
+        .form-select,
+        #paymentStatusBtn {
             padding: 0.45rem 0.75rem !important;
             font-size: 0.875rem !important;
             background-color: #f8fafc;
@@ -107,19 +107,31 @@
         }
 
         .form-control:hover,
-        .form-select:hover {
+        .form-select:hover,
+        #paymentStatusBtn:hover {
             border-color: #cbd5e1;
         }
 
         .form-control:focus,
-        .form-select:focus {
+        .form-select:focus,
+        #paymentStatusBtn:focus,
+        #paymentStatusBtn.show {
             background-color: #ffffff;
             border-color: #93c5fd;
             box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            outline: none;
         }
 
         .form-control::placeholder {
             color: #94a3b8;
+        }
+
+        #paymentStatusBtn {
+            text-align: left;
+        }
+
+        #paymentStatusBtn::after {
+            margin-left: auto;
         }
 
         /* Filter Panel */
@@ -129,33 +141,6 @@
             border-radius: var(--radius-md);
             padding: 1.25rem;
             margin-bottom: 1.25rem;
-        }
-
-        /* Custom dropdown toggle */
-        #paymentStatusBtn {
-            padding: 0.45rem 0.75rem !important;
-            font-size: 0.875rem !important;
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            color: var(--text-main);
-            text-align: left;
-            transition: var(--transition);
-        }
-
-        #paymentStatusBtn:hover {
-            border-color: #cbd5e1;
-        }
-
-        #paymentStatusBtn:focus,
-        #paymentStatusBtn.show {
-            background-color: #ffffff;
-            border-color: #93c5fd;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-        }
-
-        #paymentStatusBtn::after {
-            margin-left: auto;
         }
 
         .dropdown-menu {
@@ -201,6 +186,17 @@
             border-spacing: 0;
         }
 
+        /* Table Structure */
+        #bookingTable thead th,
+        #bookingTable tbody td,
+        #bookingTable tfoot th,
+        #bookingTable tfoot td {
+            white-space: nowrap;
+            padding: 0.7rem 0.75rem !important;
+            border-left: none;
+            border-right: none;
+        }
+
         /* Header */
         #bookingTable thead th {
             position: sticky;
@@ -211,26 +207,18 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 600;
-            white-space: nowrap;
             z-index: 10;
-            padding: 0.7rem 0.75rem !important;
             border-bottom: 1px solid var(--border-color);
             border-top: none;
-            border-left: none;
-            border-right: none;
             text-align: center;
         }
 
         /* Body */
         #bookingTable tbody td {
             font-size: 0.82rem;
-            padding: 0.6rem 0.75rem !important;
             vertical-align: middle;
-            white-space: nowrap;
             color: var(--text-main);
             border-bottom: 1px solid var(--border-color);
-            border-left: none;
-            border-right: none;
             text-align: center;
         }
 
@@ -250,34 +238,23 @@
             background-color: #f1f5f9;
             font-weight: 700;
             z-index: 9;
-            white-space: nowrap;
-            padding: 0.7rem 0.75rem !important;
             font-size: 0.82rem;
             border-top: 1px solid var(--border-color);
             border-bottom: none;
-            border-left: none;
-            border-right: none;
             color: var(--text-main);
-        }
-
-        #bookingTable tfoot th:first-child {
-            text-align: right;
         }
 
         /* Colored accents on totals */
         #bookingTable tfoot #totalGrandTotal {
             color: #059669 !important;
-            /* emerald-600 */
         }
 
         #bookingTable tfoot #totalCreditDebitNoteAmount {
             color: #0284c7 !important;
-            /* sky-600 */
         }
 
         #bookingTable tfoot #totalBalance {
             color: #dc2626 !important;
-            /* red-600 */
         }
 
         #totalsRow {
@@ -307,10 +284,6 @@
         #paginationControls {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
-        }
-
-        .pagination {
             gap: 4px;
         }
 
@@ -351,19 +324,96 @@
 
         /* Mobile tweaks */
         @media (max-width: 768px) {
-            #bookingTable thead th {
-                font-size: 0.68rem;
-                padding: 0.5rem 0.6rem !important;
-            }
 
+            #bookingTable thead th,
             #bookingTable tbody td {
-                font-size: 0.75rem;
+                font-size: 0.68rem;
                 padding: 0.5rem 0.6rem !important;
             }
 
             .card-body {
                 padding: 1rem 1.25rem !important;
             }
+        }
+
+        /* --- FREEZE COLUMNS (Sticky Left) --- */
+        #bookingTable th:nth-child(1),
+        #bookingTable td:nth-child(1) {
+            min-width: 65px;
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            background-color: var(--surface-color);
+        }
+
+        #bookingTable th:nth-child(2),
+        #bookingTable td:nth-child(2) {
+            min-width: 150px;
+            position: sticky;
+            left: 65px;
+            /* Matches the width of column 1 */
+            z-index: 11;
+            background-color: var(--surface-color);
+            box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.15);
+            /* Shadow border effect */
+        }
+
+        /* Ensure headers and footers keep their distinct background color while frozen */
+        #bookingTable thead th:nth-child(1),
+        #bookingTable thead th:nth-child(2),
+        #bookingTable tfoot th:nth-child(1),
+        #bookingTable tfoot td:nth-child(2)
+
+        /* Assuming tfoot adjustments */
+            {
+            background-color: #f1f5f9;
+            z-index: 12;
+        }
+
+        /* Match row hover state for frozen columns */
+        #bookingTable tbody tr:hover td:nth-child(1),
+        #bookingTable tbody tr:hover td:nth-child(2) {
+            background-color: #f8fafc;
+        }
+
+        /* --- FREEZE COLUMNS (Sticky Left) --- */
+        #bookingTable th:nth-child(1),
+        #bookingTable td:nth-child(1) {
+            min-width: 65px;
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            background-color: var(--surface-color);
+        }
+
+        #bookingTable th:nth-child(2),
+        #bookingTable td:nth-child(2) {
+            min-width: 150px;
+            position: sticky;
+            left: 65px;
+            /* Matches the width of column 1 */
+            z-index: 11;
+            background-color: var(--surface-color);
+            box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.15);
+            /* Shadow border effect */
+        }
+
+        /* Ensure headers and footers keep their distinct background color while frozen */
+        #bookingTable thead th:nth-child(1),
+        #bookingTable thead th:nth-child(2),
+        #bookingTable tfoot th:nth-child(1),
+        #bookingTable tfoot td:nth-child(2)
+
+        /* Assuming tfoot adjustments */
+            {
+            background-color: #f1f5f9;
+            z-index: 12;
+        }
+
+        /* Match row hover state for frozen columns */
+        #bookingTable tbody tr:hover td:nth-child(1),
+        #bookingTable tbody tr:hover td:nth-child(2) {
+            background-color: #f8fafc;
         }
     </style>
 </head>
@@ -372,27 +422,27 @@
     <div class="app-wrapper">
 
         <!-- Sidebar -->
-        <div id="sidebar">
+        <aside id="sidebar" aria-label="Main Navigation">
             <div class="text-center text-muted p-3">Loading Sidebar...</div>
-        </div>
+        </aside>
 
         <!-- Main Content -->
-        <div class="main-content">
+        <main class="main-content">
             <div class="page-content">
-
                 <div class="container-fluid mt-3 mb-4" id="root">
                     <div class="card">
                         <div class="card-body">
 
                             <!-- Action Bar -->
-                            <div class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                <h5 class="m-0 fw-bold text-dark d-none d-md-block">Vendor Billing Report</h5>
+                            <header
+                                class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                <h1 class="h5 m-0 fw-bold text-dark d-none d-md-block">Vendor Billing Report</h1>
                                 <button class="btn btn-outline-primary btn-sm bg-white" type="button"
                                     data-bs-toggle="collapse" data-bs-target="#filterSection" aria-expanded="false"
                                     aria-controls="filterSection">
-                                    <i class="bi bi-funnel"></i> Toggle Filters
+                                    <i class="bi bi-funnel" aria-hidden="true"></i> Toggle Filters
                                 </button>
-                            </div>
+                            </header>
 
                             <!-- Filter Section -->
                             <div class="collapse" id="filterSection">
@@ -453,38 +503,32 @@
 
                                         <!-- Payment Status (multi-select) -->
                                         <div class="col-md-4 col-lg-3">
-                                            <label class="form-label">Payment Status</label>
+                                            <label class="form-label" id="paymentStatusLabel">Payment Status</label>
                                             <div class="dropdown w-100">
                                                 <button
                                                     class="btn dropdown-toggle w-100 d-flex align-items-center justify-content-between"
                                                     type="button" id="paymentStatusBtn" data-bs-toggle="dropdown"
-                                                    data-bs-auto-close="outside">
+                                                    data-bs-auto-close="outside" aria-expanded="false"
+                                                    aria-labelledby="paymentStatusLabel">
                                                     All Status
                                                 </button>
-
                                                 <div class="dropdown-menu w-100">
                                                     <div class="form-check">
                                                         <input class="form-check-input paymentStatus" type="checkbox"
                                                             value="Paid" id="statusPaid">
-                                                        <label class="form-check-label" for="statusPaid">
-                                                            Paid
-                                                        </label>
+                                                        <label class="form-check-label" for="statusPaid">Paid</label>
                                                     </div>
-
                                                     <div class="form-check">
                                                         <input class="form-check-input paymentStatus" type="checkbox"
                                                             value="ShortPaid" id="statusShortPaid">
-                                                        <label class="form-check-label" for="statusShortPaid">
-                                                            Short Paid
-                                                        </label>
+                                                        <label class="form-check-label" for="statusShortPaid">Short
+                                                            Paid</label>
                                                     </div>
-
                                                     <div class="form-check">
                                                         <input class="form-check-input paymentStatus" type="checkbox"
                                                             value="UnPaid" id="statusUnPaid">
-                                                        <label class="form-check-label" for="statusUnPaid">
-                                                            Unpaid
-                                                        </label>
+                                                        <label class="form-check-label"
+                                                            for="statusUnPaid">Unpaid</label>
                                                     </div>
                                                 </div>
                                             </div>
@@ -493,7 +537,7 @@
                                         <!-- Search -->
                                         <div class="col-md-2 col-lg-2 d-grid align-self-end">
                                             <button class="btn btn-primary" id="searchBtn">
-                                                <i class="bi bi-search"></i> Search
+                                                <i class="bi bi-search" aria-hidden="true"></i> Search
                                             </button>
                                         </div>
                                     </div>
@@ -501,7 +545,7 @@
                             </div>
 
                             <!-- Loading Spinner -->
-                            <div id="loadingSpinner" class="text-center my-4 d-none">
+                            <div id="loadingSpinner" class="text-center my-4 d-none" aria-live="polite">
                                 <div class="spinner-border" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
@@ -528,7 +572,7 @@
                                             <th>IGST Amount</th>
                                             <th>Total GST</th>
                                             <th>Grand Total</th>
-                                            <th>Collected</th>
+                                            <th>Paid</th>
                                             <th>Other Deduction</th>
                                             <th>TDS Deduction</th>
                                             <th>C & D Note Amount</th>
@@ -542,47 +586,46 @@
                                     <tfoot>
                                         <tr id="totalsRow">
                                             <th colspan="8" class="text-end">Total</th>
-                                            <th id="totalNonTaxableAmount" class="text-end">0.00</th>
-                                            <th id="totalTaxableAmount" class="text-end">0.00</th>
-                                            <th id="totalCGSTAmount" class="text-end">0.00</th>
-                                            <th id="totalSGSTAmount" class="text-end">0.00</th>
-                                            <th id="totalIGSTAmount" class="text-end">0.00</th>
-                                            <th id="totalGSTAmount" class="text-end">0.00</th>
-                                            <th id="totalGrandTotal" class="text-end">0.00</th>
-                                            <th id="totalCollected" class="text-end">0.00</th>
-                                            <th id="totalOtherDeduction" class="text-end">0.00</th>
-                                            <th id="totalTDSDeduction" class="text-end">0.00</th>
-                                            <th id="totalCreditDebitNoteAmount" class="text-end">0.00</th>
-                                            <th id="totalPayment" class="text-end">0.00</th>
-                                            <th id="totalBalance" class="text-end">0.00</th>
-                                            <th>-</th>
+                                            <td id="totalNonTaxableAmount" class="text-end">0.00</td>
+                                            <td id="totalTaxableAmount" class="text-end">0.00</td>
+                                            <td id="totalCGSTAmount" class="text-end">0.00</td>
+                                            <td id="totalSGSTAmount" class="text-end">0.00</td>
+                                            <td id="totalIGSTAmount" class="text-end">0.00</td>
+                                            <td id="totalGSTAmount" class="text-end">0.00</td>
+                                            <td id="totalGrandTotal" class="text-end">0.00</td>
+                                            <td id="totalCollected" class="text-end">0.00</td>
+                                            <td id="totalOtherDeduction" class="text-end">0.00</td>
+                                            <td id="totalTDSDeduction" class="text-end">0.00</td>
+                                            <td id="totalCreditDebitNoteAmount" class="text-end">0.00</td>
+                                            <td id="totalPayment" class="text-end">0.00</td>
+                                            <td id="totalBalance" class="text-end">0.00</td>
+                                            <td>-</td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
 
                             <!-- Pagination & Export -->
-                            <div
+                            <footer
                                 class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                <nav>
+                                <nav aria-label="Table navigation">
                                     <ul class="pagination mb-0" id="paginationControls"></ul>
                                 </nav>
                                 <div class="d-flex flex-wrap gap-2">
                                     <button class="btn btn-outline-success btn-sm bg-white" id="exportExcelBtn">
-                                        <i class="bi bi-file-earmark-excel"></i> Export Excel
+                                        <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Export Excel
                                     </button>
                                     <button class="btn btn-outline-danger btn-sm bg-white" id="exportPdfBtn">
-                                        <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Export PDF
                                     </button>
                                 </div>
-                            </div>
+                            </footer>
 
                         </div>
                     </div>
                 </div>
-
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- Scripts (defer placement for performance) -->

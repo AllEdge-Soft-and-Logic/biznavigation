@@ -188,8 +188,15 @@
                                 </div>
 
                                 <!-- ============ BOOKING INFORMATION ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-journal-text"></i> Booking Information
+                                <p class="vm-section-title d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="bi bi-journal-text"></i> Booking Information
+                                    </span>
+                                    <!-- This badge will dynamically show the request number when incomingRequestNo is present -->
+                                    <span id="headerPickupRequestBadge" class="badge text-bg-primary fw-normal d-none"
+                                        style="font-size: 0.75rem;">
+                                        Req No: <span id="headerPickupRequestNoText"></span>
+                                    </span>
                                 </p>
 
                                 <!-- Booking Info Row 1 -->

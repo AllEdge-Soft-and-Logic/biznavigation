@@ -14,6 +14,16 @@ async function initializeForm() {
             await loadBlAwbNumberSuggestions(CompanyID),
             await loadBeNumberSuggestions(CompanyID),
         ]);
+        const urlParams = new URLSearchParams(window.location.search);
+        const incomingRequestNo = urlParams.get('pickupRequestNo');
+        const headerBadge = document.getElementById("headerPickupRequestBadge");
+        const headerText = document.getElementById("headerPickupRequestNoText");
+
+        if (incomingRequestNo) {
+            headerText.textContent = incomingRequestNo;
+            headerBadge.classList.remove("d-none");
+        }
+
         loadTaxData();
 
     } catch (error) {
@@ -57,7 +67,8 @@ function getFormData() {
         ClearancePort: clearancePortInput.value.trim(),
         CustomsBroker: document.getElementById('customsBroker').value.trim(),
         PONo: document.getElementById('poNo').value.trim(),
-        AnyInformation: document.getElementById('information').value.trim()
+        AnyInformation: document.getElementById('information').value.trim(),
+        pickup_request_no: document.getElementById('headerPickupRequestNoText').textContent.trim()
     };
 }
 
@@ -118,7 +129,7 @@ function validateFormData(data) {
  */
 async function saveFormData() {
     let formData = getFormData();
-
+    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
     if (!validateFormData(formData)) return;
 
     try {
@@ -226,6 +237,7 @@ async function saveFormData() {
         // Save charges (for both insert/update, if needed)
         await saveChargesTableToSupabase(parentId, jobID);
         await saveEquipmentDetails(); // Save equipment details linked to this job
+        await updatePickupRequestStatus(requestNoText);
 
     } catch (error) {
         console.error('Error saving data:', error);
@@ -483,6 +495,17 @@ newButton.addEventListener('click', () => {
     if (modifyButton) modifyButton.disabled = true;
     const tbody = document.querySelector('#chargesTable tbody');
     tbody.innerHTML = ''; // Clear current rows
+    // Hide the Request Number container / badge if it was visible
+    const requestNoEl = document.getElementById("headerPickupRequestNoText");
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    if (headerBadge) {
+        headerBadge.classList.add("d-none");
+    }
+
+    if (requestNoEl) {
+        requestNoEl.textContent = ""; // Correct way to clear text content of a span
+    }
     resetTotalsRow();
 });
 

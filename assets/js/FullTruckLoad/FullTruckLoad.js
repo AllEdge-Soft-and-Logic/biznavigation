@@ -25,6 +25,16 @@ document.addEventListener("DOMContentLoaded", async () => {
             ['VehicleType', 'vehicleType']
         ];
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const incomingRequestNo = urlParams.get('pickupRequestNo');
+        const headerBadge = document.getElementById("headerPickupRequestBadge");
+        const headerText = document.getElementById("headerPickupRequestNoText");
+
+        if (incomingRequestNo) {
+            headerText.textContent = incomingRequestNo;
+            headerBadge.classList.remove("d-none");
+        }
+
         const dropdownTasks = dropdownConfigs.map(([id, table]) => loadDropdownOptions(id, table));
         const otherTasks = [loadRouteSuggestions(), loadTaxData()];
 
@@ -103,7 +113,8 @@ function mapMovementRow(row) {
         driverCode: row.driver_code,
         driverName: row.driver_name,
         driverPhoneNo: row.driver_phone_no,
-        driverDLNo: row.driver_dl_no
+        driverDLNo: row.driver_dl_no,
+        pickup_request_no: row.pickup_request_no
     };
 }
 
@@ -200,6 +211,18 @@ document.getElementById('newButton').addEventListener('click', async function ()
     document.getElementById('addFreightRow').disabled = false;
     document.getElementById('addVendorFreightRow').disabled = false;
 
+    // Hide the Request Number container / badge if it was visible
+    const requestNoEl = document.getElementById("headerPickupRequestNoText");
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    if (headerBadge) {
+        headerBadge.classList.add("d-none");
+    }
+
+    if (requestNoEl) {
+        requestNoEl.textContent = ""; // Correct way to clear text content of a span
+    }
+
     deletedShipmentIds = [];
     currentEditShipmentId = null;
 
@@ -234,8 +257,14 @@ function areRequiredFieldsFilled() {
 
     for (let fieldId of requiredFields) {
         const field = document.getElementById(fieldId);
-        if (!field || !field.value.trim()) {
-            field?.focus();
+        if (!field) continue;
+
+        // Skip fields hidden from the user (auto-derived from Shipment rows,
+        // e.g. destination*). The user cannot fill these, so don't block the save.
+        if (field.closest('.d-none')) continue;
+
+        if (!field.value.trim()) {
+            field.focus();
             alert('Please fill in all required fields. Missing: ' + fieldId);
             return false;
         }
@@ -248,6 +277,11 @@ function areRequiredFieldsFilled() {
 // =========================================================================
 document.getElementById("saveButton").addEventListener("click", async function (event) {
     event.preventDefault();
+
+    // NOTE: recalculateShipmentSummary() is intentionally NOT called here.
+    // It runs when a shipment row is added/edited/deleted. Calling it again
+    // on Save would overwrite the user's manually-entered origin fields with
+    // values taken from the Pickup shipment rows.
 
     const saveBtn = document.getElementById("saveButton");
     const addBtn = document.getElementById("addFreightRow");
@@ -282,6 +316,9 @@ document.getElementById("saveButton").addEventListener("click", async function (
     const val = id => document.getElementById(id)?.value || "";
     const modeType = val("modeType");
     const transitType = modeType === "FTL" ? "By Road" : "By Sea Freight";
+
+    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
+    // console.log("headerPickupRequestNoText:", requestNoText);
 
     let formData = {
         lr_number: lrNumber,
@@ -318,7 +355,8 @@ document.getElementById("saveButton").addEventListener("click", async function (
         driver_code: val("driverCode"),
         driver_name: val("driverName"),
         driver_phone_no: val("driverPhoneNo"),
-        driver_dl_no: val("driverDLNo")
+        driver_dl_no: val("driverDLNo"),
+        pickup_request_no: requestNoText
     };
 
     try {
@@ -326,12 +364,22 @@ document.getElementById("saveButton").addEventListener("click", async function (
         if (isSaveAction) {
             formData.created_by = UserLoginID;
             formData.created_at = localtimeStamp;
-            query = supabaseClient.from("FullLoadBookingDetails").insert([formData]).select().single();
+            query = supabaseClient
+                .from("FullLoadBookingDetails")
+                .insert([formData])
+                .select()
+                .single();
         } else {
             formData.updated_by = UserLoginID;
             formData.updated_at = localtimeStamp;
-            query = supabaseClient.from("FullLoadBookingDetails").update(formData).eq("lr_number", lrNumber).select().single();
+            query = supabaseClient
+                .from("FullLoadBookingDetails")
+                .update(formData)
+                .eq("lr_number", lrNumber)
+                .select()
+                .single();
         }
+
 
         const { data, error } = await query;
         if (error) throw error;
@@ -341,7 +389,8 @@ document.getElementById("saveButton").addEventListener("click", async function (
         await Promise.all([
             saveCharges(bookingId, "chargesDetailsTable", "Sale"),
             saveCharges(bookingId, "vendorChargesDetailsTable", "Buy"),
-            saveShipments(bookingId, lrNumber)
+            saveShipments(bookingId, lrNumber),
+            updatePickupRequestStatus(requestNoText)
         ]);
 
         await loadShipmentDetails(lrNumber);
@@ -465,6 +514,9 @@ async function saveShipments(bookingId, lrNumber) {
     const shipmentsToUpdate = [];
 
     rows.forEach(tr => {
+        // Skip placeholder / empty rows if present
+        if (tr.querySelector('.vm-empty')) return;
+
         const shipment = {
             booking_id: bookingId,
             lr_number: lrNumber,
@@ -491,23 +543,48 @@ async function saveShipments(bookingId, lrNumber) {
         }
     });
 
-    const promises = [];
-    if (deletedShipmentIds.length > 0) {
-        promises.push(supabaseClient.from('FullLoadShipmentDetails').delete().in('id', deletedShipmentIds));
-    }
-    if (shipmentsToUpdate.length > 0) {
-        promises.push(supabaseClient.from('FullLoadShipmentDetails').upsert(shipmentsToUpdate));
-    }
-    if (shipmentsToInsert.length > 0) {
-        promises.push(supabaseClient.from('FullLoadShipmentDetails').insert(shipmentsToInsert));
-    }
+    try {
+        const promises = [];
 
-    if (promises.length > 0) await Promise.all(promises);
-    deletedShipmentIds = [];
+        if (deletedShipmentIds.length > 0) {
+            promises.push(supabaseClient
+                .from('FullLoadShipmentDetails')
+                .delete()
+                .in('id', deletedShipmentIds));
+        }
+        if (shipmentsToUpdate.length > 0) {
+            promises.push(supabaseClient
+                .from('FullLoadShipmentDetails')
+                .upsert(shipmentsToUpdate));
+        }
+        if (shipmentsToInsert.length > 0) {
+            promises.push(supabaseClient
+                .from('FullLoadShipmentDetails')
+                .insert(shipmentsToInsert));
+        }
+
+        if (promises.length > 0) {
+            // Promise.allSettled ensures that even if one action fails, it doesn't crash the rest
+            const results = await Promise.allSettled(promises);
+            results.forEach((res, idx) => {
+                if (res.status === 'rejected') {
+                    console.warn(`Shipment operation at index ${idx} failed, ignoring:`, res.reason);
+                }
+            });
+        }
+    } catch (err) {
+        // Catch any unexpected errors and ignore them so execution continues
+        console.warn("Failed to update shipment details, ignoring and continuing:", err);
+    } finally {
+        deletedShipmentIds = [];
+    }
 }
 
 async function loadShipmentDetails(lrNumber) {
-    const { data, error } = await supabaseClient.from('FullLoadShipmentDetails').select('*').eq('lr_number', lrNumber);
+    const { data, error } = await supabaseClient
+        .from('FullLoadShipmentDetails')
+        .select('*')
+        .eq('lr_number', lrNumber);
     if (error || !data) return;
 
     shipmentTableBody.innerHTML = '';
@@ -557,7 +634,12 @@ async function loadShipmentDetails(lrNumber) {
 }
 
 async function loadBillingCharges(lrNumber, accountType, tableId) {
-    const { data, error } = await supabaseClient.from("FullLoadBookingCharges").select("*").eq("LRNumber", lrNumber).eq("AccountType", accountType);
+    const { data, error } = await supabaseClient
+        .from("FullLoadBookingCharges")
+        .select("*")
+        .eq("LRNumber", lrNumber)
+        .eq("AccountType", accountType);
+
     if (error || !data) return;
 
     const tableBody = document.getElementById(tableId).querySelector("tbody");
@@ -1007,36 +1089,69 @@ function updateShipmentTotals() {
     chargeWtInput.dispatchEvent(new Event('change'));
 }
 
+// =========================================================================
+// RECALCULATE SUMMARY FROM SHIPMENT ROWS
+// -------------------------------------------------------------------------
+// Rules:
+//   • If any row has type "Delivery"  → update destination* fields
+//   • If any row has type "Pickup"    → update origin* fields
+//   • If no row of a given type exists → leave the corresponding fields
+//     untouched (do not clear or overwrite them)
+//   • Shared fields (referenceNumber, invoiceValue, totals) are always
+//     aggregated from all rows
+//
+// NOTE: This function is called ONLY when a shipment row is added, edited,
+// or deleted — NOT on Save. That prevents the user's manually-entered
+// origin/destination values from being overwritten at save time.
+// =========================================================================
 function recalculateShipmentSummary() {
-    const allRows = shipmentTableBody.querySelectorAll('tr');
-    let uniqueCities = new Set(), uniqueRefs = new Set();
+    const allRows = [...shipmentTableBody.querySelectorAll('tr')];
+
+    // Nothing to do if no rows
+    if (allRows.length === 0) {
+        updateShipmentTotals();
+        return;
+    }
+
+    const uniqueCities = new Set();
+    const uniqueRefs = new Set();
     let totalInvoiceValue = 0;
+
+    let deliveryRow = null;   // first Delivery row
+    let pickupRow = null;     // first Pickup row
 
     allRows.forEach(row => {
         if (row.dataset.city) uniqueCities.add(row.dataset.city);
         if (row.dataset.refNo) uniqueRefs.add(row.dataset.refNo);
         totalInvoiceValue += parseFloat(row.dataset.invValue) || 0;
+
+        const type = (row.dataset.type || '').toLowerCase();
+        if (!deliveryRow && type === 'delivery') deliveryRow = row;
+        if (!pickupRow && type === 'pickup') pickupRow = row;
     });
 
-    const firstRow = allRows[0];
-    const firstPinCode = firstRow ? firstRow.dataset.pincode : '';
-    const firstAddress = firstRow ? firstRow.dataset.address : '';
     const citiesString = Array.from(uniqueCities).join(', ');
     const refsString = Array.from(uniqueRefs).join(', ');
 
-    if (firstRow) {
-        const type = firstRow.dataset.type;
-        if (type === 'Delivery') {
-            document.getElementById('destinationPinCode').value = firstPinCode;
-            document.getElementById('destinationCity').value = citiesString;
-            document.getElementById('destinationAddress').value = firstAddress;
-        } else if (type === 'Pickup') {
-            document.getElementById('originPinCode').value = firstPinCode;
-            document.getElementById('originCity').value = citiesString;
-            document.getElementById('originAddress').value = firstAddress;
-        }
+    // ---- Destination fields ----
+    // Only update when at least one Delivery row exists.
+    // Otherwise leave the destination fields exactly as they were.
+    if (deliveryRow) {
+        document.getElementById('destinationPinCode').value = deliveryRow.dataset.pincode || '';
+        document.getElementById('destinationCity').value = citiesString;
+        document.getElementById('destinationAddress').value = deliveryRow.dataset.address || '';
     }
 
+    // ---- Origin fields ----
+    // Only update when at least one Pickup row exists.
+    // Otherwise leave the origin fields exactly as they were.
+    if (pickupRow) {
+        document.getElementById('originPinCode').value = pickupRow.dataset.pincode || '';
+        document.getElementById('originCity').value = citiesString;
+        document.getElementById('originAddress').value = pickupRow.dataset.address || '';
+    }
+
+    // ---- Shared fields (always updated) ----
     document.getElementById('referenceNumber').value = refsString;
     document.getElementById('invoiceValue').value = totalInvoiceValue.toFixed(2);
 

@@ -198,8 +198,15 @@
                                 </div>
 
                                 <!-- ============ BOOKING INFORMATION ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-journal-text"></i> Booking Information
+                                <p class="vm-section-title d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="bi bi-journal-text"></i> Booking Information
+                                    </span>
+                                    <!-- This badge will dynamically show the request number when incomingRequestNo is present -->
+                                    <span id="headerPickupRequestBadge" class="badge text-bg-primary fw-normal d-none"
+                                        style="font-size: 0.75rem;">
+                                        Req No: <span id="headerPickupRequestNoText"></span>
+                                    </span>
                                 </p>
 
                                 <div class="row g-3">
@@ -587,7 +594,7 @@
                                                         placeholder="E-Way Bill Number">
                                                 </div>
 
-                                                <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6 d-grid">
+                                                <div class="col-xl-1 col-lg-3 col-md-3 col-sm-6 d-grid">
                                                     <button type="button" id="addShipmentRow" class="btn btn-primary">
                                                         <i class="bi bi-plus-circle"></i> Add
                                                     </button>
@@ -898,6 +905,127 @@
     <script src="../../assets/js/FullTruckLoad/FullTruckLoad.js" defer></script>
     <script src="../../assets/js/FullTruckLoad/lr_Report.js" defer></script>
     <script src="../../assets/js/FullTruckLoad/lr_annexure_Report.js" defer></script>
+
+    <!-- ============================================================
+         EMPTY-STATE PLACEHOLDER MANAGEMENT
+         Automatically removes the "No ... rows added" row when data
+         is added, and restores it when the table becomes empty.
+         ============================================================ -->
+    <script>
+        (function () {
+            // Configuration for each table that has an empty-state placeholder
+            const EMPTY_STATES = {
+                shipmentDetailsTable: {
+                    colspan: 12,
+                    icon: 'bi-box-seam',
+                    text: 'No shipment rows added'
+                },
+                chargesDetailsTable: {
+                    colspan: 9,
+                    icon: 'bi-currency-rupee',
+                    text: 'No customer charges added'
+                },
+                vendorChargesDetailsTable: {
+                    colspan: 9,
+                    icon: 'bi-wallet2',
+                    text: 'No vendor charges added'
+                }
+            };
+
+            /**
+             * Remove the placeholder row (any <tr> containing a td.vm-empty).
+             */
+            function clearEmptyState(tableId) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+
+                const emptyRow = tbody.querySelector('tr td.vm-empty');
+                if (emptyRow) {
+                    emptyRow.closest('tr').remove();
+                }
+            }
+
+            /**
+             * Re-insert the placeholder when the tbody has no data rows left.
+             */
+            function restoreEmptyStateIfNeeded(tableId) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+
+                // Check if there is at least one real data row (not the placeholder)
+                const hasDataRow = Array.from(tbody.children).some(tr => {
+                    return !tr.querySelector('td.vm-empty');
+                });
+
+                if (hasDataRow) return; // still has data, nothing to do
+
+                // If placeholder already exists, do nothing
+                if (tbody.querySelector('td.vm-empty')) return;
+
+                const cfg = EMPTY_STATES[tableId];
+                if (!cfg) return;
+
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = cfg.colspan;
+                td.className = 'vm-empty';
+                td.innerHTML = '<i class="bi ' + cfg.icon + '"></i>' + cfg.text;
+                tr.appendChild(td);
+                tbody.appendChild(tr);
+            }
+
+            /**
+             * Set up a MutationObserver on the tbody of each table.
+             * When rows are added/removed, we adjust the placeholder accordingly.
+             */
+            function observeTable(tableId) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                const tbody = table.querySelector('tbody');
+                if (!tbody) return;
+
+                const observer = new MutationObserver(function (mutations) {
+                    // If any child was added, remove placeholder if a real row exists
+                    const addedNodes = mutations.some(m => m.addedNodes.length > 0);
+                    const removedNodes = mutations.some(m => m.removedNodes.length > 0);
+
+                    if (addedNodes) {
+                        // If a real row was added, remove the placeholder
+                        const hasDataRow = Array.from(tbody.children).some(tr => {
+                            return !tr.querySelector('td.vm-empty');
+                        });
+                        if (hasDataRow) {
+                            clearEmptyState(tableId);
+                        }
+                    }
+
+                    if (removedNodes) {
+                        // If no data rows left, restore placeholder
+                        restoreEmptyStateIfNeeded(tableId);
+                    }
+                });
+
+                observer.observe(tbody, { childList: true });
+            }
+
+            // Expose functions for use by external scripts (e.g., FullTruckLoad.js)
+            window.clearEmptyState = clearEmptyState;
+            window.restoreEmptyStateIfNeeded = restoreEmptyStateIfNeeded;
+
+            // Start observing when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function () {
+                    Object.keys(EMPTY_STATES).forEach(observeTable);
+                });
+            } else {
+                Object.keys(EMPTY_STATES).forEach(observeTable);
+            }
+        })();
+    </script>
 
 </body>
 

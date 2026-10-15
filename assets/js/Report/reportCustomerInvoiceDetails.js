@@ -6,11 +6,12 @@ let sortOrder = 'asc';
 let partyNameCache = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
-
     flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
 
-    document.getElementById("searchBtn").addEventListener("click", async () => {
+    // Inject freeze styling for columns 1 & 2 dynamically
+    injectFreezeStyles();
 
+    document.getElementById("searchBtn").addEventListener("click", async () => {
         const filters = getFilters();
 
         const hasAnyFilter =
@@ -25,10 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             filters.financialYear;
 
         if (!hasAnyFilter) {
-            const ok = confirm(
-                "No filters selected.\n\nThis will load all company records.\n\nDo you want to continue?"
-            );
-
+            const ok = confirm("No filters selected.\n\nThis will load all company records.\n\nDo you want to continue?");
             if (!ok) return;
         }
 
@@ -44,9 +42,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadReportSuggestions();
     await loadTable(getFilters());
-
     enableSortableHeaders();
 });
+
+// Inject CSS rule for freezing Sr No and Invoice No
+function injectFreezeStyles() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #bookingTable th:nth-child(1), #bookingTable td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background-color: inherit;
+        }
+        #bookingTable th:nth-child(2), #bookingTable td:nth-child(2) {
+            position: sticky;
+            left: 50px; /* Adjust depending on Sr No column width */
+            z-index: 5;
+            background-color: inherit;
+        }
+        /* Ensure header and footer stay above frozen cells */
+        #bookingTable thead th:nth-child(1), #bookingTable thead th:nth-child(2) {
+            z-index: 15;
+            background-color: #f1f5f9 !important;
+        }
+        #bookingTable tbody tr th:nth-child(1), #bookingTable tbody tr th:nth-child(2),
+        #bookingTable tbody tr td:nth-child(1), #bookingTable tbody tr td:nth-child(2) {
+            background-color: #ffffff;
+        }
+        #bookingTable tbody tr:hover td:nth-child(1), #bookingTable tbody tr:hover td:nth-child(2) {
+            background-color: #f8fafc;
+        }
+        #bookingTable tfoot th:nth-child(1), #bookingTable tfoot th:nth-child(2) {
+            z-index: 12;
+            background-color: #f1f5f9 !important;
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 function getFilters() {
     const filters = {
@@ -114,28 +147,18 @@ async function loadReportSuggestions() {
     )].sort();
 
     populateArrayDatalist(financialYears, 'financialYearList');
-
     attachSuggestionFilters();
 }
 
 function populateDatalists(data, field, datalistId) {
     const uniqueValues = [...new Set(
-        data
-            .map(item => item[field])
-            .filter(Boolean)
-    )].sort((a, b) => a.localeCompare(b)); // A to Z sorting
+        data.map(item => item[field]).filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
 
     const datalist = document.getElementById(datalistId);
+    if (!datalist) return;
 
-    // Add null check here
-    if (!datalist) {
-        console.warn(`Datalist with id "${datalistId}" not found`);
-        return;
-    }
-
-    datalist.innerHTML = uniqueValues
-        .map(value => `<option value="${value}">`)
-        .join('');
+    datalist.innerHTML = uniqueValues.map(value => `<option value="${value}">`).join('');
 }
 
 function attachSuggestionFilters() {
@@ -148,15 +171,10 @@ function attachSuggestionFilters() {
 function attachDatalistFilter(inputId, datalistId, field) {
     const input = document.getElementById(inputId);
     const datalist = document.getElementById(datalistId);
-
     if (!input || !datalist) return;
 
     input.addEventListener('input', function () {
-        let searchText = this.value.trim().toLowerCase();
-
-        // optional: remove % if user types Shar%
-        searchText = searchText.replace(/%/g, '');
-
+        let searchText = this.value.trim().toLowerCase().replace(/%/g, '');
         const matchedValues = [...new Set(
             reportSuggestionData
                 .map(item => item[field])
@@ -164,16 +182,78 @@ function attachDatalistFilter(inputId, datalistId, field) {
                 .filter(value => value.toLowerCase().startsWith(searchText))
         )].sort((a, b) => a.localeCompare(b));
 
-        datalist.innerHTML = matchedValues
-            .slice(0, 50) // limit suggestions
-            .map(value => `<option value="${value}">`)
-            .join('');
+        datalist.innerHTML = matchedValues.slice(0, 50).map(value => `<option value="${value}">`).join('');
     });
 }
 
 function populateArrayDatalist(array, datalistId) {
     const datalist = document.getElementById(datalistId);
-    datalist.innerHTML = array.map(value => `<option value="${value}">`).join('');
+    if (datalist) datalist.innerHTML = array.map(value => `<option value="${value}">`).join('');
+}
+
+// Unified Query Builder Function
+function applyQueryFilters(query, filters) {
+    if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
+    if (filters.customerName) query = query.ilike('PartyName', `%${filters.customerName}%`);
+    if (filters.invoiceType) query = query.ilike('InvoiceType', `%${filters.invoiceType}%`);
+    if (filters.paymentStatus && filters.paymentStatus.length > 0) {
+        query = query.in("PaymentStatus", filters.paymentStatus);
+    }
+
+    const hasExplicitDateFilter = !!filters.startDate || !!filters.endDate || !!filters.invoiceMonth || !!filters.invoiceYear || !!filters.financialYear;
+    const onlyCustomerNameSelected = !!filters.customerName && !filters.invoiceNo && !filters.invoiceType && (!filters.paymentStatus || filters.paymentStatus.length === 0) && !hasExplicitDateFilter;
+
+    if (onlyCustomerNameSelected) {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1;
+        const fyStartYear = currentMonth >= 4 ? currentYear : currentYear - 1;
+        const fyEndYear = fyStartYear + 1;
+        return query.gte('InvoiceDate', `${fyStartYear}-04-01`).lte('InvoiceDate', `${fyEndYear}-03-31`);
+    }
+
+    if (filters.financialYear) {
+        const [startYear, endYear] = filters.financialYear.split('-').map(Number);
+        if (!isNaN(startYear) && !isNaN(endYear)) {
+            return query.gte('InvoiceDate', `${startYear}-04-01`).lte('InvoiceDate', `${endYear}-03-31`);
+        }
+    }
+
+    if (filters.invoiceYear) {
+        const year = parseInt(filters.invoiceYear, 10);
+        if (!isNaN(year)) {
+            return query.gte('InvoiceDate', `${year}-01-01`).lte('InvoiceDate', `${year}-12-31`);
+        }
+    }
+
+    if (filters.invoiceMonth) {
+        const [yearStr, monthStr] = filters.invoiceMonth.split('-');
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        if (!isNaN(year) && !isNaN(month)) {
+            const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
+            const end = new Date(year, month, 0).toISOString().split('T')[0];
+            return query.gte('InvoiceDate', start).lte('InvoiceDate', end);
+        }
+    }
+
+    if (filters.startDate || filters.endDate) {
+        if (filters.startDate) query = query.gte('InvoiceDate', filters.startDate);
+        if (filters.endDate) query = query.lte('InvoiceDate', filters.endDate);
+        return query;
+    }
+
+    return query;
+}
+
+function buildQuery(filters = {}) {
+    let query = supabaseClient
+        .from('InvoicePaymentView')
+        .select('*', { count: 'exact' })
+        .eq('company_id', CompanyID)
+        .order('InvoiceNo', { ascending: false });
+
+    return applyQueryFilters(query, filters);
 }
 
 async function loadTable(filters = {}) {
@@ -181,11 +261,9 @@ async function loadTable(filters = {}) {
     const tbody = document.querySelector('#bookingTable tbody');
 
     spinner.style.display = 'block';
-
-    // Show processing message in table
     tbody.innerHTML = `
         <tr>
-            <td colspan="18" class="text-center text-primary fw-bold py-4">
+            <td colspan="19" class="text-center text-primary fw-bold py-4">
                 <span class="spinner-border spinner-border-sm me-2"></span>
                 Processing data, please wait...
             </td>
@@ -194,7 +272,6 @@ async function loadTable(filters = {}) {
 
     try {
         let pageQuery = buildQuery(filters);
-
         if (sortColumn) {
             pageQuery = pageQuery.order(sortColumn, { ascending: sortOrder === 'asc' });
         }
@@ -206,29 +283,17 @@ async function loadTable(filters = {}) {
 
         if (pageError) {
             console.error('Error loading table:', pageError);
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="18" class="text-center text-danger py-4">
-                        Failed to load data
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = `<tr><td colspan="19" class="text-center text-danger py-4">Failed to load data</td></tr>`;
             return;
         }
 
         let totalQuery = buildQuery(filters);
-
         if (sortColumn) {
             totalQuery = totalQuery.order(sortColumn, { ascending: sortOrder === 'asc' });
         }
 
-        const cumulativeTo = currentPage * pageSize - 1;
-
-        const { data: cumulativeData, error: totalError } = await totalQuery.range(0, cumulativeTo);
-
-        if (totalError) {
-            console.error('Error loading cumulative totals:', totalError);
-        }
+        const { data: cumulativeData, error: totalError } = await totalQuery.range(0, currentPage * pageSize - 1);
+        if (totalError) console.error('Error loading cumulative totals:', totalError);
 
         await renderTable(pageData || []);
         updateCumulativeTotals(cumulativeData || []);
@@ -237,162 +302,10 @@ async function loadTable(filters = {}) {
 
     } catch (err) {
         console.error("Unexpected loadTable error:", err);
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="18" class="text-center text-danger py-4">
-                    Something went wrong while loading data
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="19" class="text-center text-danger py-4">Something went wrong while loading data</td></tr>`;
     } finally {
         spinner.style.display = 'none';
     }
-}
-
-function buildQuery(filters = {}) {
-    let query = supabaseClient
-        .from('InvoicePaymentView')
-        .select('*', { count: 'exact' })
-        .eq('company_id', CompanyID)
-        .order('InvoiceNo', { ascending: false });
-
-    // -----------------------------
-    // Non-date filters
-    // -----------------------------
-    if (filters.invoiceNo) {
-        query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
-    }
-
-    if (filters.customerName) {
-        query = query.ilike('PartyName', `%${filters.customerName}%`);
-    }
-
-    if (filters.invoiceType) {
-        query = query.ilike('InvoiceType', `%${filters.invoiceType}%`);
-    }
-
-    if (filters.paymentStatus.length > 0) {
-        query = query.in("PaymentStatus", filters.paymentStatus);
-    }
-
-    // -----------------------------
-    // Check date-related filters
-    // -----------------------------
-    const hasExplicitDateFilter =
-        !!filters.startDate ||
-        !!filters.endDate ||
-        !!filters.invoiceMonth ||
-        !!filters.invoiceYear ||
-        !!filters.financialYear;
-
-    // only customer name selected (no explicit date filters)
-    const onlyCustomerNameSelected =
-        !!filters.customerName &&
-        !filters.invoiceNo &&
-        !filters.invoiceType &&
-        !filters.paymentStatus &&
-        !hasExplicitDateFilter;
-
-    // ---------------------------------------------------------
-    // CASE 1: Only customer name selected -> current FY
-    // ---------------------------------------------------------
-    if (onlyCustomerNameSelected) {
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth() + 1; // 1 to 12
-
-        let fyStartYear, fyEndYear;
-
-        if (currentMonth >= 4) {
-            // Apr to Dec -> current FY starts this year
-            fyStartYear = currentYear;
-            fyEndYear = currentYear + 1;
-        } else {
-            // Jan to Mar -> current FY started last year
-            fyStartYear = currentYear - 1;
-            fyEndYear = currentYear;
-        }
-
-        query = query
-            .gte('InvoiceDate', `${fyStartYear}-04-01`)
-            .lte('InvoiceDate', `${fyEndYear}-03-31`);
-
-        return query;
-    }
-
-    // ---------------------------------------------------------
-    // CASE 2: Explicit date filters given -> use them
-    // Priority:
-    // financialYear > invoiceYear > invoiceMonth > dateRange
-    // ---------------------------------------------------------
-
-    if (filters.financialYear) {
-        const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-
-        if (!isNaN(startYear) && !isNaN(endYear)) {
-            query = query
-                .gte('InvoiceDate', `${startYear}-04-01`)
-                .lte('InvoiceDate', `${endYear}-03-31`);
-        }
-
-        return query;
-    }
-
-    if (filters.invoiceYear) {
-        const year = parseInt(filters.invoiceYear, 10);
-
-        if (!isNaN(year)) {
-            query = query
-                .gte('InvoiceDate', `${year}-01-01`)
-                .lte('InvoiceDate', `${year}-12-31`);
-        }
-
-        return query;
-    }
-
-    if (filters.invoiceMonth) {
-        const [yearStr, monthStr] = filters.invoiceMonth.split('-'); // YYYY-MM
-        const year = parseInt(yearStr, 10);
-        const month = parseInt(monthStr, 10);
-
-        if (!isNaN(year) && !isNaN(month)) {
-            const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-            const end = new Date(year, month, 0).toISOString().split('T')[0];
-
-            query = query
-                .gte('InvoiceDate', start)
-                .lte('InvoiceDate', end);
-        }
-
-        return query;
-    }
-
-    if (filters.startDate || filters.endDate) {
-        if (filters.startDate) {
-            query = query.gte('InvoiceDate', filters.startDate);
-        }
-
-        if (filters.endDate) {
-            query = query.lte('InvoiceDate', filters.endDate);
-        }
-
-        return query;
-    }
-
-    // ---------------------------------------------------------
-    // CASE 3: No date filters selected
-    // default -> last 2 months
-    // applies to:
-    // - no filters at all
-    // - invoiceType only
-    // - paymentStatus only
-    // - invoiceType + paymentStatus
-    // - invoiceNo only
-    // - customerName + invoiceType
-    // etc.
-    // ---------------------------------------------------------
-
-    return query;
 }
 
 function updateHeaderSortIndicators() {
@@ -410,11 +323,7 @@ async function renderTable(data) {
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="18" class="text-center text-muted">No records found</td>
-            </tr>
-        `;
+        tbody.innerHTML = `<tr><td colspan="19" class="text-center text-muted">No records found</td></tr>`;
         return;
     }
 
@@ -437,7 +346,7 @@ async function renderTable(data) {
 
         tr.innerHTML = `
             <td>${(currentPage - 1) * pageSize + idx + 1}</td>
-           <td>
+            <td>
                 <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
                 class="text-decoration-none fw-bold">
                     ${row.InvoiceNo}
@@ -456,7 +365,7 @@ async function renderTable(data) {
             <td class="text-end">${formatAmount(row.PaymentAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.OtherDeductionAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TDSDeductionAmount || '0')}</td>
-             <td class="text-end fw-bold  text-info">${formatAmount(row.CreditDebitNoteAmount || '0')}</td>
+            <td class="text-end fw-bold text-info">${formatAmount(row.CreditDebitNoteAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.PaymentTotalAmount || '0')}</td>
             <td class="text-end fw-bold text-danger">${formatAmount(row.BalanceAmount || '0')}</td>
             <td>${row.PaymentStatus || ''}</td>
@@ -469,108 +378,76 @@ async function renderTable(data) {
 function renderPagination(totalCount, loadTableFn) {
     const totalPages = Math.ceil(totalCount / pageSize);
     const pagination = document.getElementById('paginationControls');
-
     pagination.innerHTML = '';
 
     const maxVisiblePages = 5;
-
-    // Previous Button
     const prevLi = document.createElement('li');
     prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
     prevLi.innerHTML = `<a class="page-link" href="#">Previous</a>`;
 
     prevLi.addEventListener('click', (e) => {
         e.preventDefault();
-
         if (currentPage > 1) {
             currentPage--;
             loadTableFn(getFilters());
         }
     });
-
     pagination.appendChild(prevLi);
 
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    // Adjust start page if near end
     startPage = Math.max(1, endPage - maxVisiblePages + 1);
 
-    // First page + dots
     if (startPage > 1) {
         addPageButton(1);
-
-        if (startPage > 2) {
-            addDots();
-        }
+        if (startPage > 2) addDots();
     }
 
-    // Visible Pages
     for (let i = startPage; i <= endPage; i++) {
         addPageButton(i);
     }
 
-    // Last page + dots
     if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            addDots();
-        }
-
+        if (endPage < totalPages - 1) addDots();
         addPageButton(totalPages);
     }
 
-    // Next Button
     const nextLi = document.createElement('li');
     nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
     nextLi.innerHTML = `<a class="page-link" href="#">Next</a>`;
 
     nextLi.addEventListener('click', (e) => {
         e.preventDefault();
-
         if (currentPage < totalPages) {
             currentPage++;
             loadTableFn(getFilters());
         }
     });
-
     pagination.appendChild(nextLi);
 
-    // Helper function
     function addPageButton(page) {
         const li = document.createElement('li');
-
         li.className = `page-item ${page === currentPage ? 'active' : ''}`;
-
         li.innerHTML = `<a class="page-link" href="#">${page}</a>`;
-
         li.addEventListener('click', (e) => {
             e.preventDefault();
-
             currentPage = page;
             loadTableFn(getFilters());
         });
-
         pagination.appendChild(li);
     }
 
-    // Dots (...)
     function addDots() {
         const li = document.createElement('li');
-
         li.className = 'page-item disabled';
-
         li.innerHTML = `<span class="page-link">...</span>`;
-
         pagination.appendChild(li);
     }
 }
 
 async function exportToExcel() {
-    // 1. Select the actual button DOM element using querySelector
     const buttonElement = document.querySelector('.btn');
-
-    // 2. Pass the element object, not the string selector
-    startButtonLoading(buttonElement);
+    if (typeof startButtonLoading === 'function') startButtonLoading(buttonElement);
 
     try {
         const filters = getFilters();
@@ -578,7 +455,7 @@ async function exportToExcel() {
 
         if (allData.length === 0) {
             alert('No data to export.');
-            return; // Safe to return; the finally block will still reset the button
+            return;
         }
 
         let tableHtml = `<table><thead><tr>
@@ -602,12 +479,7 @@ async function exportToExcel() {
 
             tableHtml += `<tr>
             <td>${i + 1}</td>
-            <td>
-                <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
-                   class="text-decoration-none fw-bold">
-                    ${row.InvoiceNo}
-                </a>
-            </td>
+            <td>${row.InvoiceNo || ''}</td>
             <td>${row.InvoiceDate || ''}</td>
             <td>${row.InvoiceType || ''}</td>
             <td>${partyName}</td>
@@ -632,7 +504,6 @@ async function exportToExcel() {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = tableHtml;
         const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
-
         const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
         XLSX.writeFile(wb, `Customer Invoice Report_${date}.xlsx`);
 
@@ -640,46 +511,39 @@ async function exportToExcel() {
         console.error("Export failed:", error);
         alert("An error occurred while exporting data.");
     } finally {
-        // 3. Pass the element object here as well
-        stopButtonLoading(buttonElement);
+        if (typeof stopButtonLoading === 'function') stopButtonLoading(buttonElement);
     }
 }
 
-// PDF Export Function with PartyName
 async function exportToPdf() {
     const filters = getFilters();
     const allData = await fetchAllFilteredData(filters);
     if (!allData.length) return alert('No data to export.');
 
     const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
     const headers = [
         'Sr No', 'Invoice No', 'Invoice Date', 'Invoice Type', 'Customer Name', 'Basic Amount', 'Other Amount',
         'CGST Amount', 'SGST Amount', 'IGST Amount', 'Total GST Amount', 'Grand Total Amount', 'Collected Amount',
         'Other Deduction Amount', 'TDS Deduction Amount', 'Credit Debit Note Amount', 'Total Payment Amount', 'Balance Amount', 'Payment Status'
     ];
 
-    const formatNumber = (value) => typeof value === 'number' ? value.toFixed(2) : (parseFloat(value) || 0).toFixed(2);
-    const formatDate = (dateStr) => {
+    const formatNumber = (value) => (parseFloat(value) || 0).toFixed(2);
+    const formatDateStr = (dateStr) => {
         const date = new Date(dateStr);
         return isNaN(date) ? '' : date.toLocaleDateString();
     };
 
-    // Step 1: Get unique PartyCodes
     const uniqueCodes = [...new Set(allData.map(r => r.PartyCode).filter(Boolean))];
-
-    // Step 2: Build PartyCode -> PartyName map
     const partyNameMap = {};
     for (const code of uniqueCodes) {
         const details = await getPartyDetailsByCode(code);
         partyNameMap[code] = details?.PartyName || code;
     }
 
-    // Step 3: Prepare rows
     const rows = allData.map((row, i) => [
         i + 1,
         row.InvoiceNo || '',
-        formatDate(row.InvoiceDate),
+        formatDateStr(row.InvoiceDate),
         row.InvoiceType || '',
         partyNameMap[row.PartyCode] || row.PartyCode || '',
         formatNumber(row.BasicAmount),
@@ -698,7 +562,6 @@ async function exportToPdf() {
         row.PaymentStatus || ''
     ]);
 
-    // Step 4: Export
     doc.autoTable({
         head: [headers],
         body: rows,
@@ -713,10 +576,7 @@ async function exportToPdf() {
         pageBreak: 'auto'
     });
 
-    // Get today's date in YYYY-MM-DD format
     const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
-
-    // Save with the date appended
     doc.save(`Customer Invoice Report_${date}.pdf`);
 }
 
@@ -730,44 +590,7 @@ async function fetchAllFilteredData(filters = {}) {
             .eq('company_id', CompanyID)
             .order('InvoiceNo', { ascending: true });
 
-        if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
-        if (filters.customerName) query = query.ilike('PartyName', filters.customerName);
-        if (filters.invoiceType) query = query.ilike('InvoiceType', filters.invoiceType);
-        if (filters.paymentStatus.length > 0) {
-            query = query.in("PaymentStatus", filters.paymentStatus);
-        }
-        if (filters.startDate) query = query.gte('InvoiceDate', filters.startDate);
-        if (filters.endDate) query = query.lte('InvoiceDate', filters.endDate);
-        //Month filters
-        if (filters.invoiceMonth) {
-            let [monthStr, yearStr] = filters.invoiceMonth.split('-');
-            // Fallback if format is "YYYY-MM"
-            if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
-
-            const month = parseInt(monthStr);
-            const year = parseInt(yearStr);
-
-            if (!isNaN(year) && !isNaN(month)) {
-                const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-                const end = new Date(year, month, 0).toISOString().split('T')[0];
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
-            }
-        }
-        //Year filters
-        // Else fallback to full year range if only invoiceYear is set
-        if (!filters.invoiceMonth && filters.invoiceYear) {
-            const year = parseInt(filters.invoiceYear);
-            if (!isNaN(year)) {
-                const start = new Date(year, 0, 1).toISOString().split('T')[0];   // Jan 1
-                const end = new Date(year, 11, 31).toISOString().split('T')[0];  // Dec 31
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
-            }
-        }
-
-        if (filters.financialYear) {
-            const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-            query = query.gte('InvoiceDate', `${startYear}-04-01`).lte('InvoiceDate', `${endYear}-03-31`);
-        }
+        query = applyQueryFilters(query, filters);
 
         const { data, error } = await query.range(from, to);
         if (error) {
@@ -775,7 +598,7 @@ async function fetchAllFilteredData(filters = {}) {
             break;
         }
 
-        if (data.length > 0) {
+        if (data && data.length > 0) {
             allData = allData.concat(data);
             from += batchSize;
             to += batchSize;
@@ -801,26 +624,13 @@ function formatAmount(value) {
 
 function updateCumulativeTotals(allData) {
     const totals = {
-        BasicAmount: 0,
-        OtherAmount: 0,
-        CGSTAmount: 0,
-        SGSTAmount: 0,
-        IGSTAmount: 0,
-        TotalGSTAmount: 0,
-        GrandTotalAmount: 0,
-        PaymentAmount: 0,
-        OtherDeductionAmount: 0,
-        TDSDeductionAmount: 0,
-        CreditDebitNoteAmount: 0,
-        PaymentTotalAmount: 0,
-        BalanceAmount: 0
+        BasicAmount: 0, OtherAmount: 0, CGSTAmount: 0, SGSTAmount: 0,
+        IGSTAmount: 0, TotalGSTAmount: 0, GrandTotalAmount: 0, PaymentAmount: 0,
+        OtherDeductionAmount: 0, TDSDeductionAmount: 0, CreditDebitNoteAmount: 0,
+        PaymentTotalAmount: 0, BalanceAmount: 0
     };
 
-    const toNumber = (val) => parseFloat(val || 0) || 0;
-
-    // page 1 to current page rows count
     const endIndex = currentPage * pageSize;
-
     const cumulativeRows = allData.slice(0, endIndex);
 
     cumulativeRows.forEach(row => {
@@ -866,13 +676,9 @@ function updatePaymentStatus() {
         .filter(cb => cb.checked)
         .map(cb => cb.nextElementSibling.textContent.trim());
 
-    paymentStatusBtn.textContent = selected.length
-        ? selected.join(", ")
-        : "All Status";
+    paymentStatusBtn.textContent = selected.length ? selected.join(", ") : "All Status";
 }
 
 function getSelectedPaymentStatus() {
-    return [...paymentStatusCheckboxes]
-        .filter(cb => cb.checked)
-        .map(cb => cb.value);
+    return [...paymentStatusCheckboxes].filter(cb => cb.checked).map(cb => cb.value);
 }

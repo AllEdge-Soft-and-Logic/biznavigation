@@ -468,18 +468,16 @@ async function addChargesDetails() {
         let currentGrandTotal = 0;
 
         [...tableBody.rows].forEach(row => {
-
             if (row.style.display === "none") return;
+            if (row.cells.length < 11) return; // Guard clause
 
             const status = row.querySelector(".status")?.innerText.trim() || "";
-
             if (status === "Deleted") return;
 
             // Ignore Round Off Row
             if (row.cells[1]?.innerText.trim() === "Round Off") return;
 
-            currentGrandTotal += parseFloat(row.cells[10].innerText || 0);
-
+            currentGrandTotal += parseFloat(row.cells[10]?.innerText || 0);
         });
 
         currentGrandTotal = Number(currentGrandTotal.toFixed(2));
@@ -584,16 +582,13 @@ function calculateRoundOff(amount) {
 }
 
 function updateTotals() {
-
     const tbody = document.querySelector("#pendingShipmentTable tbody");
 
-    // Remove existing Round Off row
+    // Remove existing Round Off row safely
     [...tbody.rows].forEach(row => {
-
-        if (row.cells[1]?.innerText.trim() === "Round Off") {
+        if (row.cells.length > 1 && row.cells[1]?.innerText.trim() === "Round Off") {
             row.remove();
         }
-
     });
 
     let totalNonTaxable = 0;
@@ -605,21 +600,20 @@ function updateTotals() {
     let grandTotal = 0;
 
     [...tbody.rows].forEach(row => {
-
+        if (row.classList.contains("empty-row")) return;
         if (row.style.display === "none") return;
+        if (row.cells.length < 11) return;
 
         const status = row.querySelector(".status")?.innerText.trim() || "";
-
         if (status === "Deleted") return;
 
-        totalNonTaxable += parseFloat(row.cells[4].innerText || 0);
-        totalTaxable += parseFloat(row.cells[5].innerText || 0);
-        totalSGST += parseFloat(row.cells[6].innerText || 0);
-        totalCGST += parseFloat(row.cells[7].innerText || 0);
-        totalIGST += parseFloat(row.cells[8].innerText || 0);
-        totalGST += parseFloat(row.cells[9].innerText || 0);
-        grandTotal += parseFloat(row.cells[10].innerText || 0);
-
+        totalNonTaxable += parseFloat(row.cells[4]?.innerText || 0);
+        totalTaxable += parseFloat(row.cells[5]?.innerText || 0);
+        totalSGST += parseFloat(row.cells[6]?.innerText || 0);
+        totalCGST += parseFloat(row.cells[7]?.innerText || 0);
+        totalIGST += parseFloat(row.cells[8]?.innerText || 0);
+        totalGST += parseFloat(row.cells[9]?.innerText || 0);
+        grandTotal += parseFloat(row.cells[10]?.innerText || 0);
     });
 
     totalNonTaxable = Number(totalNonTaxable.toFixed(2));
@@ -635,17 +629,13 @@ function updateTotals() {
         document.getElementById("vendorBilledAmount").value || 0
     );
 
-    // Apply Round Off only if Vendor Bill is whole number
     const hasDecimal = (vendorBillAmount % 1) !== 0;
 
     if (!hasDecimal) {
-
         const result = calculateRoundOff(grandTotal);
 
         if (result.roundOff !== 0) {
-
             const row = tbody.insertRow();
-
             row.dataset.chargeId = "";
 
             row.innerHTML = `
@@ -653,18 +643,14 @@ function updateTotals() {
                 <td><b>Round Off</b></td>
                 <td>-</td>
                 <td>0%</td>
-
                 <td class="text-end">${result.roundOff.toFixed(2)}</td>
                 <td class="text-end">0.00</td>
                 <td class="text-end">0.00</td>
                 <td class="text-end">0.00</td>
                 <td class="text-end">0.00</td>
                 <td class="text-end">0.00</td>
-
                 <td class="text-end fw-bold">${result.roundOff.toFixed(2)}</td>
-
                 <td></td>
-
                 <td class="tax-id d-none">0</td>
                 <td class="status d-none">RoundOff</td>
             `;
@@ -672,10 +658,10 @@ function updateTotals() {
             totalNonTaxable += result.roundOff;
             grandTotal = result.finalAmount;
         }
-
     }
 
     reindexRows();
+    updateEmptyState(); // <-- Automatically manages empty message visibility
 
     document.getElementById("totalNonTaxableAmount").innerText = totalNonTaxable.toFixed(2);
     document.getElementById("totalTaxableAmount").innerText = totalTaxable.toFixed(2);
@@ -685,6 +671,7 @@ function updateTotals() {
     document.getElementById("totalGSTAmount").innerText = totalGST.toFixed(2);
     document.getElementById("grandTotalAmount").innerText = grandTotal.toFixed(2);
 }
+
 function clearChargesInputs() {
     document.getElementById("chargesType").value = "";
     document.getElementById("shipmentNo").value = "";
@@ -707,7 +694,7 @@ async function loadVendorBillingCharges(billReferenceNo) {
         console.error(error);
         return;
     }
-
+    updateEmptyState();
     for (const [index, item] of data.entries()) {
         const row = tbody.insertRow();
         row.dataset.chargeId = item.id;
@@ -728,8 +715,8 @@ async function loadVendorBillingCharges(billReferenceNo) {
             <td class="text-end">${item.IGSTAmount.toFixed(2)}</td>
             <td class="text-end">${item.TotalGSTAmount.toFixed(2)}</td>
             <td class="text-end">${item.TotalAmount.toFixed(2)}</td>
-            <td>
-                <button class="btn btn-danger btn-sm delete-row" disabled>
+         <td>
+                <button type="button" class="btn btn-danger btn-sm delete-row" disabled>
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -1199,3 +1186,36 @@ searchBillReferenceModalEl.addEventListener('shown.bs.modal', () => {
     loadSavedBillReferences();
     searchSavedBillReferenceInput.focus();
 });
+
+function updateEmptyState() {
+    const tbody = document.querySelector("#pendingShipmentTable tbody");
+    if (!tbody) return;
+
+    // Filter out the "No billing details added" placeholder row if it exists
+    const activeRows = [...tbody.querySelectorAll("tr")].filter(row => {
+        return !row.classList.contains("empty-row") &&
+            !row.classList.contains("d-none") &&
+            row.style.display !== "none" &&
+            row.querySelector(".status")?.innerText.trim() !== "Deleted";
+    });
+
+    const emptyRowId = "emptyBillingStateRow";
+    let emptyRow = document.getElementById(emptyRowId);
+
+    if (activeRows.length === 0) {
+        if (!emptyRow) {
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr id="${emptyRowId}" class="empty-row">
+                    <td colspan="12" class="vm-empty">
+                        <i class="bi bi-list-check"></i>
+                        No billing details added
+                    </td>
+                </tr>
+            `);
+        }
+    } else {
+        if (emptyRow) {
+            emptyRow.remove();
+        }
+    }
+}

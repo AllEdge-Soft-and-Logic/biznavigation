@@ -302,7 +302,7 @@ function addBillDetailRow() {
         `;
         UI.tbody.appendChild(row);
     }
-
+    toggleEmptyTableState("#paymentDetailsBody", "No allocation details added", 9);
     syncTableUpdates();
     clearBillInputs();
 }
@@ -340,6 +340,7 @@ if (UI.tbody) {
             if (row.dataset.status === "Old" && row.dataset.id) deletedPaymentLines.push(row.dataset.id);
 
             row.remove();
+            toggleEmptyTableState("#paymentDetailsBody", "No allocation details added", 9);
             syncTableUpdates();
         }
     });

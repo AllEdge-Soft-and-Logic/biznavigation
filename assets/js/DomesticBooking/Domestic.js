@@ -18,10 +18,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
     initDatalistValidation();
     loadTaxData();
+    const urlParams = new URLSearchParams(window.location.search);
+    const incomingRequestNo = urlParams.get('pickupRequestNo');
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+    const headerText = document.getElementById("headerPickupRequestNoText");
+
+    if (incomingRequestNo) {
+        headerText.textContent = incomingRequestNo;
+        headerBadge.classList.remove("d-none");
+    }
 });
 
-document.getElementById("docketNo")
-    .addEventListener("input", e => loadDocketDetails(e.target.value));
+document.getElementById("docketNo").addEventListener("input", e => loadDocketDetails(e.target.value));
 
 docketNoInput.addEventListener('change', async () => {
     const docketNo = docketNoInput.value;
@@ -267,6 +275,17 @@ document.getElementById('newButton').addEventListener('click', () => {
     recalcTotals();
     // updateTotals(); // Reset totals display
     document.querySelector('#bookingStatusTable tbody').innerHTML = ''; // Clear previous data
+    // Hide the Request Number container / badge if it was visible
+    const requestNoEl = document.getElementById("headerPickupRequestNoText");
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    if (headerBadge) {
+        headerBadge.classList.add("d-none");
+    }
+
+    if (requestNoEl) {
+        requestNoEl.textContent = ""; // Correct way to clear text content of a span
+    }
 
     // Disable calculated weight fields
     ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
@@ -295,7 +314,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
 
     const val = id => document.getElementById(id)?.value || "";
     saveButton.disabled = true;
-
+    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
     const formData = {
         DocketNo: val('docketNo'),
         BookingDate: val('bookedDate'),
@@ -322,7 +341,8 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         CargoDescription: val('cargoDescription'),
         PaymentType: val('paymentType'),
         UOMType: val('uOMType'),
-        Department: val('department')
+        Department: val('department'),
+        pickup_request_no: requestNoText
     };
 
     if (mode === 'insert') {
@@ -377,6 +397,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         document.getElementById('addVolumetricRow').disabled = true;
         document.getElementById('addContainer').disabled = true;
 
+        await updatePickupRequestStatus(requestNoText);
         showToast(`Booking details ${mode} successful!`);
 
     } catch (err) {

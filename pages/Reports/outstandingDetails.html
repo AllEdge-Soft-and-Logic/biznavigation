@@ -529,6 +529,10 @@
                                     <ul id="paginationControls" class="pagination mb-0 d-flex flex-wrap"></ul>
                                 </nav>
                                 <div class="d-flex flex-wrap gap-2">
+                                    <button id="balanceCertificateBtn" class="btn btn-outline-success btn-sm bg-white"
+                                        aria-label="Export to PDF">
+                                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Balance Certificate
+                                    </button>
                                     <button id="exportExcelBtn" class="btn btn-outline-success btn-sm bg-white"
                                         aria-label="Export to Excel">
                                         <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Export Excel
@@ -548,6 +552,30 @@
         </main>
     </div>
 
+    <!-- Balance Certificate Date Modal -->
+    <div class="modal fade" id="balanceDateModal" tabindex="-1" aria-labelledby="balanceDateModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="balanceDateModalLabel">Enter Balance Certificate Date</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="certificateDateInput" class="form-label">As of Date</label>
+                        <input type="date" class="form-control" id="certificateDateInput" placeholder="Enter date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="confirmGeneratePdfBtn">Generate
+                        PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"
@@ -561,6 +589,7 @@
     <script src="../../assets/js/utils/navbar.js" defer></script>
     <script src="../../assets/js/utils/utils.js" defer></script>
     <script src="../../assets/js/Report/outstandingDetails.js" defer></script>
+    <script src="../../assets/js/Report/balanceCertificatePdf.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
 </body>
 

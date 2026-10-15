@@ -79,8 +79,8 @@
         }
 
         /* =========================================
-           NEW MODERN TABS UI
-           ========================================= */
+            NEW MODERN TABS UI
+            ========================================= */
 
         /* 1. Main Tabs (Segmented Control / Pills) */
         .custom-main-tabs {
@@ -159,6 +159,25 @@
             background: transparent;
             border: none !important;
             padding: 0 !important;
+        }
+
+        .kpi-hover-breakdown {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            /* Forces the popup to appear above the card */
+            left: 12px;
+            right: 12px;
+            z-index: 1050;
+            margin-bottom: 10px;
+            /* Adds a small gap between the popup and the card */
+
+            /* Optional: Reverses the shadow to look better when popping upwards */
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .kpi-card:hover .kpi-hover-breakdown {
+            display: block;
         }
     </style>
 </head>
@@ -372,20 +391,45 @@
 
                                 <!-- Pending Invoices -->
                                 <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
-                                    <div class="kpi-card p-3">
+                                    <div class="kpi-card p-3 position-relative">
                                         <div class="d-flex align-items-start justify-content-between">
-                                            <div>
+                                            <div class="w-100">
                                                 <div class="kpi-label text-muted small fw-semibold">Pending Invoices
                                                 </div>
                                                 <div class="kpi-value fs-4 fw-bold text-dark mt-1"
-                                                    id="kpiPendingInvoices">0
-                                                </div>
-                                                <div class="kpi-delta mt-1">
-                                                    <span class="text-muted fw-normal small">Awaiting action</span>
+                                                    id="kpiPendingInvoices">0</div>
+
+                                                <div class="kpi-delta mt-2">
+                                                    <span class="text-muted fw-normal small"
+                                                        id="kpiPendingInvoicesSub">Awaiting action</span>
                                                 </div>
                                             </div>
-                                            <div class="icon-box bg-purple-soft p-2 rounded-3 text-info">
+                                            <div class="icon-box bg-purple-soft p-2 rounded-3 text-info ms-2">
                                                 <i class="bi bi-clock-history fs-4"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Hover Breakdown Popover -->
+                                        <div class="kpi-hover-breakdown shadow-lg bg-white p-3 rounded-3 border">
+                                            <div class="fw-semibold small text-dark mb-2 pb-1 border-bottom">Pending
+                                                Breakdown</div>
+                                            <div class="small text-muted">
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span>International:</span>
+                                                    <span id="kpiIntPending" class="fw-semibold text-dark">0</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span>Domestic:</span>
+                                                    <span id="kpiDomPending" class="fw-semibold text-dark">0</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-1">
+                                                    <span>Customs:</span>
+                                                    <span id="kpiCustomsPending" class="fw-semibold text-dark">0</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Full Load:</span>
+                                                    <span id="kpiFullLoadPending" class="fw-semibold text-dark">0</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -557,7 +601,6 @@
 
         .custom-hover-action:hover {
             background-color: #f1f5f9 !important;
-            /* Slightly darker gray */
             transform: translateY(-2px);
         }
     </style>

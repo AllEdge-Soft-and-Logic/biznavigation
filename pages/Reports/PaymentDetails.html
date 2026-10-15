@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payment Report - Credit & Debit</title>
+    <meta name="description" content="Payment report with credit and debit details, filters, sorting and export." />
+    <meta name="theme-color" content="#2563eb" />
+    <title>Payment Report - Credit &amp; Debit</title>
 
     <!-- Resource Hints -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -22,18 +24,17 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
     <!-- Flatpickr -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 
-    <!-- SheetJS, jsPDF, jsPDF AutoTable -->
+    <!-- Libs (deferred, execute in document order) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"
         defer></script>
-
-    <!-- jQuery, Bootstrap JS, Flatpickr, Supabase -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2.45.4" defer></script>
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
@@ -153,10 +154,13 @@
             background: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
+            -webkit-overflow-scrolling: touch;
         }
 
         #paymentTable {
             width: 100%;
+            min-width: 880px;
+            /* keeps columns readable on mobile -> horizontal scroll */
             table-layout: fixed;
             margin-bottom: 0;
             border-collapse: separate;
@@ -214,11 +218,37 @@
             border-right: none;
             cursor: pointer;
             transition: var(--transition);
+            user-select: none;
         }
 
         #paymentTable thead th:hover {
             background-color: #e2e8f0;
             color: var(--text-main);
+        }
+
+        #paymentTable thead th:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: -2px;
+        }
+
+        /* Sort indicator driven by aria-sort (set this from your JS) */
+        #paymentTable thead th[aria-sort]::after {
+            content: "";
+            display: inline-block;
+            margin-left: 0.35rem;
+            border: 4px solid transparent;
+            vertical-align: middle;
+            opacity: 0.35;
+        }
+
+        #paymentTable thead th[aria-sort="ascending"]::after {
+            border-bottom-color: currentColor;
+            opacity: 1;
+        }
+
+        #paymentTable thead th[aria-sort="descending"]::after {
+            border-top-color: currentColor;
+            opacity: 1;
         }
 
         /* Body */
@@ -271,6 +301,14 @@
             width: 120px;
         }
 
+        /* Empty / loading state row */
+        #paymentTable tbody tr.table-empty td {
+            text-align: center !important;
+            color: var(--text-muted);
+            padding: 2.5rem 1rem !important;
+            font-size: 0.85rem;
+        }
+
         /* Custom Scrollbar */
         .table-responsive::-webkit-scrollbar {
             width: 8px;
@@ -293,6 +331,7 @@
         /* Pagination */
         .pagination {
             gap: 4px;
+            flex-wrap: wrap;
         }
 
         .pagination .page-link {
@@ -328,6 +367,14 @@
             height: 2.5rem;
             border-width: 0.2rem;
             color: var(--primary-color) !important;
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation-duration: 0.01ms !important;
+            }
         }
 
         /* Mobile tweaks */
@@ -371,7 +418,7 @@
                                 <button class="btn btn-outline-primary btn-sm bg-white" type="button"
                                     data-bs-toggle="collapse" data-bs-target="#filterSection" aria-expanded="false"
                                     aria-controls="filterSection">
-                                    <i class="bi bi-funnel"></i> Toggle Filters
+                                    <i class="bi bi-funnel" aria-hidden="true"></i> Toggle Filters
                                 </button>
                             </div>
 
@@ -382,27 +429,27 @@
                                         <div class="col-12 col-md-6 col-lg-3">
                                             <label for="customerName" class="form-label">Customer Name</label>
                                             <input id="customerName" class="form-control" list="customerNameList"
-                                                placeholder="Enter Customer Name">
+                                                placeholder="Enter Customer Name" autocomplete="off" spellcheck="false">
                                             <datalist id="customerNameList"></datalist>
                                         </div>
                                         <div class="col-12 col-md-6 col-lg-3">
                                             <label for="paymentNo" class="form-label">Payment No</label>
                                             <input id="paymentNo" class="form-control" list="paymentNoList"
-                                                placeholder="Enter Payment No">
+                                                placeholder="Enter Payment No" autocomplete="off" spellcheck="false">
                                             <datalist id="paymentNoList"></datalist>
                                         </div>
 
                                         <div class="col-12 col-md-6 col-lg-3">
                                             <label for="invoiceNo" class="form-label">Invoice No</label>
                                             <input id="invoiceNo" class="form-control" list="invoiceNoList"
-                                                placeholder="Enter Invoice No">
+                                                placeholder="Enter Invoice No" autocomplete="off" spellcheck="false">
                                             <datalist id="invoiceNoList"></datalist>
                                         </div>
 
                                         <div class="col-6 col-md-6 col-lg-3">
                                             <label for="dateRange" class="form-label">Payment Date Range</label>
                                             <input id="dateRange" class="form-control" placeholder="Select Date Range"
-                                                readonly>
+                                                readonly autocomplete="off">
                                         </div>
                                         <div class="col-6 col-md-2">
                                             <label for="paymentMonth" class="form-label">Payment Month</label>
@@ -411,17 +458,17 @@
                                         <div class="col-6 col-md-4">
                                             <label for="paymentYear" class="form-label">Payment Year</label>
                                             <input type="number" id="paymentYear" class="form-control"
-                                                placeholder="YYYY" min="2000" max="2100">
+                                                placeholder="YYYY" min="2000" max="2100" step="1" inputmode="numeric">
                                         </div>
                                         <div class="col-6 col-md-4">
                                             <label for="financialYear" class="form-label">Financial Year</label>
                                             <input id="financialYear" class="form-control" placeholder="YYYY-YYYY"
-                                                list="financialYearList">
+                                                list="financialYearList" autocomplete="off">
                                             <datalist id="financialYearList"></datalist>
                                         </div>
                                         <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
-                                            <button class="btn btn-primary" id="searchBtn">
-                                                <i class="bi bi-search"></i> Search
+                                            <button class="btn btn-primary" id="searchBtn" type="button">
+                                                <i class="bi bi-search" aria-hidden="true"></i> Search
                                             </button>
                                         </div>
                                     </div>
@@ -429,10 +476,8 @@
                             </div>
 
                             <!-- Spinner -->
-                            <div id="loadingSpinner" class="text-center my-4 hidden">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                            <div id="loadingSpinner" class="text-center my-4 hidden" role="status" aria-live="polite">
+                                <div class="spinner-border" aria-hidden="true"></div>
                                 <p class="text-muted mt-2 small mb-0">Loading payment records...</p>
                             </div>
 
@@ -441,14 +486,13 @@
                                 <table class="table" id="paymentTable">
                                     <thead>
                                         <tr>
-                                            <th data-key="RowID">Sr No</th>
-                                            <th data-key="DocketNo">Payment No</th>
-                                            <th data-key="BookedDate">Payment Date</th>
-                                            <th data-key="CustomerName">Customer Name</th>
-                                            <th data-key="ActualWeight">Narration</th>
-                                            <th data-key="VolumeWeight">Credit</th>
-                                            <th data-key="ChargeableWeight">Debit</th>
-                                            <th data-key="TotalAmount">Running Total</th>
+                                            <th scope="col" data-key="RowID">Sr No</th>
+                                            <th scope="col" data-key="DocketNo">Payment No</th>
+                                            <th scope="col" data-key="BookedDate">Payment Date</th>
+                                            <th scope="col" data-key="CustomerName">Customer Name</th>
+                                            <th scope="col" data-key="Narration">Narration</th>
+                                            <th scope="col" data-key="Credit">Credit</th>
+                                            <th scope="col" data-key="Debit">Debit</th>
                                         </tr>
                                     </thead>
                                     <tbody></tbody>
@@ -458,16 +502,17 @@
                             <!-- Pagination & Export -->
                             <div
                                 class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                <nav>
+                                <nav aria-label="Payment report pagination">
                                     <ul class="pagination mb-0" id="paginationControls"></ul>
                                 </nav>
                                 <div class="d-flex flex-wrap gap-2">
                                     <button class="btn btn-outline-success btn-sm bg-white" id="exportExcelBtn"
-                                        disabled>
-                                        <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                                        type="button" disabled>
+                                        <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Export to Excel
                                     </button>
-                                    <button class="btn btn-outline-danger btn-sm bg-white" id="exportPdfBtn" disabled>
-                                        <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+                                    <button class="btn btn-outline-danger btn-sm bg-white" id="exportPdfBtn"
+                                        type="button" disabled>
+                                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Export to PDF
                                     </button>
                                 </div>
                             </div>
@@ -480,12 +525,12 @@
         </div>
     </div>
 
-    <!-- App Scripts -->
-    <script src="../../assets/js/utils/server.js"></script>
-    <script src="../../assets/js/utils/navbar.js"></script>
-    <script src="../../assets/js/utils/utils.js"></script>
-    <script src="../../assets/js/Report/rep_PaymentDetails.js"></script>
-    <script src="../../assets/js/utils/logout.js"></script>
+    <!-- App Scripts (defer keeps order after the CDN libs above) -->
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/Report/rep_PaymentDetails.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
 </body>
 
 </html>

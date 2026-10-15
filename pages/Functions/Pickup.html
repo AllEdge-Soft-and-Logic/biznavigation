@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Full Truck Load Booking – manage FTL shipments, customer and vendor charges, driver details and status.">
+    <meta name="theme-color" content="#0d6efd">
+    <title>Pickup Request · BizNavigation</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+    <!-- Sidebar + Theme CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css">
+    <link rel="stylesheet" href="../../assets/css/booking-theme.css">
+
+    <!-- Page-scoped polish -->
+    <style>
+        .vm-action-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            padding: .75rem 0;
+            margin-bottom: .5rem;
+            background: rgba(255, 255, 255, .92);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--bs-border-color-translucent, #e9ecef);
+        }
+
+        .vm-section-title {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            margin: 1.25rem 0 .25rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-section-title::after {
+            content: "";
+            flex: 1 1 auto;
+            height: 1px;
+            background: currentColor;
+            opacity: .15;
+        }
+
+        .form-label .req {
+            color: var(--bs-danger, #dc3545);
+            margin-left: .15rem;
+        }
+
+        .form-control:disabled,
+        .form-control[readonly] {
+            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        }
+
+        .vm-tabs .nav-link {
+            font-size: .875rem;
+            font-weight: 500;
+        }
+
+        .vm-tabs .nav-link .badge {
+            font-size: .65rem;
+        }
+
+        .vm-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--bs-secondary-color, #6c757d);
+        }
+
+        .vm-empty i {
+            display: block;
+            font-size: 1.75rem;
+            opacity: .45;
+            margin-bottom: .5rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .table-container table thead th {
+            font-size: .8rem;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
+            }
+        }
+
+        .table-container table thead th {
+            font-size: .8rem;
+            white-space: nowrap;
+            /* This keeps headers on one line */
+        }
+    </style>
+
+    <!-- Core Scripts (deferred, executed in document order) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
+
+    <!-- Local Scripts -->
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
+    <script src="../../assets/js/utils/pincode-helper.js" defer></script>
+    <script src="../../assets/js/utils/taxDescription.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
+    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
+    <script src="../../assets/js/FullTruckLoad/PickupRequest.js" defer></script>
+</head>
+
+<body>
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body pb-3">
+                            <form id="fullTruckLoadForm" autocomplete="off" novalidate>
+
+                                <!-- ============ ACTION BAR ============ -->
+                                <div
+                                    class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h1 class="h5 m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-truck-front text-primary" aria-hidden="true"></i>
+                                        Pickup Request
+                                        <span class="badge rounded-pill text-bg-light border fw-normal"
+                                            id="formStateBadge" aria-live="polite">New</span>
+                                    </h1>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="Create new booking" aria-label="New booking">
+                                            <i class="bi bi-file-earmark-plus" aria-hidden="true"></i>
+                                            <span class="d-none d-lg-inline ms-1">New</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" disabled title="Confirm Request"
+                                            aria-label="Confirm Request">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                                            <span class="d-none d-lg-inline ms-1">Confirm</span>
+                                        </button>
+
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" disabled title="Cancel Request"
+                                            aria-label="Cancel Request">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                            <span class="d-none d-lg-inline ms-1">Cancel</span>
+                                        </button>
+
+                                        <!-- LR Print Dropdown -->
+                                        <div class="dropdown d-inline-block">
+                                            <button type="button"
+                                                class="btn btn-outline-info btn-sm bg-white dropdown-toggle"
+                                                id="reportButton" data-bs-toggle="dropdown" aria-expanded="false"
+                                                disabled title="Send Request Message" aria-label="Send Request Message">
+                                                <i class="bi bi-printer" aria-hidden="true"></i>
+                                                <span class="d-none d-lg-inline ms-1">Send</span>
+                                            </button>
+                                            <ul class="dropdown-menu shadow-sm" aria-labelledby="reportButton">
+                                                <li>
+                                                    <button type="button" class="dropdown-item"
+                                                        data-print-type="customer_copy">Customer Copy</button>
+                                                </li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item"
+                                                        data-print-type="assigned_person_copy">Assigned Person
+                                                        Copy</button>
+                                                </li>
+                                            </ul>
+                                        </div>
+
+                                        <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            id="saveButton" data-mode="insert" title="Save booking">
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Save
+                                        </button>
+                                    </div>
+
+                                    <input type="hidden" id="tempFormID" name="tempFormID">
+                                    <input type="hidden" id="partyCode" name="partyCode">
+                                    <input type="hidden" id="assignedToPersonCode" name="assignedToPersonCode">
+                                </div>
+
+                                <!-- ============ PICKUP REQUEST INFORMATION ============ -->
+                                <h2 class="vm-section-title">
+                                    <i class="bi bi-journal-text" aria-hidden="true"></i> Pickup Request Information
+                                </h2>
+
+                                <div class="row g-3">
+
+                                    <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6">
+                                        <label for="pickupRequestNo" class="form-label">Pickup Request No</label>
+                                        <div class="input-group">
+                                            <input list="pickupRequestSuggestions" class="form-control invoice-bg"
+                                                id="pickupRequestNo" required autocomplete="off"
+                                                placeholder="Pickup Request No">
+                                            <datalist id="pickupRequestSuggestions"></datalist>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                id="pickupRequestNoSearch" data-bs-toggle="modal"
+                                                data-bs-target="#searchPickupRequestModal" title="Search Pickup Request"
+                                                aria-label="Search Pickup Request">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="pickupRequestDate" class="form-label">Pickup Request Date</label>
+                                        <input type="date" id="pickupRequestDate" name="pickupRequestDate"
+                                            class="form-control" required>
+                                    </div>
+
+                                    <div class="col-xl-4 col-lg-6 col-md-8 col-sm-12">
+                                        <label for="partyName" class="form-label">
+                                            Customer Name<span class="req" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white">
+                                                <i class="bi bi-person" aria-hidden="true"></i>
+                                            </span>
+                                            <input list="partySuggestions" class="form-control" id="partyName"
+                                                name="partyName" required placeholder="Choose Customer…"
+                                                autocomplete="new-password" autocorrect="off" autocapitalize="off"
+                                                spellcheck="false" readonly onfocus="this.removeAttribute('readonly')"
+                                                onblur="if(!this.value) this.setAttribute('readonly','readonly')"
+                                                required aria-required="true">
+                                            <datalist id="partySuggestions"></datalist>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="scheduledDate" class="form-label">Scheduled Date and Time</label>
+                                        <input type="datetime-local" id="scheduledDate" name="scheduledDate"
+                                            class="form-control" required>
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="requestMovementType" class="form-label">
+                                            Movement Type<span class="req" aria-hidden="true" required>*</span>
+                                        </label>
+
+                                        <select class="form-select" id="requestMovementType" name="requestMovementType"
+                                            required>
+                                            <option value="" disabled selected>Select Movement</option>
+                                            <option value="International">International</option>
+                                            <option value="Domestic">Domestic</option>
+                                            <option value="Customs Clearance">Customs Clearance</option>
+                                            <option value="Full Truck Load">Full Truck Load</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- ============ ROUTE & MOVEMENT ============ -->
+                                <h2 class="vm-section-title">
+                                    <i class="bi bi-geo-alt" aria-hidden="true"></i> Route &amp; Movement
+                                </h2>
+
+                                <div class="row g-3">
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="originPinCode" class="form-label">
+                                            Pickup Pincode<span class="req" aria-hidden="true">*</span>
+                                        </label>
+                                        <input type="text" class="form-control" id="originPinCode" name="originPinCode"
+                                            list="originPinCodeSuggestions" required autocomplete="postal-code"
+                                            inputmode="numeric" maxlength="6" placeholder="Enter Pincode"
+                                            aria-required="true">
+                                        <datalist id="originPinCodeSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                                        <label for="originCity" class="form-label">
+                                            Pickup City<span class="req" aria-hidden="true">*</span>
+                                        </label>
+                                        <input type="text" id="originCity" name="originCity"
+                                            class="form-control text-capitalize" required autocomplete="address-level2"
+                                            aria-required="true">
+                                    </div>
+
+                                    <div class="col-xl-4 col-lg-6 col-md-8 col-sm-12">
+                                        <label for="originAddress" class="form-label">
+                                            Pickup Address<span class="req" aria-hidden="true">*</span>
+                                        </label>
+                                        <textarea id="originAddress" class="form-control text-capitalize"
+                                            name="originAddress" required rows="1" autocomplete="street-address"
+                                            placeholder="Full Address" aria-required="true"></textarea>
+                                    </div>
+
+                                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
+                                        <label for="assignedToPerson" class="form-label">
+                                            Assigned to Person<span class="req" aria-hidden="true">*</span>
+                                        </label>
+                                        <input list="assignedToPersonSuggestions" class="form-control"
+                                            id="assignedToPerson" name="assignedToPerson" required
+                                            placeholder="Select Person" autocomplete="off" aria-required="true">
+                                        <datalist id="assignedToPersonSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="notes" class="form-label">Notes</label>
+                                        <input type="text" class="form-control" id="notes" name="notes"
+                                            placeholder="Enter any additional remarks or information">
+                                    </div>
+                                </div>
+
+                                <!-- ============ SCHEDULED INFORMATION ============ -->
+                                <h2 class="vm-section-title">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i> Scheduled Pickup Information
+                                </h2>
+
+                                <div id="scheduledPickupDetailsTableContainer" class="table-container">
+                                    <table id="scheduledPickupDetailsTable"
+                                        class="table table-hover align-middle mb-0 w-100">
+                                        <caption class="visually-hidden">Scheduled pickup request rows</caption>
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th scope="col" style="width: 4%; min-width: 50px;">S.No</th>
+                                                <th scope="col" style="width: 11%; min-width: 120px;">Request No</th>
+                                                <th scope="col" style="width: 5%; min-width: 70px;">Date</th>
+                                                <th scope="col" style="width: 14%; min-width: 150px;">Customer Name</th>
+                                                <th scope="col" style="width: 12%; min-width: 160px;">Scheduled Date and
+                                                    Time</th>
+                                                <th scope="col" style="width: 10%; min-width: 120px;">Movement Type</th>
+                                                <th scope="col" style="width: 15%; min-width: 200px;">Pickup Address
+                                                </th>
+                                                <th scope="col" style="width: 10%; min-width: 130px;">Assigned to Person
+                                                </th>
+                                                <th scope="col" style="width: 10%; min-width: 150px;">Notes</th>
+                                                <th scope="col" style="width: 10%; min-width: 80px;">
+                                                    Canceled Notes
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="11" class="vm-empty">
+                                                    <i class="bi bi-box-seam" aria-hidden="true"></i>
+                                                    No scheduled pickup rows added
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TOASTS ============ -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
+                    <span id="errorToastMessage">Error message here…</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+
+        <div id="successToast" class="toast align-items-center text-white bg-success border-0 shadow" role="alert"
+            aria-live="polite" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-start gap-2">
+                    <i class="bi bi-check-circle-fill mt-1" aria-hidden="true"></i>
+                    <span id="successToastMessage">Saved successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SEARCH SAVED PICKUP REQUEST MODAL ============ -->
+    <div class="modal fade" id="searchPickupRequestModal" tabindex="-1" aria-labelledby="searchPickupRequestModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="searchPickupRequestModalLabel">
+                        <i class="bi bi-search me-1"></i> Search Saved Pickup Request
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchSavedPickupRequestInput" class="form-control"
+                            placeholder="Search by Pickup Request No, Customer Name, Status or Movement Type..."
+                            autocomplete="off" aria-label="Search Pickup Request">
+                        <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
+                            Search
+                        </button>
+                    </div>
+
+                    <div class="table-responsive"
+                        style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 60px;">Sl No</th>
+                                    <th scope="col">Pickup Request No</th>
+                                    <th scope="col" style="width: 120px;">Pickup Request Date</th>
+                                    <th scope="col" style="width: 120px;">Scheduled Date & Time</th>
+                                    <th scope="col" class="text-start">Customer Name</th>
+                                    <th scope="col" style="width: 160px;">Movement Type</th>
+                                    <th scope="col" style="width: 110px;" class="text-center">Status</th>
+                                    <th scope="col" style="width: 110px;" class="text-center">Action</th>
+
+                                </tr>
+                            </thead>
+                            <tbody id="searchPickupRequestTableBody">
+                                <tr>
+                                    <td colspan="8" class="vm-empty">
+                                        <i class="bi bi-receipt"></i>
+                                        Enter search criteria to find pickup requests…
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ CANCELED NOTES MODAL ============ -->
+    <div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-danger text-white pb-2 pt-2">
+                    <h6 class="modal-title mb-0"><i class="bi bi-exclamation-octagon me-2"></i>Cancel Pickup Request
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">Please provide a reason for canceling this pickup request. This
+                        will be recorded as the Canceled Notes.</p>
+                    <div class="mb-3">
+                        <label for="canceledNotesInput" class="form-label fw-semibold">Canceled Notes <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="canceledNotesInput" rows="3"
+                            placeholder="Enter reason for cancellation..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-3"
+                        data-bs-dismiss="modal">Exit</button>
+                    <button type="button" class="btn btn-danger btn-sm px-3" id="confirmCancelBtn">Confirm
+                        Cancellation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ============================================================
+         EMPTY-STATE PLACEHOLDER MANAGEMENT
+         Keeps a single "no rows" placeholder row in sync with the
+         real data rows of each table. Batched via microtask so a
+         burst of DOM writes only triggers one reconciliation pass.
+         ============================================================ -->
+    <script>
+        (function () {
+            'use strict';
+
+            /** Configuration for each table that has an empty-state placeholder. */
+            var EMPTY_STATES = {
+                scheduledPickupDetailsTable: { colspan: 11, icon: 'bi-box-seam', text: 'No scheduled pickup rows added' },
+                chargesDetailsTable: { colspan: 9, icon: 'bi-currency-rupee', text: 'No customer charges added' },
+                vendorChargesDetailsTable: { colspan: 9, icon: 'bi-wallet2', text: 'No vendor charges added' }
+            };
+
+            /** True when the <tr> is our generated placeholder row. */
+            function isPlaceholder(tr) {
+                var first = tr.firstElementChild;
+                return !!first && first.classList.contains('vm-empty');
+            }
+
+            /** Build a fresh placeholder row from config. */
+            function buildPlaceholder(cfg) {
+                var tr = document.createElement('tr');
+                var td = document.createElement('td');
+
+                td.colSpan = cfg.colspan;
+                td.className = 'vm-empty';
+
+                var icon = document.createElement('i');
+                icon.className = 'bi ' + cfg.icon;
+                icon.setAttribute('aria-hidden', 'true');
+
+                td.appendChild(icon);
+                td.appendChild(document.createTextNode(cfg.text));
+                tr.appendChild(td);
+
+                return tr;
+            }
+
+            /**
+             * Reconcile a single table:
+             *  - data rows present  -> drop any placeholder
+             *  - no data rows       -> ensure exactly one placeholder
+             */
+            function sync(tableId) {
+                var cfg = EMPTY_STATES[tableId];
+                if (!cfg) return;
+
+                var table = document.getElementById(tableId);
+                var tbody = table && table.tBodies[0];
+                if (!tbody) return;
+
+                var dataRows = 0;
+                var placeholders = [];
+                var rows = tbody.rows;
+
+                for (var i = 0; i < rows.length; i++) {
+                    if (isPlaceholder(rows[i])) {
+                        placeholders.push(rows[i]);
+                    } else {
+                        dataRows++;
+                    }
+                }
+
+                if (dataRows > 0) {
+                    for (var p = 0; p < placeholders.length; p++) {
+                        placeholders[p].remove();
+                    }
+                } else if (placeholders.length === 0) {
+                    tbody.appendChild(buildPlaceholder(cfg));
+                } else {
+                    // Collapse accidental duplicates.
+                    for (var d = 1; d < placeholders.length; d++) {
+                        placeholders[d].remove();
+                    }
+                }
+            }
+
+            /* ---- Batched scheduling ---------------------------------------- */
+
+            var pendingIds = new Set();
+            var flushQueued = false;
+
+            function scheduleSync(tableId) {
+                pendingIds.add(tableId);
+                if (flushQueued) return;
+
+                flushQueued = true;
+                queueMicrotask(function () {
+                    flushQueued = false;
+                    var ids = Array.from(pendingIds);
+                    pendingIds.clear();
+                    for (var i = 0; i < ids.length; i++) sync(ids[i]);
+                });
+            }
+
+            /** Attach a MutationObserver to each configured table body. */
+            function observeTable(tableId) {
+                var table = document.getElementById(tableId);
+                var tbody = table && table.tBodies[0];
+                if (!tbody) return;
+
+                new MutationObserver(function () {
+                    scheduleSync(tableId);
+                }).observe(tbody, { childList: true });
+
+                // Normalise any server-rendered / pre-existing placeholder.
+                sync(tableId);
+            }
+
+            /* ---- Public API (kept for FullTruckLoad.js) --------------------- */
+
+            /** Remove the placeholder row, if present. */
+            window.clearEmptyState = function (tableId) {
+                var table = document.getElementById(tableId);
+                var tbody = table && table.tBodies[0];
+                if (!tbody) return;
+
+                var rows = tbody.rows;
+                for (var i = rows.length - 1; i >= 0; i--) {
+                    if (isPlaceholder(rows[i])) rows[i].remove();
+                }
+            };
+
+            /** Re-insert the placeholder when the table has no data rows. */
+            window.restoreEmptyStateIfNeeded = function (tableId) {
+                sync(tableId);
+            };
+
+            /* ---- Boot ------------------------------------------------------- */
+
+            Object.keys(EMPTY_STATES).forEach(observeTable);
+        })();
+    </script>
+</body>
+
+</html>

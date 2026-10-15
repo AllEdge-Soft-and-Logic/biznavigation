@@ -292,7 +292,7 @@ function addInvoiceDetailRow() {
         `;
         UI.tbody.appendChild(row);
     }
-
+    toggleEmptyTableState("#paymentDetailsBody", "No allocation details added", 8);
     syncTableUpdates();
     clearInvoiceInputs();
 }
@@ -327,6 +327,7 @@ if (UI.tbody) {
             if (row.dataset.status === "Old" && row.dataset.id) deletedPaymentLines.push(row.dataset.id);
 
             row.remove();
+            toggleEmptyTableState("#paymentDetailsBody", "No allocation details added", 8);
             syncTableUpdates();
         }
     });
@@ -500,6 +501,7 @@ async function loadPaymentLineItems(paymentID) {
     });
 
     syncTableUpdates();
+    toggleEmptyTableState("#paymentDetails tbody", "No allocation details added", 8);
 }
 
 async function loadPaymentDetails(paymentID) {

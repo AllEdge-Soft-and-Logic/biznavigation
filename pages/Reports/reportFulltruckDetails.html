@@ -4,33 +4,28 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Full-Truck Details</title>
+    <meta name="description" content="Full-Truck Details and Booking Report Management" />
+    <title>Full-Truck Details | BizNavigation</title>
 
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <!-- Performance: Preconnect to critical domains -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Modern Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
 
-    <!-- Bootstrap & Icons -->
+    <!-- External CSS Libraries -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- Flatpickr -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
-    <!-- SheetJS, jsPDF, jsPDF AutoTable -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
-    <!-- Sidebar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
-    <!-- Upgraded Modern Report Styles (Unified) -->
+    <!-- Application Styles -->
     <style>
         :root {
             --primary-color: #2563eb;
@@ -47,8 +42,9 @@
 
         body {
             background-color: var(--bg-color);
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
         }
 
         #root {
@@ -57,14 +53,14 @@
 
         /* Card Styling */
         .card {
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
             background-color: var(--surface-color);
         }
 
         .card-body {
-            padding: 1.5rem 2rem !important;
+            padding: 1.5rem 2rem;
         }
 
         /* Action Bar */
@@ -84,13 +80,9 @@
             transition: var(--transition);
         }
 
-        .btn-sm {
-            font-size: 0.85rem;
-        }
-
         /* Form Controls */
         .form-label {
-            margin-bottom: 0.3rem !important;
+            margin-bottom: 0.3rem;
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-muted);
@@ -100,8 +92,8 @@
 
         .form-control,
         .form-select {
-            padding: 0.45rem 0.75rem !important;
-            font-size: 0.875rem !important;
+            padding: 0.45rem 0.75rem;
+            font-size: 0.875rem;
             background-color: #f8fafc;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
@@ -134,13 +126,15 @@
             margin-bottom: 1.25rem;
         }
 
-        /* Table Container */
+        /* Table Optimization */
         .table-responsive {
             max-height: 70vh;
             overflow: auto;
             background: var(--surface-color);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
+            /* Hardware acceleration for smooth scrolling with many columns */
+            transform: translateZ(0);
         }
 
         #bookingTable {
@@ -162,10 +156,9 @@
             z-index: 2;
             cursor: pointer;
             white-space: nowrap;
-            padding: 0.7rem 0.75rem !important;
+            padding: 0.7rem 0.75rem;
             border-bottom: 1px solid var(--border-color);
-            border-top: none;
-            transition: var(--transition);
+            user-select: none;
         }
 
         #bookingTable thead th:hover {
@@ -177,7 +170,7 @@
             vertical-align: middle;
             white-space: nowrap;
             font-size: 0.82rem;
-            padding: 0.6rem 0.75rem !important;
+            padding: 0.6rem 0.75rem;
             color: var(--text-main);
             border-bottom: 1px solid var(--border-color);
         }
@@ -256,113 +249,119 @@
 
         /* Empty State */
         #emptyRow td {
-            padding: 3rem 1rem !important;
+            padding: 3rem 1rem;
             color: var(--text-muted);
             font-size: 0.9rem;
         }
 
-        /* Mobile tweaks */
+        /* Mobile Adjustments */
         @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+
             #bookingTable thead th {
                 font-size: 0.68rem;
-                padding: 0.5rem 0.6rem !important;
+                padding: 0.5rem 0.6rem;
             }
 
             #bookingTable tbody td {
                 font-size: 0.75rem;
-                padding: 0.5rem 0.6rem !important;
-            }
-
-            .card-body {
-                padding: 1rem 1.25rem !important;
+                padding: 0.5rem 0.6rem;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="app-wrapper">
-
+    <div class="app-wrapper d-flex">
         <!-- Sidebar -->
-        <div id="sidebar">
+        <aside id="sidebar" aria-label="Main Navigation">
             <div class="text-center text-muted p-3">Loading Sidebar...</div>
-        </div>
+        </aside>
 
         <!-- Main Content -->
-        <div class="main-content">
+        <main class="main-content flex-grow-1">
             <div class="page-content">
-
                 <div class="container-fluid mt-3 mb-4" id="root">
-                    <div class="card">
+                    <div class="card border-0">
                         <div class="card-body">
 
                             <!-- Action Bar -->
-                            <div class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                <h5 class="m-0 fw-bold text-dark d-none d-md-block">Full-Truck Details</h5>
+                            <header
+                                class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                <h1 class="h5 m-0 fw-bold text-dark d-none d-md-block">Full-Truck Details</h1>
                                 <button class="btn btn-outline-primary btn-sm bg-white" type="button"
                                     data-bs-toggle="collapse" data-bs-target="#filterSection" aria-expanded="false"
                                     aria-controls="filterSection">
-                                    <i class="bi bi-funnel"></i> Toggle Filters
+                                    <i class="bi bi-funnel" aria-hidden="true"></i> Toggle Filters
                                 </button>
-                            </div>
+                            </header>
 
                             <!-- Filters Section -->
                             <div class="collapse" id="filterSection">
-                                <div class="filter-panel">
-                                    <div class="row g-3" id="searchFilters">
+                                <section class="filter-panel" aria-label="Search Filters">
+                                    <form class="row g-3" id="searchFilters" onsubmit="event.preventDefault();">
+
                                         <div class="col-12 col-md-6 col-lg-3">
                                             <label for="customerName" class="form-label">Customer Name</label>
-                                            <input id="customerName" class="form-control" list="customerNameList"
-                                                placeholder="Enter Customer Name">
+                                            <input type="text" id="customerName" class="form-control"
+                                                list="customerNameList" placeholder="Enter Customer Name">
                                             <datalist id="customerNameList"></datalist>
                                         </div>
+
                                         <div class="col-6 col-md-6 col-lg-2">
                                             <label for="docketNo" class="form-label">Docket No</label>
-                                            <input id="docketNo" class="form-control" list="docketNoList"
+                                            <input type="text" id="docketNo" class="form-control" list="docketNoList"
                                                 placeholder="Enter Docket No" autocomplete="off">
                                             <datalist id="docketNoList"></datalist>
                                         </div>
 
                                         <div class="col-6 col-md-6 col-lg-3">
                                             <label for="dateRange" class="form-label">Booked Date Range</label>
-                                            <input id="dateRange" class="form-control" placeholder="Select Date Range"
-                                                readonly>
+                                            <input type="text" id="dateRange" class="form-control"
+                                                placeholder="Select Date Range" readonly>
                                         </div>
+
                                         <div class="col-6 col-md-6 col-lg-2">
                                             <label for="movementType" class="form-label">Movement Type</label>
-                                            <input id="movementType" class="form-control" list="movementTypeList"
-                                                autocomplete="off" placeholder="Enter Movement Type">
+                                            <input type="text" id="movementType" class="form-control"
+                                                list="movementTypeList" autocomplete="off" placeholder="Enter Type">
                                             <datalist id="movementTypeList"></datalist>
                                         </div>
 
                                         <div class="col-6 col-md-6 col-lg-2">
                                             <label for="modeType" class="form-label">Mode Type</label>
-                                            <input id="modeType" class="form-control" list="modeTypeList"
-                                                placeholder="Enter Mode Type">
+                                            <input type="text" id="modeType" class="form-control" list="modeTypeList"
+                                                placeholder="Enter Mode">
                                             <datalist id="modeTypeList"></datalist>
                                         </div>
+
                                         <div class="col-6 col-md-6 col-lg-2">
                                             <label for="originLocation" class="form-label">Origin</label>
-                                            <input id="originLocation" class="form-control" list="originLocationList"
-                                                placeholder="Enter Origin">
+                                            <input type="text" id="originLocation" class="form-control"
+                                                list="originLocationList" placeholder="Enter Origin">
                                             <datalist id="originLocationList"></datalist>
                                         </div>
+
                                         <div class="col-6 col-md-6 col-lg-2">
                                             <label for="destinationLocation" class="form-label">Destination</label>
-                                            <input id="destinationLocation" class="form-control"
+                                            <input type="text" id="destinationLocation" class="form-control"
                                                 list="destinationLocationList" placeholder="Enter Destination">
                                             <datalist id="destinationLocationList"></datalist>
                                         </div>
+
                                         <div class="col-6 col-md-6 col-lg-2">
                                             <label for="routeDetails" class="form-label">Route</label>
-                                            <input id="routeDetails" class="form-control" list="routeDetailsList"
-                                                placeholder="Enter Route">
+                                            <input type="text" id="routeDetails" class="form-control"
+                                                list="routeDetailsList" placeholder="Enter Route">
                                             <datalist id="routeDetailsList"></datalist>
                                         </div>
+
                                         <div class="col-12 col-md-6 col-lg-3">
                                             <label for="vendorName" class="form-label">Vendor Name</label>
-                                            <input id="vendorName" class="form-control" list="vendorNameList"
-                                                placeholder="Enter Vendor Name">
+                                            <input type="text" id="vendorName" class="form-control"
+                                                list="vendorNameList" placeholder="Enter Vendor Name">
                                             <datalist id="vendorNameList"></datalist>
                                         </div>
 
@@ -376,45 +375,48 @@
                                             <input type="number" id="bookedYear" class="form-control" placeholder="YYYY"
                                                 min="2000" max="2100">
                                         </div>
+
                                         <div class="col-6 col-md-4 col-lg-2">
                                             <label for="financialYear" class="form-label">Financial Year</label>
-                                            <input id="financialYear" class="form-control" placeholder="YYYY-YYYY"
-                                                list="financialYearList">
+                                            <input type="text" id="financialYear" class="form-control"
+                                                placeholder="YYYY-YYYY" list="financialYearList">
                                             <datalist id="financialYearList"></datalist>
                                         </div>
 
                                         <div class="col-6 col-md-4 col-lg-2">
                                             <label for="invoiceStatus" class="form-label">Invoice Status</label>
-                                            <input id="invoiceStatus" class="form-control" list="invoiceStatusList"
-                                                placeholder="Enter Status">
+                                            <input type="text" id="invoiceStatus" class="form-control"
+                                                list="invoiceStatusList" placeholder="Enter Status">
                                             <datalist id="invoiceStatusList"></datalist>
                                         </div>
+
                                         <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
-                                            <button class="btn btn-primary" id="searchBtn" aria-label="Search records">
-                                                <i class="bi bi-search"></i> Search
+                                            <button type="submit" class="btn btn-primary" id="searchBtn"
+                                                aria-label="Search records">
+                                                <i class="bi bi-search" aria-hidden="true"></i> Search
                                             </button>
                                         </div>
-                                    </div>
-                                </div>
+                                    </form>
+                                </section>
                             </div>
 
                             <!-- Spinner -->
-                            <div id="loadingSpinner" class="text-center my-4" style="display: none;">
+                            <div id="loadingSpinner" class="text-center my-4" style="display: none;" aria-live="polite">
                                 <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                                    <span class="visually-hidden">Loading records...</span>
                                 </div>
                                 <p class="text-muted mt-2 small mb-0">Loading records...</p>
                             </div>
 
                             <!-- Table -->
-                            <div class="table-responsive">
+                            <div class="table-responsive" tabindex="0">
                                 <table class="table" id="bookingTable">
                                     <thead>
                                         <tr>
                                             <th data-key="RowID">Sr No</th>
                                             <th data-key="DocketNo">Docket No</th>
-                                            <th data-key="PickupDate">Booking Date <i class="bi bi-arrow-down-up"></i>
-                                            </th>
+                                            <th data-key="PickupDate">Booking Date <i
+                                                    class="bi bi-arrow-down-up ms-1"></i></th>
                                             <th data-key="PartyName">Customer Name</th>
                                             <th data-key="MovementType">Movement Type</th>
                                             <th data-key="ModeType">Mode Type</th>
@@ -445,11 +447,15 @@
                                             <th data-key="GrandTotal">Grand Total</th>
                                             <th data-key="InvoiceNo">Invoice No</th>
                                             <th data-key="InvoiceStatus">Invoice Status</th>
+                                            <th data-key="BuyTotalAmount">Buy Total Amount</th>
+                                            <th data-key="TotalMargin">Total Margin</th>
+                                            <th data-key="MarginPer">Margin %</th>
+                                            <th data-key="BillStatus">Bill Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="tableBody">
                                         <tr id="emptyRow">
-                                            <td colspan="33" class="text-center text-muted">
+                                            <td colspan="37" class="text-center text-muted">
                                                 <i class="bi bi-inbox fs-3 d-block mb-2 opacity-50"></i>
                                                 No data found
                                             </td>
@@ -459,39 +465,43 @@
                             </div>
 
                             <!-- Pagination & Export -->
-                            <div
+                            <footer
                                 class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                <nav>
+                                <nav aria-label="Table navigation">
                                     <ul class="pagination mb-0" id="paginationControls"></ul>
                                 </nav>
                                 <div class="d-flex flex-wrap gap-2">
                                     <button class="btn btn-outline-success btn-sm bg-white" id="exportExcelBtn">
-                                        <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                                        <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Export to Excel
                                     </button>
                                     <button class="btn btn-outline-danger btn-sm bg-white" id="exportPdfBtn">
-                                        <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+                                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Export to PDF
                                     </button>
                                 </div>
-                            </div>
+                            </footer>
 
                         </div>
                     </div>
                 </div>
-
             </div>
-        </div>
+        </main>
     </div>
 
+    <!-- Deferred Library Scripts -->
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script defer src="https://unpkg.com/@supabase/supabase-js"></script>
 
     <!-- App Scripts -->
-    <script src="../../assets/js/utils/server.js" defer></script>
-    <script src="../../assets/js/utils/navbar.js" defer></script>
-    <script src="../../assets/js/utils/utils.js" defer></script>
-    <script src="../../assets/js/Report/reportFullTruckDetails.js" defer></script>
-    <script src="../../assets/js/utils/logout.js" defer></script>
+    <script defer src="../../assets/js/utils/server.js"></script>
+    <script defer src="../../assets/js/utils/navbar.js"></script>
+    <script defer src="../../assets/js/utils/utils.js"></script>
+    <script defer src="../../assets/js/Report/reportFullTruckDetails.js"></script>
+    <script defer src="../../assets/js/utils/logout.js"></script>
 </body>
 
 </html>

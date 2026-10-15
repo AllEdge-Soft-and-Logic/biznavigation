@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#0d6efd">
     <title>Vendor Billing · BizNavigation</title>
 
-    <!-- Resource Hints -->
+    <!-- Resource Hints for faster DNS resolution -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,22 +17,16 @@
     <!-- Modern Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Bootstrap CSS & Icons -->
+    <!-- Stylesheets -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    <!-- Sidebar CSS -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
-
-    <!-- Upgraded Modern Form Styles -->
     <link rel="stylesheet" href="../../assets/css/booking-theme.css" />
 
-    <!-- Page-scoped polish -->
+    <!-- Page-scoped polish (Consider moving this to an external vendor-billing.css file for caching) -->
     <style>
         :root {
             --primary-color: #2563eb;
@@ -51,6 +45,12 @@
             --transition: all 0.2s ease-in-out;
         }
 
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+
         .vm-action-bar {
             position: sticky;
             top: 0;
@@ -66,7 +66,7 @@
             display: flex;
             align-items: center;
             gap: .5rem;
-            margin: 1.25rem 0 .25rem;
+            margin: 1.25rem 0 .5rem;
             font-size: .75rem;
             font-weight: 600;
             letter-spacing: .06em;
@@ -88,17 +88,16 @@
         }
 
         .form-control:disabled,
-        .form-control[readonly] {
-            background-color: var(--bs-tertiary-bg, #f8f9fa);
+        .form-control[readonly],
+        .form-control.bg-light {
+            background-color: #f1f5f9 !important;
+            color: #475569;
+            cursor: default;
         }
 
         .vm-tabs .nav-link {
             font-size: .875rem;
             font-weight: 500;
-        }
-
-        .vm-tabs .nav-link .badge {
-            font-size: .65rem;
         }
 
         .vm-empty {
@@ -112,12 +111,6 @@
             font-size: 1.75rem;
             opacity: .45;
             margin-bottom: .5rem;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            font-family: 'Inter', sans-serif;
-            color: var(--text-main);
         }
 
         .card {
@@ -141,10 +134,6 @@
             transition: var(--transition);
         }
 
-        .btn-sm {
-            font-size: 0.85rem;
-        }
-
         .form-label {
             margin-bottom: 0.3rem !important;
             font-size: 0.75rem;
@@ -165,13 +154,6 @@
             transition: var(--transition);
         }
 
-        .form-control-sm,
-        .form-select-sm {
-            padding: 0.4rem 0.7rem !important;
-            font-size: 0.85rem !important;
-            border-radius: var(--radius-md);
-        }
-
         .form-control:hover,
         .form-select:hover {
             border-color: #cbd5e1;
@@ -186,14 +168,6 @@
 
         .form-control::placeholder {
             color: #94a3b8;
-        }
-
-        .form-control[readonly],
-        .form-control:disabled,
-        .form-control.bg-light {
-            background-color: #f1f5f9 !important;
-            color: #475569;
-            cursor: default;
         }
 
         .invoice-bg {
@@ -276,6 +250,7 @@
             color: var(--primary-color) !important;
         }
 
+        /* Modal & Dropdown Adjustments */
         .modal-content {
             border: none;
             border-radius: var(--radius-lg);
@@ -322,6 +297,7 @@
             border-color: #bfdbfe;
         }
 
+        /* Select2 Theme overrides */
         .select2-container--default .select2-selection--single,
         .select2-container--default .select2-selection--multiple {
             border: 1px solid var(--border-color);
@@ -360,6 +336,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
         }
 
+        /* Responsive tweaks */
         @media (max-width: 768px) {
             .card-body {
                 padding: 1rem 1.25rem !important;
@@ -378,51 +355,49 @@
     <div class="app-wrapper">
 
         <!-- Sidebar -->
-        <div id="sidebar">
+        <aside id="sidebar" aria-label="Main Navigation">
             <div class="text-center text-muted p-3">Loading Sidebar...</div>
-        </div>
+        </aside>
 
         <!-- Main Content -->
-        <div class="main-content">
+        <main class="main-content">
             <div class="page-content">
-
                 <div class="container-fluid mt-3 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-body pb-3">
-
                             <form class="invoiceForm" autocomplete="off" novalidate>
 
                                 <!-- ============ ACTION BAR ============ -->
                                 <div
                                     class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                    <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
-                                        <i class="bi bi-receipt-cutoff text-primary"></i>
+                                    <h1 class="h5 m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
+                                        <i class="bi bi-receipt-cutoff text-primary" aria-hidden="true"></i>
                                         Vendor Billing
                                         <span class="badge rounded-pill text-bg-light border fw-normal"
                                             id="formStateBadge">New</span>
-                                    </h5>
+                                    </h1>
 
                                     <div class="d-flex flex-wrap gap-2">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
                                             id="newButton" title="Create new billing" aria-label="New billing">
-                                            <i class="bi bi-file-earmark-plus"></i>
+                                            <i class="bi bi-file-earmark-plus" aria-hidden="true"></i>
                                             <span class="d-none d-lg-inline ms-1">New</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-warning btn-sm bg-white"
                                             id="modifyButton" disabled title="Modify billing"
                                             aria-label="Modify billing">
-                                            <i class="bi bi-pencil"></i>
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
                                             <span class="d-none d-lg-inline ms-1">Modify</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-danger btn-sm bg-white"
                                             id="deleteButton" disabled title="Delete billing"
                                             aria-label="Delete billing">
-                                            <i class="bi bi-trash"></i>
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
                                             <span class="d-none d-lg-inline ms-1">Delete</span>
                                         </button>
                                         <button type="button" class="btn btn-outline-info btn-sm bg-white"
                                             id="reportButton" disabled title="Print billing" aria-label="Print billing">
-                                            <i class="bi bi-printer"></i>
+                                            <i class="bi bi-printer" aria-hidden="true"></i>
                                             <span class="d-none d-lg-inline ms-1">Print</span>
                                         </button>
                                         <button id="saveButton" class="btn btn-primary btn-sm px-4 shadow-sm"
@@ -435,7 +410,6 @@
                                         <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"
                                             aria-hidden="true"></div>
                                     </div>
-
                                     <input type="text" class="form-control bg-light d-none" id="status" value="New"
                                         readonly aria-hidden="true">
                                 </div>
@@ -448,9 +422,9 @@
                                 <input type="hidden" id="mode" value="insert">
 
                                 <!-- ============ EXPENSE INFORMATION ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-tag"></i> Expense Information
-                                </p>
+                                <h2 class="vm-section-title h6">
+                                    <i class="bi bi-tag" aria-hidden="true"></i> Expense Information
+                                </h2>
 
                                 <div class="row g-3">
                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
@@ -464,14 +438,14 @@
                                                 id="billReferenceNoSearch" data-bs-toggle="modal"
                                                 data-bs-target="#searchBillReferenceModal" title="Search Reference"
                                                 aria-label="Search Reference">
-                                                <i class="bi bi-search"></i>
+                                                <i class="bi bi-search" aria-hidden="true"></i>
                                             </button>
                                         </div>
                                     </div>
 
                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
                                         <label for="accountedDate" class="form-label">
-                                            Accounted Date<span class="req">*</span>
+                                            Accounted Date<span class="req" aria-hidden="true">*</span>
                                         </label>
                                         <input type="date" class="form-control" id="accountedDate" required>
                                     </div>
@@ -491,14 +465,14 @@
                                 </div>
 
                                 <!-- ============ VENDOR & BILL DETAILS ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-building"></i> Vendor &amp; Bill Details
-                                </p>
+                                <h2 class="vm-section-title h6">
+                                    <i class="bi bi-building" aria-hidden="true"></i> Vendor &amp; Bill Details
+                                </h2>
 
                                 <div class="row g-3">
                                     <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
                                         <label for="partyName" class="form-label">
-                                            Vendor Name<span class="req">*</span>
+                                            Vendor Name<span class="req" aria-hidden="true">*</span>
                                         </label>
                                         <div class="input-group">
                                             <span class="input-group-text bg-white"><i
@@ -511,7 +485,7 @@
 
                                     <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
                                         <label for="vendorBillNo" class="form-label">
-                                            Bill No<span class="req">*</span>
+                                            Bill No<span class="req" aria-hidden="true">*</span>
                                         </label>
                                         <input list="vendorBillNoSuggestions" class="form-control invoice-bg"
                                             id="vendorBillNo" required autocomplete="off" placeholder="Bill No">
@@ -520,31 +494,31 @@
 
                                     <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
                                         <label for="vendorBillDate" class="form-label">
-                                            Bill Date<span class="req">*</span>
+                                            Bill Date<span class="req" aria-hidden="true">*</span>
                                         </label>
                                         <input type="date" class="form-control" id="vendorBillDate" required>
                                     </div>
 
                                     <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
                                         <label for="vendorBilledAmount" class="form-label">
-                                            Billed Amount<span class="req">*</span>
+                                            Billed Amount<span class="req" aria-hidden="true">*</span>
                                         </label>
                                         <input type="number" class="form-control text-end" id="vendorBilledAmount"
-                                            required min="0" placeholder="0.00" step="0.01">
+                                            required min="0" placeholder="0.00" step="0.01" inputmode="decimal">
                                     </div>
 
                                     <div class="col-xl-2 col-lg-3 col-md-3 col-sm-6">
                                         <label for="vendorDueDate" class="form-label">
-                                            Due Date<span class="req">*</span>
+                                            Due Date<span class="req" aria-hidden="true">*</span>
                                         </label>
                                         <input type="date" class="form-control" id="vendorDueDate" required>
                                     </div>
                                 </div>
 
                                 <!-- ============ INFORMATION ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-info-circle"></i> Information
-                                </p>
+                                <h2 class="vm-section-title h6">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i> Information
+                                </h2>
 
                                 <div class="row g-3">
                                     <div class="col-12">
@@ -561,14 +535,13 @@
                                             <button class="nav-link active" id="shipmentDetails-tab"
                                                 data-bs-toggle="tab" data-bs-target="#shipmentDetails" type="button"
                                                 role="tab" aria-controls="shipmentDetails" aria-selected="true">
-                                                <i class="bi bi-list-check me-1"></i> Billing Details
+                                                <i class="bi bi-list-check me-1" aria-hidden="true"></i> Billing Details
                                             </button>
                                         </li>
                                     </ul>
 
                                     <div class="tab-content border border-top-0 rounded-bottom p-3 bg-white"
                                         id="partyTabsContent">
-
                                         <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
                                             aria-labelledby="shipmentDetails-tab" tabindex="0">
 
@@ -595,14 +568,14 @@
                                                         Amount</label>
                                                     <input type="number" class="form-control text-end"
                                                         id="nonTaxableAmount" autocomplete="off" placeholder="0.00"
-                                                        min="0" step="0.01">
+                                                        min="0" step="0.01" inputmode="decimal">
                                                 </div>
 
                                                 <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
                                                     <label for="taxableAmount" class="form-label">Taxable Amount</label>
                                                     <input type="number" class="form-control text-end"
                                                         id="taxableAmount" autocomplete="off" placeholder="0.00" min="0"
-                                                        step="0.01">
+                                                        step="0.01" inputmode="decimal">
                                                 </div>
 
                                                 <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
@@ -615,7 +588,7 @@
                                                 <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6 d-grid">
                                                     <button type="button" class="btn btn-primary"
                                                         id="addChargesDetails">
-                                                        <i class="bi bi-plus-circle"></i> Add
+                                                        <i class="bi bi-plus-circle" aria-hidden="true"></i> Add
                                                     </button>
                                                 </div>
                                             </div>
@@ -643,9 +616,9 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <tr>
+                                                        <tr id="emptyBillingStateRow" class="empty-row">
                                                             <td colspan="12" class="vm-empty">
-                                                                <i class="bi bi-list-check"></i>
+                                                                <i class="bi bi-list-check" aria-hidden="true"></i>
                                                                 No billing details added
                                                             </td>
                                                         </tr>
@@ -653,28 +626,26 @@
                                                     <tfoot>
                                                         <tr id="totalsRow" class="table-light fw-bold">
                                                             <th colspan="4" class="text-end" scope="row">Totals:</th>
-                                                            <th class="text-end" id="totalNonTaxableAmount">0.00</th>
-                                                            <th class="text-end" id="totalTaxableAmount">0.00</th>
-                                                            <th class="text-end" id="totalSGSTAmount">0.00</th>
-                                                            <th class="text-end" id="totalCGSTAmount">0.00</th>
-                                                            <th class="text-end" id="totalIGSTAmount">0.00</th>
-                                                            <th class="text-end" id="totalGSTAmount">0.00</th>
-                                                            <th class="text-end" id="grandTotalAmount">0.00</th>
-                                                            <th></th>
-                                                            <th class="d-none"></th>
-                                                            <th class="d-none"></th>
+                                                            <td class="text-end" id="totalNonTaxableAmount">0.00</td>
+                                                            <td class="text-end" id="totalTaxableAmount">0.00</td>
+                                                            <td class="text-end" id="totalSGSTAmount">0.00</td>
+                                                            <td class="text-end" id="totalCGSTAmount">0.00</td>
+                                                            <td class="text-end" id="totalIGSTAmount">0.00</td>
+                                                            <td class="text-end" id="totalGSTAmount">0.00</td>
+                                                            <td class="text-end" id="grandTotalAmount">0.00</td>
+                                                            <td></td>
+                                                            <td class="d-none"></td>
+                                                            <td class="d-none"></td>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
                                             </div>
 
                                         </div><!-- tab-pane -->
-
                                     </div><!-- tab-content -->
                                 </div><!-- mt-4 -->
 
                             </form>
-
                         </div>
                     </div>
                 </div>
@@ -695,7 +666,7 @@
                         <div class="modal-content">
                             <div class="modal-header bg-primary text-white">
                                 <h5 class="modal-title" id="addressModalLabel">
-                                    <i class="bi bi-geo-alt me-1"></i> Select Invoice Address
+                                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i> Select Invoice Address
                                 </h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
@@ -706,7 +677,7 @@
                 </div>
 
             </div>
-        </div>
+        </main>
     </div>
 
     <!-- ============ SEARCH SAVED REFERENCE MODAL ============ -->
@@ -717,7 +688,7 @@
 
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="searchBillReferenceModalLabel">
-                        <i class="bi bi-search me-1"></i> Search Saved Reference
+                        <i class="bi bi-search me-1" aria-hidden="true"></i> Search Saved Reference
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
@@ -725,8 +696,8 @@
 
                 <div class="modal-body">
                     <div class="input-group mb-3">
-                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                        <input type="text" id="searchSavedBillReferenceInput" class="form-control"
+                        <span class="input-group-text bg-white"><i class="bi bi-search" aria-hidden="true"></i></span>
+                        <input type="search" id="searchSavedBillReferenceInput" class="form-control"
                             placeholder="Search by Reference No, Vendor Name, or Movement Type..." autocomplete="off"
                             aria-label="Search Reference">
                         <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
@@ -751,7 +722,7 @@
                             <tbody id="searchBillReferenceTableBody">
                                 <tr>
                                     <td colspan="7" class="vm-empty">
-                                        <i class="bi bi-receipt"></i>
+                                        <i class="bi bi-receipt" aria-hidden="true"></i>
                                         Enter search criteria to find references…
                                     </td>
                                 </tr>
@@ -774,7 +745,7 @@
             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body d-flex align-items-start gap-2">
-                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <i class="bi bi-exclamation-triangle-fill mt-1" aria-hidden="true"></i>
                     <span id="errorToastMessage">Error message here...</span>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
@@ -786,7 +757,7 @@
             aria-live="polite" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body d-flex align-items-start gap-2">
-                    <i class="bi bi-check-circle-fill mt-1"></i>
+                    <i class="bi bi-check-circle-fill mt-1" aria-hidden="true"></i>
                     <span id="successToastMessage">Saved successfully.</span>
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
@@ -795,23 +766,25 @@
         </div>
     </div>
 
-    <!-- Optimized Script Loading -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
+    <!-- External Vendor Scripts (Moved to bottom to prevent render-blocking) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
 
+    <!-- Internal Application Scripts -->
     <script src="../../assets/js/utils/server.js"></script>
     <script src="../../assets/js/utils/navbar.js"></script>
     <script src="../../assets/js/utils/utils.js"></script>
-    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
-    <script src="../../assets/js/utils/api.js" defer></script>
-    <script src="../../assets/js/utils/logout.js" defer></script>
-    <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
-    <script src="../../assets/js/utils/taxDescription.js" defer></script>
-
-    <script src="../../assets/js/VendorBilling/VendorBilling.js" defer></script>
+    <script src="../../assets/js/utils/GlobalShortcut.js"></script>
+    <script src="../../assets/js/utils/api.js"></script>
+    <script src="../../assets/js/utils/logout.js"></script>
+    <script src="../../assets/js/utils/dropdownLoader.js"></script>
+    <script src="../../assets/js/utils/taxDescription.js"></script>
+    <script src="../../assets/js/VendorBilling/VendorBilling.js"></script>
 
 </body>
 

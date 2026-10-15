@@ -13,7 +13,11 @@
         VENDOR_BILLING: 'VendorBillingDetails',
         PARTY: 'PartyDetails',
         PAYMENT_VIEW: 'InvoicePaymentView',      // Customer Outstanding SQL View
-        VENDOR_PAYMENT_VIEW: 'VendorBillPaymentView' // Vendor Outstanding SQL View
+        VENDOR_PAYMENT_VIEW: 'VendorBillPaymentView', // Vendor Outstanding SQL View
+        INTERNATIONAL_BOOKING: 'InternationalBookingView',
+        DOMESTIC_BOOKING: 'DomesticBookingView',
+        CUSTOMS_CLEARANCE: 'CustomsClearanceView',
+        FULL_LOAD_MOVEMENT: 'FullLoadMovementDetailsView'
     };
 
     const COLUMNS = {
@@ -44,7 +48,11 @@
     let activeTab = 'customer';
     let currentView = 'Monthly';
     let currentFY = '';
-    let isRefreshing = false; // Spam-click guard
+
+    // State Guards
+    let isRefreshing = false; // Spam-click guard for full refresh
+    let isHoverFetching = false; // Prevents overlapping hover fetches
+    let lastPendingHoverTime = 0; // Cooldown timer for hover
 
     const dashboardData = {
         labels: MONTHS.slice(),
@@ -71,7 +79,6 @@
         return '₹' + n.toFixed(0);
     }
 
-    /* Fast string-based date parser (skips slow 'new Date()' for ISO strings) */
     function getFYStringFromDate(dateStr) {
         if (!dateStr) return null;
         if (typeof dateStr === 'string' && dateStr.length >= 10) {
@@ -281,6 +288,75 @@
         return data.reduce((sum, row) => sum + (Number(row.BalanceAmount) || 0), 0);
     }
 
+    // Total Pending Invoices & Individual Breakdown
+    async function fetchTotalPendingInvoices(isHover = false) {
+        // Anti-spam: If it's a hover event, enforce a 30-second cooldown
+        if (isHover) {
+            if (isHoverFetching) return;
+            if (Date.now() - lastPendingHoverTime < 30000) return; // 30 sec cooldown
+
+            isHoverFetching = true;
+
+            // Show temporary loading dots on the hover breakdown while fetching
+            const loadingText = '...';
+            if (DOM.intPending) DOM.intPending.textContent = loadingText;
+            if (DOM.domPending) DOM.domPending.textContent = loadingText;
+            if (DOM.customsPending) DOM.customsPending.textContent = loadingText;
+            if (DOM.fullLoadPending) DOM.fullLoadPending.textContent = loadingText;
+        }
+
+        const checks = [
+            { key: 'international', table: TABLES.INTERNATIONAL_BOOKING, domEl: DOM.intPending },
+            { key: 'domestic', table: TABLES.DOMESTIC_BOOKING, domEl: DOM.domPending },
+            { key: 'customs', table: TABLES.CUSTOMS_CLEARANCE, domEl: DOM.customsPending },
+            { key: 'fullLoad', table: TABLES.FULL_LOAD_MOVEMENT, domEl: DOM.fullLoadPending }
+        ];
+
+        try {
+            const promises = checks.map(item =>
+                supabaseClient
+                    .from(item.table)
+                    .select('*', { count: 'exact', head: true })
+                    .eq(COLUMNS.COMPANY, CompanyID)
+                    .eq('InvoiceStatus', 'Pending')
+            );
+
+            const results = await Promise.all(promises);
+            let totalPending = 0;
+
+            results.forEach((res, index) => {
+                const count = res.error ? 0 : (res.count || 0);
+                totalPending += count;
+
+                // Update individual UI sub-metric in the hover list
+                const targetDom = checks[index].domEl;
+                if (targetDom) {
+                    targetDom.textContent = count.toLocaleString('en-IN');
+                }
+
+                if (res.error) {
+                    console.error(`Failed to fetch pending count from ${checks[index].table}:`, res.error);
+                }
+            });
+
+            // If triggered by hover, also update the main UI number in case it changed
+            if (isHover) {
+                if (DOM.pendingKpi) DOM.pendingKpi.textContent = totalPending.toLocaleString('en-IN');
+                if (DOM.pendingSub) DOM.pendingSub.textContent = totalPending > 0 ? 'Awaiting action' : 'All clear';
+            }
+
+            return totalPending;
+        } catch (err) {
+            console.error('Error fetching total pending invoices:', err);
+            return 0;
+        } finally {
+            if (isHover) {
+                lastPendingHoverTime = Date.now();
+                isHoverFetching = false;
+            }
+        }
+    }
+
     async function loadDashboardData() {
         if (isRefreshing) return;
         isRefreshing = true;
@@ -291,13 +367,12 @@
             const prevFYYear = parseInt(currentFY.split('-')[0], 10) - 1;
             const prevFYRange = getFYRange(`${prevFYYear}-${String(prevFYYear + 1).slice(-2)}`);
 
-            // Fetch everything concurrently, including BOTH outstanding APIs
             const [
                 custRows,
                 vendRows,
                 prevCustRows,
                 prevVendRows,
-                pendingRes,
+                totalPendingInvoices,
                 customerOutstandingTotal,
                 vendorOutstandingTotal
             ] = await Promise.all([
@@ -305,7 +380,7 @@
                 fetchData(TABLES.VENDOR_BILLING, 'AccountedDate', 'BilledAmount', fyRange),
                 fetchData(TABLES.CUSTOMER_INVOICES, COLUMNS.INVOICE_DATE, COLUMNS.INVOICE_AMOUNT, prevFYRange),
                 fetchData(TABLES.VENDOR_BILLING, 'AccountedDate', 'BilledAmount', prevFYRange),
-                supabaseClient.from(TABLES.PAYMENT_VIEW).select('*', { count: 'exact', head: true }).eq(COLUMNS.COMPANY, CompanyID).gt('BalanceAmount', 0),
+                fetchTotalPendingInvoices(),
                 fetchCustomerOutstanding(),
                 fetchVendorOutstanding()
             ]);
@@ -324,18 +399,15 @@
 
             const calcDelta = (curr, prev) => prev ? ((curr - prev) / Math.abs(prev)) * 100 : 0;
 
-            // Update primary financial KPIs
             setKPI('kpiCustomerBilling', formatCurrency(custTotal), 'kpiCustomerBillingDelta', calcDelta(custTotal, prevCustTotal));
             setKPI('kpiVendorCosting', formatCurrency(vendTotal), 'kpiVendorCostingDelta', calcDelta(vendTotal, prevVendTotal));
             setKPI('kpiTotalMargin', formatCurrency(marginTotal), 'kpiTotalMarginDelta', calcDelta(marginTotal, prevCustTotal - prevVendTotal));
 
-            // Update Outstanding KPIs
             if (DOM.customerOutstanding) DOM.customerOutstanding.textContent = formatCurrency(customerOutstandingTotal);
             if (DOM.vendorOutstanding) DOM.vendorOutstanding.textContent = formatCurrency(vendorOutstandingTotal);
 
-            // Update Pending Invoices Count
-            if (DOM.pendingKpi) DOM.pendingKpi.textContent = (pendingRes.count || 0).toLocaleString('en-IN');
-            if (DOM.pendingSub) DOM.pendingSub.textContent = pendingRes.count > 0 ? 'Awaiting action' : 'All clear';
+            if (DOM.pendingKpi) DOM.pendingKpi.textContent = totalPendingInvoices.toLocaleString('en-IN');
+            if (DOM.pendingSub) DOM.pendingSub.textContent = totalPendingInvoices > 0 ? 'Awaiting action' : 'All clear';
 
             refreshChart();
             await loadRecentInvoices();
@@ -414,14 +486,20 @@
        INITIALIZATION & EVENT BINDINGS
     ========================================================= */
     async function init() {
-        // Cache DOM elements
         DOM.fyFilter = document.getElementById('fyFilter');
         DOM.viewFilter = document.getElementById('viewFilter');
         DOM.refreshBtn = document.getElementById('refreshBtn');
         DOM.recentList = document.getElementById('recentInvoicesList');
         DOM.chartCtx = document.getElementById('financeChart');
+
+        // Cache DOM elements for Pending Invoices KPI & Breakdown List
         DOM.pendingKpi = document.getElementById('kpiPendingInvoices');
         DOM.pendingSub = document.getElementById('kpiPendingInvoicesSub');
+        DOM.intPending = document.getElementById('kpiIntPending');
+        DOM.domPending = document.getElementById('kpiDomPending');
+        DOM.customsPending = document.getElementById('kpiCustomsPending');
+        DOM.fullLoadPending = document.getElementById('kpiFullLoadPending');
+
         DOM.customerOutstanding = document.getElementById('kpiCustomerOutstanding');
         DOM.vendorOutstanding = document.getElementById('kpiVendorOutstanding');
         DOM.exportBtn = document.getElementById('exportBtn');
@@ -433,7 +511,6 @@
 
         initChart();
 
-        // Wire Tabs
         ['customer', 'vendor', 'margin'].forEach(key => {
             document.getElementById(`tab-${key}`)?.addEventListener('shown.bs.tab', () => {
                 activeTab = key;
@@ -441,7 +518,6 @@
             });
         });
 
-        // Wire Filters
         DOM.fyFilter?.addEventListener('change', async (e) => { currentFY = e.target.value; await loadDashboardData(); });
         DOM.viewFilter?.addEventListener('change', async (e) => { currentView = e.target.value; await loadDashboardData(); });
 
@@ -455,6 +531,14 @@
         DOM.exportBtn?.addEventListener('click', () => {
             alert(typeof window.jspdf === 'undefined' ? 'PDF library not loaded.' : 'Export feature coming soon.');
         });
+
+        // Add Live Hover Refresh to Pending Invoices Card
+        const pendingCardEl = DOM.pendingKpi?.closest('.kpi-card');
+        if (pendingCardEl) {
+            pendingCardEl.addEventListener('mouseenter', () => {
+                fetchTotalPendingInvoices(true); // 'true' flags it as a hover refresh
+            });
+        }
 
         await loadDashboardData();
     }

@@ -190,6 +190,7 @@ async function loadSuggestions(
     attachPartyCodeFiller('serviceProviderName', 'serviceProviderSuggestions', 'serviceProviderCode');
     attachPartyCodeFiller('vendorName', 'vendorSuggestions', 'vendorCode');
     attachPartyCodeFiller('carrierName', 'carrierSuggestions', 'carrierCode');
+    attachPartyCodeFiller('assignedToPerson', 'assignedToPersonSuggestions', 'assignedToPersonCode');
 }
 
 
@@ -1164,6 +1165,22 @@ async function getPartyProfile(partyCode) {
             .from('PartyDetails')
             .select('*')                                  // ✅ returns RCM
             .eq('PartyCode', partyCode)
+            .eq('company_id', CompanyID)                  // ✅ scope to company
+            .maybeSingle();                               // ✅ no throw on 0 rows
+
+        if (error) throw error;
+        return data || null;
+    } catch (error) {
+        console.error('Error fetching Party profile:', error.message);
+        return null;
+    }
+}
+async function getPartyProfileByName(partyName) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('PartyDetails')
+            .select('*')                                  // ✅ returns RCM
+            .eq('PartyName', partyName)
             .eq('company_id', CompanyID)                  // ✅ scope to company
             .maybeSingle();                               // ✅ no throw on 0 rows
 
@@ -2480,3 +2497,123 @@ async function generateQRCodeBase64(text) {
 //         }
 //     }
 // }
+
+const urlParams = new URLSearchParams(window.location.search);
+const incomingRequestNo = urlParams.get('pickupRequestNo');
+
+if (incomingRequestNo) {
+    // Automatically populate or fetch data for this request number on page load
+    // console.log("Confirmed Pickup Request No:", incomingRequestNo);
+}
+
+async function updatePickupRequestStatus(requestNo) {
+    try {
+        // console.log(`Updating pickup request status for RequestNo: ${requestNo} to 'Confirmed'...`);
+        if (!requestNo) return;
+        const { data, error } = await supabaseClient
+            .from('pickup_requests')
+            .update({ status: 'Confirmed' })
+            .eq('pickup_request_no', requestNo)
+            .eq('company_id', CompanyID);
+
+        if (error) throw error;
+        console.log("Pickup request status updated successfully.");
+    } catch (err) {
+        console.error("Error updating pickup request status:", err);
+    }
+}
+
+
+/**
+ * Automatically manages an empty state row for any table body.
+ * @param {string} tableSelector - CSS selector for the table or tbody (e.g., "#pendingShipmentTable tbody")
+ * @param {string} message - The text message to display when empty
+ * @param {number} colSpan - Number of columns the empty row should span
+ * @param {string} [iconClass="bi-list-check"] - Bootstrap icon class
+ */
+function toggleEmptyTableState(tableSelector, message, colSpan = 12, iconClass = "bi-list-check") {
+    const tbody = document.querySelector(tableSelector);
+    if (!tbody) return;
+
+    // Find all active (visible, non-deleted, non-empty) rows
+    const activeRows = [...tbody.querySelectorAll("tr")].filter(row => {
+        return !row.classList.contains("empty-state-row") &&
+            row.style.display !== "none" &&
+            (!row.querySelector(".status") || row.querySelector(".status").innerText.trim() !== "Deleted");
+    });
+
+    const emptyRowId = `emptyState_${tbody.id || 'table'}`;
+    let emptyRow = document.getElementById(emptyRowId);
+
+    if (activeRows.length === 0) {
+        if (!emptyRow) {
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr id="${emptyRowId}" class="empty-state-row">
+                    <td colspan="${colSpan}" class="vm-empty">
+                        <i class="bi ${iconClass}"></i>
+                        ${message}
+                    </td>
+                </tr>
+            `);
+        }
+    } else {
+        if (emptyRow) {
+            emptyRow.remove();
+        }
+    }
+}
+
+function formatToReadableDate(dateString) {
+    // If the user already entered a formatted string like "31st July 2026", return it directly
+    if (!dateString.includes('-') && !dateString.includes('/')) {
+        return dateString;
+    }
+
+    // Handles standard YYYY-MM-DD or DD-MM-YYYY inputs
+    let parts;
+    if (dateString.includes('-')) {
+        parts = dateString.split('-');
+    } else if (dateString.includes('/')) {
+        parts = dateString.split('/');
+    } else {
+        return dateString;
+    }
+
+    let day, monthIndex, year;
+
+    // Detect format based on year position (4 digits)
+    if (parts[0].length === 4) {
+        // YYYY-MM-DD
+        year = parseInt(parts[0], 10);
+        monthIndex = parseInt(parts[1], 10) - 1;
+        day = parseInt(parts[2], 10);
+    } else {
+        // DD-MM-YYYY
+        day = parseInt(parts[0], 10);
+        monthIndex = parseInt(parts[1], 10) - 1;
+        year = parseInt(parts[2], 10);
+    }
+
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    if (isNaN(day) || isNaN(monthIndex) || isNaN(year) || !months[monthIndex]) {
+        return dateString; // Fallback if parsing fails
+    }
+
+    // Determine ordinal suffix (st, nd, rd, th)
+    const j = day % 10,
+        k = day % 100;
+    let suffix = 'th';
+    if (j === 1 && k !== 11) {
+        suffix = 'st';
+    } else if (j === 2 && k !== 12) {
+        suffix = 'nd';
+    } else if (j === 3 && k !== 13) {
+        suffix = 'rd';
+    }
+
+    return `${day}${suffix} ${months[monthIndex]} ${year}`;
+}
