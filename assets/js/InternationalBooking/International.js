@@ -362,6 +362,12 @@ async function saveOrUpdateInternationalBooking() {
     const updateID = document.getElementById('tempFormID').value;
     let uomType = document.getElementById("uOMType").value;
     const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
+    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    // Determine if the badge is visible and a valid request number exists
+    const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
+    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
 
     if (uomType == "Gms") {
         uomType = "Kgs";
@@ -407,7 +413,7 @@ async function saveOrUpdateInternationalBooking() {
         company_id: CompanyID,
         CreatedBy: UserLoginID,
         created_at: localtimeStamp,
-        pickup_request_no: requestNoText
+        pickup_request_no: finalPickupRequestNo
     };
 
     let result;

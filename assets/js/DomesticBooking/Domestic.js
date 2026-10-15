@@ -315,6 +315,13 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     const val = id => document.getElementById(id)?.value || "";
     saveButton.disabled = true;
     const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
+    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    // Determine if the badge is visible and a valid request number exists
+    const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
+    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
+
     const formData = {
         DocketNo: val('docketNo'),
         BookingDate: val('bookedDate'),
@@ -342,7 +349,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         PaymentType: val('paymentType'),
         UOMType: val('uOMType'),
         Department: val('department'),
-        pickup_request_no: requestNoText
+        pickup_request_no: finalPickupRequestNo
     };
 
     if (mode === 'insert') {

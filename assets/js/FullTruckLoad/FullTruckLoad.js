@@ -319,6 +319,12 @@ document.getElementById("saveButton").addEventListener("click", async function (
 
     const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
     // console.log("headerPickupRequestNoText:", requestNoText);
+    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
+    const headerBadge = document.getElementById("headerPickupRequestBadge");
+
+    // Determine if the badge is visible and a valid request number exists
+    const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
+    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
 
     let formData = {
         lr_number: lrNumber,
@@ -356,7 +362,7 @@ document.getElementById("saveButton").addEventListener("click", async function (
         driver_name: val("driverName"),
         driver_phone_no: val("driverPhoneNo"),
         driver_dl_no: val("driverDLNo"),
-        pickup_request_no: requestNoText
+        pickup_request_no: finalPickupRequestNo
     };
 
     try {
