@@ -37,23 +37,6 @@ async function generate_DomesticReports_InvoicePDF(header, lines = []) {
     doc.save(`Invoice_${header?.InvoiceNo || "NA"}.pdf`);
 }
 
-// Utility function to fetch party details
-async function fetchPartyDetails(header) {
-    const data = await getPartyProfile(header.PartyCode);
-
-    return {
-        name: data?.PartyName || "-",
-        address: [
-            data?.Address,
-            data?.City && `${data.City} - ${data.PinCode}`,
-            data?.State,
-            data?.Country
-        ].filter(Boolean).join(", "),
-        gst: data?.GSTNumber || "-",
-        state: data?.State
-    };
-}
-
 // Utility function to fetch shipment details
 async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
 

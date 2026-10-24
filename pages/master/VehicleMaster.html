@@ -127,7 +127,7 @@
                 <div class="container-fluid mt-3 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-body pb-3">
-                            <form id="customsClearanceForm" autocomplete="off" novalidate>
+                            <form id="vehicleMasterForm" autocomplete="off" novalidate>
 
                                 <!-- ============ ACTION BAR ============ -->
                                 <div
@@ -162,7 +162,7 @@
                                             <i class="bi bi-printer"></i>
                                             <span class="d-none d-lg-inline ms-1">Print</span>
                                         </button>
-                                        <button type="submit" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                        <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
                                             id="saveButton" data-mode="insert" title="Save vehicle">
                                             <i class="bi bi-check2-circle"></i> Save
                                         </button>
@@ -326,7 +326,17 @@
                                         </div>
                                         <div class="invalid-feedback">Enter the load capacity.</div>
                                     </div>
+                                    <!-- Current Mileage -->
 
+                                    <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+                                        <label for="currentMileage" class="form-label">
+                                            Current Mileage<span class="req">*</span>
+                                        </label>
+                                        <input list="number" id="currentMileage" name="currentMileage"
+                                            class="form-control text-end" placeholder="00" autocomplete="off"
+                                            required />
+                                        <div class="invalid-feedback">Current Mileage is required.</div>
+                                    </div>
                                     <!-- Operational Status -->
                                     <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
                                         <label for="operationalStatus" class="form-label">
@@ -603,6 +613,7 @@
                                     <th scope="col">Vehicle Type</th>
                                     <th scope="col">Model</th>
                                     <th scope="col">Make</th>
+                                    <th scope="col">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="searchVehicleTableBody">
@@ -654,6 +665,8 @@
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
     <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
     <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/VehicleMaster/vehicleMaster.js" defer></script>
+
 </body>
 
 </html>

@@ -61,31 +61,26 @@ async function fetchPartyDetails(header) {
     }
 
     const data = await getPartyProfile(header.PartyCode);
-
-    // 🔍 DEBUG — remove once confirmed
-    console.log("[fetchPartyDetails] raw party row:", data);
-    console.log("[fetchPartyDetails] RCM field:", {
-        "data.RCM": data?.RCM,
-        "data.rcm": data?.rcm,
-        typeofRCM: typeof data?.RCM,
-        typeofrcm: typeof data?.rcm
-    });
-
+    console.log("Party Profile", data);
+    // Normalize RCM value (Handles booleans, strings, null/undefined)
     const rawRcm = data?.RCM ?? data?.rcm;
+    let rcmValue = "Yes"; // default
 
-    let rcmValue = "Yes";                                // default
-    if (rawRcm === false) rcmValue = "No";               // boolean column
+    if (rawRcm === false) rcmValue = "No";
     else if (rawRcm === true) rcmValue = "Yes";
     else if (rawRcm != null && String(rawRcm).trim() !== "") {
-        rcmValue = String(rawRcm).trim();                // "Yes" / "No" / any string
+        rcmValue = String(rawRcm).trim();
     }
+
+    // Safely combine city and pincode if available
+    const cityPin = [data?.City, data?.PinCode].filter(Boolean).join(" - ");
 
     return {
         name: data?.PartyName || "-",
         rcm: rcmValue,
         address: [
             data?.Address,
-            data?.City && `${data.City} - ${data.PinCode}`,
+            cityPin,
             data?.State,
             data?.Country
         ].filter(Boolean).join(", "),
@@ -332,17 +327,26 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
     ];
 
     // ✅ Read whichever key exists — works with both fetchPartyDetails() and raw DB rows
-    const rcmValue = safe(party?.rcm ?? party?.RCM, "Yes");
+    const rcmValue = safe(party?.rcm ?? party?.RCM);
 
+    // Build rightData dynamically based on the RCM value
     const rightData = [
         ["Invoice No. :", safe(header?.InvoiceNo)],
-        ["Invoice Date :", (typeof formatDate === "function" ? formatDate(header?.InvoiceDate) : header?.InvoiceDate) || "-"],
-        ["Tax Payable under RCM :", rcmValue],   // ✅ now reads the actual value
-        ["SAC Code :", safe(header?.SACCode)],
-        ["PO No :", safe(opNo)]
+        ["Invoice Date :", (typeof formatDate === "function" ? formatDate(header?.InvoiceDate) : header?.InvoiceDate) || "-"]
     ];
 
+    // Only add RCM if it is NOT "NA" (case-insensitive check)
+    if (String(rcmValue).trim().toUpperCase() !== "NA") {
+        rightData.push(["Tax Payable under RCM :", rcmValue]);
+    }
+
+    rightData.push(
+        ["SAC Code :", safe(header?.SACCode)],
+        ["PO No :", safe(opNo)]
+    );
+
     const boldLabels = new Set(["Invoice No. :", "Invoice Date :", "Tax Payable under RCM :", "SAC Code :", "PO No :"]);
+
 
     // Calculate Row Height dynamically
     let leftLinesCount = 1; // 1 for Name
