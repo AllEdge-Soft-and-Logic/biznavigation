@@ -269,6 +269,10 @@ function addInvoiceDetailRow() {
         const exists = [...UI.tbody.rows].some(row => row.cells[1]?.textContent.trim() === invoiceNo);
         if (exists) return alert("Invoice already added.");
 
+        // 👇 ADD IT RIGHT HERE (removes the "No allocation details added" row before inserting data)
+        const emptyRow = UI.tbody.querySelector("tr:not([data-status])");
+        if (emptyRow) emptyRow.remove();
+
         const row = document.createElement("tr");
         row.dataset.status = "New";
         row.dataset.id = "";
@@ -292,7 +296,9 @@ function addInvoiceDetailRow() {
         `;
         UI.tbody.appendChild(row);
     }
-    toggleEmptyTableState("#paymentDetailsBody", "No allocation details added", 8);
+
+    // 👇 ALSO make sure this selector matches "#paymentDetails tbody"
+    toggleEmptyTableState("#paymentDetails tbody", "No allocation details added", 8);
     syncTableUpdates();
     clearInvoiceInputs();
 }
@@ -327,7 +333,7 @@ if (UI.tbody) {
             if (row.dataset.status === "Old" && row.dataset.id) deletedPaymentLines.push(row.dataset.id);
 
             row.remove();
-            toggleEmptyTableState("#paymentDetailsBody", "No allocation details added", 8);
+            toggleEmptyTableState("#paymentDetails tbody", "No allocation details added", 8);
             syncTableUpdates();
         }
     });
@@ -406,8 +412,9 @@ function enableTableButtons() {
 }
 
 function renumberRows() {
-    document.querySelectorAll("#paymentDetails tbody tr").forEach((row, index) => {
-        if (row.cells[0]) row.cells[0].textContent = index + 1;
+    let count = 1;
+    document.querySelectorAll("#paymentDetails tbody tr[data-status]").forEach(row => {
+        if (row.cells[0]) row.cells[0].textContent = count++;
     });
 }
 
@@ -420,15 +427,17 @@ async function savePaymentLineItems(paymentID) {
 
     document.querySelectorAll("#paymentDetails tbody tr").forEach(row => {
         const status = row.dataset.status;
-        if (status === "Old") return;
+
+        // Skip "Old" rows AND empty-state placeholder rows (which have no status)
+        if ((status !== "New" && status !== "Modified") || row.cells.length < 6) return;
 
         const record = {
             PaymentID: paymentID,
-            InvoiceNo: row.cells[1].textContent.trim(),
-            Narration: row.cells[2].textContent.trim(),
-            PaymentAmount: parseFloat(row.cells[3].textContent) || 0,
-            OtherDeductionAmount: parseFloat(row.cells[4].textContent) || 0,
-            TDSDeductionAmount: parseFloat(row.cells[5].textContent) || 0,
+            InvoiceNo: row.cells[1]?.textContent.trim() || "",
+            Narration: row.cells[2]?.textContent.trim() || "",
+            PaymentAmount: parseFloat(row.cells[3]?.textContent) || 0,
+            OtherDeductionAmount: parseFloat(row.cells[4]?.textContent) || 0,
+            TDSDeductionAmount: parseFloat(row.cells[5]?.textContent) || 0,
             company_id: CompanyID
         };
 
