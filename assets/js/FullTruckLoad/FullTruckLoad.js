@@ -757,6 +757,8 @@ async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
 
 function updateChargesTotals(tableId) {
     const table = document.getElementById(tableId);
+    if (!table) return;
+
     const rows = table.querySelectorAll("tbody tr");
     const tfoot = table.querySelector("tfoot") || table.createTFoot();
 
@@ -764,12 +766,14 @@ function updateChargesTotals(tableId) {
 
     rows.forEach(tr => {
         if (tr.dataset.status === "deleted") return;
-        totals.amount += parseFloat(tr.children[2].textContent) || 0;
-        totals.cgst += parseFloat(tr.children[3].textContent) || 0;
-        totals.sgst += parseFloat(tr.children[4].textContent) || 0;
-        totals.igst += parseFloat(tr.children[5].textContent) || 0;
-        totals.gst += parseFloat(tr.children[6].textContent) || 0;
-        totals.grand += parseFloat(tr.children[7].textContent) || 0;
+
+        // Ensure the cells exist before accessing textContent
+        totals.amount += parseFloat(tr.children[2]?.textContent) || 0;
+        totals.cgst += parseFloat(tr.children[3]?.textContent) || 0;
+        totals.sgst += parseFloat(tr.children[4]?.textContent) || 0;
+        totals.igst += parseFloat(tr.children[5]?.textContent) || 0;
+        totals.gst += parseFloat(tr.children[6]?.textContent) || 0;
+        totals.grand += parseFloat(tr.children[7]?.textContent) || 0;
     });
 
     tfoot.innerHTML = `
