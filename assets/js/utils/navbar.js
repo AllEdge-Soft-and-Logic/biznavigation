@@ -47,9 +47,9 @@ const Navbar = (() => {
             title: "Reports",
             icon: "bi-file-bar-graph",
             children: [
-                { label: "Pickup Request Report", icon: "bi-globe", href: "/pages/Reports/PickupRequest.html" },
-                { label: "International Report", icon: "bi-globe", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
-                { label: "Domestic Report", icon: "bi-truck", href: "/pages/Reports/reportDomesticDetails.html" },
+                { label: "Pickup Request", icon: "bi-globe", href: "/pages/Reports/PickupRequest.html" },
+                { label: "International", icon: "bi-globe", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
+                { label: "Domestic", icon: "bi-truck", href: "/pages/Reports/reportDomesticDetails.html" },
                 { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Reports/reportCustomsClearance.html" },
                 { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/Reports/reportFulltruckDetails.html" },
                 { label: "Customer Invoice", icon: "bi-receipt-cutoff", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },

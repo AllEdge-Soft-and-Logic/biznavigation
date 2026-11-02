@@ -188,13 +188,6 @@ body.sidebar-collapsed .main-content {
     animation: fadeIn 0.2s ease-in-out;
 }
 
-/* Provide data-label to menu-title for tooltips */
-.menu-group:nth-child(1) .menu-title {
-    attr-data-label: "Master";
-}
-
-/* Add similar data-labels to titles if desired via JS */
-
 /* =========================
    SIDEBAR NAVIGATION
 ========================= */
@@ -284,7 +277,7 @@ body.sidebar-collapsed .main-content {
     color: white;
 }
 
-/* Submenu */
+/* Submenu & Scrollable List Support */
 .submenu {
     max-height: 0;
     overflow: hidden;
@@ -294,8 +287,29 @@ body.sidebar-collapsed .main-content {
 }
 
 .menu-group.open .submenu {
-    max-height: 600px;
-    /* Arbitrary large number for CSS transition */
+    max-height: 280px;
+    /* Restricts max height to enable scrolling for long lists like Reports/Tools */
+    overflow-y: auto;
+    /* Adds vertical scrollbar when content exceeds max-height */
+    overflow-x: hidden;
+}
+
+/* Custom Scrollbar for Submenus */
+.menu-group .submenu::-webkit-scrollbar {
+    width: 4px;
+}
+
+.menu-group .submenu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.menu-group .submenu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.menu-group .submenu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
 }
 
 .menu-item a {
@@ -356,28 +370,9 @@ body.sidebar-collapsed .main-content {
     z-index: var(--z-navbar);
     height: var(--navbar-height);
     padding: 0 1.5rem;
-
-    /* Replaced solid rgb with a smooth diagonal gradient */
-    background: linear-gradient(135deg, rgba(20, 163, 206, 0.9) 0%, rgba(2, 33, 236, 0.95) 100%);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-
-    /* border-bottom: 1px solid var(--border-color); */
-}
-
-/* =========================
-   TOP NAVBAR LAYOUT
-========================= */
-.top-navbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* This naturally separates left and right */
-    position: sticky;
-    top: 0;
-    z-index: var(--z-navbar);
-    height: var(--navbar-height);
-    padding: 0 1.5rem;
     background: linear-gradient(15deg, #0ee6dd 0.000%, #43dddf 11.111%, #54d0e2 22.222%, #35c2e4 33.333%, #00b2e7 44.444%, #00a0e9 55.556%, #008eec 66.667%, #007bee 77.778%, #2669f0 88.889%, #5057f3 100.000%);
     border-bottom: 1px solid var(--border-color);
 }
@@ -393,7 +388,6 @@ body.sidebar-collapsed .main-content {
     align-items: center;
     gap: 15px;
     margin-left: auto;
-    /* Forces this container to the far right edge */
 }
 
 .collapse-btn:hover {

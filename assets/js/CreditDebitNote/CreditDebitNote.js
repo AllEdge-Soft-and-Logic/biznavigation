@@ -213,7 +213,7 @@ els.noteType.addEventListener("change", function () {
 });
 
 // ==========================================
-// Item Row Management
+// Item Row Management (Corrected Template)
 // ==========================================
 
 els.addCreditDebitRow.addEventListener("click", async function () {
@@ -564,7 +564,7 @@ async function saveCreditDebitNoteItems(noteDbId) {
             company_id: CompanyID,
             line_no: i + 1,
             item_id: /^\d+$/.test(rawItemId) ? parseInt(rawItemId, 10) : null,
-            item_name: c[2]?.textContent.trim(),
+            item_name: c[1]?.textContent.trim(),
             reference_invoice: c[2]?.textContent.trim(),
             description: c[3]?.textContent.trim() || null,
             hsn_sac: c[4]?.textContent.trim() || null,
