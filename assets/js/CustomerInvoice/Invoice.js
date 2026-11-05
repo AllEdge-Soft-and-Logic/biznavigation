@@ -102,6 +102,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const params = new URLSearchParams(window.location.search);
     const invoiceNo = params.get("invoiceNo");
+    // Set default date to today
+    document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
 
     if (invoiceNo) {
         const invoiceInput = document.getElementById("invoiceNo");
@@ -225,6 +227,222 @@ if (fetchPendingBtn) {
 }
 
 /* =========================================================
+   CALCULATE TAXABLE & NON-TAXABLE AMOUNTS
+   Supports:
+   1. Customs Clearance
+   2. International Booking
+   3. Full Load Booking
+   4. Domestic Booking
+========================================================= */
+
+async function calculateInvoiceTaxableAmounts(invoiceNo, invoiceType) {
+
+    if (!invoiceNo || !CompanyID) {
+        throw new Error('Invoice Number or Company ID is missing.');
+    }
+
+
+    const CONFIG = {
+        'Customs Clearance': {
+            detailTable: 'CustomsClearance_Details',
+            detailSelect: 'id, JobID',
+            invoiceColumn: 'InvoiceNo',
+            parentColumn: 'JobID',
+            chargeTable: 'CustomsClearanceCharges',
+            chargeSelect: 'JobID, ID_CC, TotalAmount, TaxRate',
+            chargeParent: 'JobID',
+            chargeID: 'ID_CC',
+            accountType: false
+        },
+
+        // INTERNATIONAL BOOKING / FORWARDING
+        'International Booking': {
+            detailTable: 'international_booking',
+            detailSelect: 'id, DocketNo',
+            invoiceColumn: 'InvoiceNumber',
+            parentColumn: 'DocketNo',
+            chargeTable: 'InternationalBookingCharges',
+            chargeSelect: 'DocketNo, ID_IB, TotalAmount, TaxRate',
+            chargeParent: 'DocketNo',
+            chargeID: 'ID_IB',
+            accountType: false
+        },
+
+        'Full Load Booking': {
+            detailTable: 'FullLoadBookingDetails',
+            detailSelect: 'id, lr_number',
+            invoiceColumn: 'invoice_number',
+            parentColumn: 'lr_number',
+            chargeTable: 'FullLoadBookingCharges',
+            chargeSelect: 'LRNumber, ID_FT, TotalAmount, TaxRate',
+            chargeParent: 'LRNumber',
+            chargeID: 'ID_FT',
+            accountType: true
+        },
+
+        'DomesticBookingDetails': {
+            detailTable: 'DomesticBookingDetails',
+            detailSelect: 'id, DocketNo',
+            invoiceColumn: 'InvoiceNumber',
+            parentColumn: 'DocketNo',
+            chargeTable: 'DomesticBookingCharges',
+            chargeSelect: 'DocketNo, ID_DB, TotalAmount, TaxRate',
+            chargeParent: 'DocketNo',
+            chargeID: 'ID_DB',
+            accountType: true
+        }
+    };
+
+    const config = FORWARDING_TYPES.includes(invoiceType)
+        ? CONFIG['International Booking']
+        : CONFIG[invoiceType];
+
+    if (!config) {
+        throw new Error(`Tax calculation not configured for: ${invoiceType}`);
+    }
+
+    // -----------------------------------------------------
+    // FETCH ALL RECORDS (SUPABASE PAGINATION)
+    // -----------------------------------------------------
+
+    const fetchAllRows = async (queryBuilder) => {
+
+        const PAGE_SIZE = 1000;
+        let allRows = [];
+        let offset = 0;
+
+        while (true) {
+
+            const { data, error } = await queryBuilder()
+                .range(offset, offset + PAGE_SIZE - 1);
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) break;
+
+            allRows.push(...data);
+
+            if (data.length < PAGE_SIZE) break;
+
+            offset += PAGE_SIZE;
+        }
+
+        return allRows;
+    };
+
+    // -----------------------------------------------------
+    // FETCH INVOICE DETAILS
+    // -----------------------------------------------------
+
+    const details = await fetchAllRows(() =>
+        supabaseClient
+            .from(config.detailTable)
+            .select(config.detailSelect)
+            .eq(config.invoiceColumn, invoiceNo)
+            .eq('company_id', CompanyID)
+    );
+
+    if (!details.length) {
+        return {
+            NonTaxableAmount: 0,
+            TaxableAmount: 0
+        };
+    }
+
+    const parentValues = [
+        ...new Set(
+            details
+                .map(x => x[config.parentColumn])
+                .filter(x => x !== null && x !== undefined)
+        )
+    ];
+
+    const detailIDs = [
+        ...new Set(details.map(x => x.id))
+    ];
+
+    if (!parentValues.length || !detailIDs.length) {
+        return {
+            NonTaxableAmount: 0,
+            TaxableAmount: 0
+        };
+    }
+
+    // -----------------------------------------------------
+    // FETCH CHARGES
+    // -----------------------------------------------------
+
+    const charges = await fetchAllRows(() => {
+
+        let query = supabaseClient
+            .from(config.chargeTable)
+            .select(config.chargeSelect)
+            .in(config.chargeParent, parentValues)
+            .in(config.chargeID, detailIDs);
+
+        if (config.accountType) {
+            query = query.eq('AccountType', 'Sale');
+        }
+
+        return query;
+    });
+
+    // -----------------------------------------------------
+    // MATCH DETAIL RECORDS
+    // -----------------------------------------------------
+
+    const detailKeys = new Set(
+        details.map(d =>
+            `${String(d[config.parentColumn])}|${String(d.id)}`
+        )
+    );
+
+    let nonTaxableAmount = 0;
+    let taxableAmount = 0;
+
+    // -----------------------------------------------------
+    // CALCULATE TAXABLE / NON-TAXABLE
+    // -----------------------------------------------------
+
+    for (const charge of charges) {
+
+        const key =
+            `${String(charge[config.chargeParent])}|${String(charge[config.chargeID])}`;
+
+        if (!detailKeys.has(key)) continue;
+
+        // Supports both 0 and "0.00%" formats
+        const rawTaxRate = charge.TaxRate;
+
+        const taxRate = rawTaxRate == null || String(rawTaxRate).trim() === ''
+            ? 0
+            : Number(String(rawTaxRate).replace('%', '').trim());
+
+        if (!Number.isFinite(taxRate)) {
+            throw new Error(
+                `Invalid TaxRate in ${config.chargeTable}: ${rawTaxRate}`
+            );
+        }
+
+        const totalAmount = Number(charge.TotalAmount ?? 0);
+
+        if (!Number.isFinite(totalAmount)) {
+            throw new Error('Invalid charge TotalAmount detected.');
+        }
+
+        if (taxRate === 0) {
+            nonTaxableAmount += totalAmount;
+        } else {
+            taxableAmount += totalAmount;
+        }
+    }
+
+    return {
+        NonTaxableAmount: Number(nonTaxableAmount.toFixed(2)),
+        TaxableAmount: Number(taxableAmount.toFixed(2))
+    };
+}
+/* =========================================================
    SAVE INVOICE
 ========================================================= */
 if (saveButton) {
@@ -232,7 +450,7 @@ if (saveButton) {
         const saveBtn = document.getElementById('saveButton');
         const spinner = document.getElementById('saveSpinnerBtn');
 
-        if (saveBtn.disabled) return;
+        if (!saveBtn || saveBtn.disabled) return;
         const originalButtonHTML = '<i class="bi bi-save"></i> Save';
 
         saveBtn.disabled = true;
@@ -342,21 +560,59 @@ if (saveButton) {
             if (isInsert) {
                 invoiceDataObj.created_by = UserLoginID;
                 invoiceDataObj.created_at = localtimeStamp;
-                const { error } = await supabaseClient.from('InvoiceDetails').insert([invoiceDataObj]);
+
+                const { error } = await supabaseClient
+                    .from('InvoiceDetails')
+                    .insert([invoiceDataObj]);
                 if (error) throw error;
+
             } else {
                 invoiceDataObj.updated_by = UserLoginID;
                 invoiceDataObj.updated_at = localtimeStamp;
-                const { error } = await supabaseClient.from('InvoiceDetails')
+
+                const { error } = await supabaseClient
+                    .from('InvoiceDetails')
                     .update(invoiceDataObj)
                     .eq('InvoiceNo', invoiceNo)
                     .eq('company_id', CompanyID);
                 if (error) throw error;
             }
 
+            // -----------------------------------------------------
+            // UPDATE SOURCE RECORDS WITH GENERATED INVOICE NUMBER
+            // -----------------------------------------------------
+
+            if (strategy.updateInvoiceNo) {
+                await strategy.updateInvoiceNo(invoiceNo);
+            }
+
+            // -----------------------------------------------------
+            // CALCULATE TAXABLE & NON-TAXABLE AMOUNTS
+            // -----------------------------------------------------
+
+            const taxAmounts = await calculateInvoiceTaxableAmounts(
+                invoiceNo,
+                invoiceType
+            );
+
+            // -----------------------------------------------------
+            // UPDATE INVOICE TAXABLE AMOUNTS
+            // -----------------------------------------------------
+
+            const { error: taxUpdateError } = await supabaseClient
+                .from('InvoiceDetails')
+                .update({
+                    NonTaxableAmount: taxAmounts.NonTaxableAmount,
+                    TaxableAmount: taxAmounts.TaxableAmount
+                })
+                .eq('InvoiceNo', invoiceNo)
+                .eq('company_id', CompanyID);
+
+            if (taxUpdateError) throw taxUpdateError;
+
             showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
 
-            if (strategy.updateInvoiceNo) await strategy.updateInvoiceNo(invoiceNo);
+            // if (strategy.updateInvoiceNo) await strategy.updateInvoiceNo(invoiceNo);
 
             disableForm();
             document.querySelectorAll('.delete-btn').forEach(btn => {
@@ -388,10 +644,12 @@ if (saveButton) {
 window.addEventListener('beforeunload', async () => {
     try {
         await autoUnlockRecords("FullLoadBookingDetails");
+        await autoUnlockRecords("DomesticBookingDetails");
         await autoUnlockRecords("international_booking");
+        await autoUnlockRecords("CustomsClearance_Details");
         await unlockBooking_ib(UserLoginID);
         await unlockBooking_cc(UserLoginID);
-        console.log('Unlocking records for user:', UserLoginID);
+        // console.log('Unlocking records for user:', UserLoginID);
     } catch (e) {
         console.error('Unlock failed:', e);
     }
@@ -403,7 +661,9 @@ if (newBtn) newBtn.addEventListener('click', newInvoice);
 async function newInvoice() {
     try {
         await autoUnlockRecords("FullLoadBookingDetails");
+        await autoUnlockRecords("DomesticBookingDetails");
         await autoUnlockRecords("international_booking");
+        await autoUnlockRecords("CustomsClearance_Details");
         await unlockBooking_ib(UserLoginID);
         await unlockBooking_cc(UserLoginID);
         await d_unlockBooking_db(UserLoginID);
@@ -455,7 +715,7 @@ async function newInvoice() {
 
     await loadInvoiceNoSuggestions();
     enableForm();
-    document.getElementById('partyName').focus();
+    // document.getElementById('partyName').focus();
     showToast('🚀 New Invoice Ready');
 }
 
