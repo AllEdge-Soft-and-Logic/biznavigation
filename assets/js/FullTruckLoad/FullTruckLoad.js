@@ -2,12 +2,18 @@ let movementDetails = [];
 const addShipmentBtn = document.getElementById('addShipmentRow');
 const shipmentTableBody = document.querySelector('#shipmentDetailsTable tbody');
 
+// Cached action bar buttons
+// const saveButton = document.getElementById('saveButton');
+// const modifyButton = document.getElementById('modifyButton');
+// const deleteButton = document.getElementById('deleteButton');
+// const reportButton = document.getElementById('reportButton');
+
 // Variables for Tracking Shipment State
 let deletedShipmentIds = [];
 let currentEditShipmentId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    enableForm();
+    if (typeof enableForm === "function") enableForm();
 
     try {
         const suggestionTasks = [
@@ -30,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const headerBadge = document.getElementById("headerPickupRequestBadge");
         const headerText = document.getElementById("headerPickupRequestNoText");
 
-        if (incomingRequestNo) {
+        if (incomingRequestNo && headerBadge && headerText) {
             headerText.textContent = incomingRequestNo;
             headerBadge.classList.remove("d-none");
         }
@@ -46,7 +52,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             setupPincodeListener('shipmentPinCode', 'shipmentCity')
         ]);
 
-        document.getElementById('lrDate').valueAsDate = new Date();
+        const lrDateEl = document.getElementById('lrDate');
+        if (lrDateEl) lrDateEl.valueAsDate = new Date();
 
     } catch (error) {
         console.error("Initialization error:", error);
@@ -54,24 +61,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Container number validation
-document.getElementById('containerNumber').addEventListener('input', function () {
+document.getElementById('containerNumber')?.addEventListener('input', function () {
     this.value = this.value.toUpperCase();
     const feedback = document.getElementById('containerFeedback');
-    const result = validateContainerNumber(this.value);
+    const result = typeof validateContainerNumber === "function"
+        ? validateContainerNumber(this.value)
+        : { valid: true };
 
     if (!result.valid) {
         this.classList.add('is-invalid');
         this.classList.remove('is-valid');
-        feedback.textContent = result.error;
-        feedback.classList.remove('d-none');
+        if (feedback) {
+            feedback.textContent = result.error;
+            feedback.classList.remove('d-none');
+        }
     } else {
         this.classList.remove('is-invalid');
         this.classList.add('is-valid');
-        feedback.classList.add('d-none');
+        if (feedback) feedback.classList.add('d-none');
     }
 });
 
-document.getElementById("lrNumber").addEventListener("input", function () {
+document.getElementById("lrNumber")?.addEventListener("input", function () {
     loadMovementDetails(this.value.trim());
 });
 
@@ -103,7 +114,7 @@ function mapMovementRow(row) {
         quantity: row.quantity,
         actualWT: row.actual_weight,
         chargeWT: row.charge_weight,
-        paymentType: row.payment_type,
+        mainPaymentType: row.payment_type,
         routeDetails: row.routedetails,
         descriptionOfGoods: row.description_of_goods,
         status: row.status,
@@ -134,7 +145,8 @@ async function loadMovementDetails(query = '') {
 
 function populateLRNumberSuggestions() {
     const suggestions = movementDetails.map(m => `<option value="${m.lrNumber}"></option>`).join('');
-    document.getElementById("lrNumberSuggestions").innerHTML = suggestions;
+    const datalist = document.getElementById("lrNumberSuggestions");
+    if (datalist) datalist.innerHTML = suggestions;
 }
 
 // When an LR Number is selected from the dropdown
@@ -152,7 +164,11 @@ $("#lrNumber").on("change", async function () {
             .maybeSingle();
 
         if (error || !data) {
-            showToast("No data found for LR:", lrNumber);
+            if (typeof showToast === "function") {
+                showToast(`No data found for LR: ${lrNumber}`);
+            } else {
+                alert(`No data found for LR: ${lrNumber}`);
+            }
             return;
         }
 
@@ -169,7 +185,7 @@ $("#lrNumber").on("change", async function () {
         referenceNumber: "#referenceNumber", invoiceValue: "#invoiceValue", vendorCode: "#vendorCode",
         vendorName: "#vendorName", vehicleType: "#vehicleType", vehicleNumber: "#vehicleNumber",
         containerNumber: "#containerNumber", routeDetails: "#routeDetails", quantity: "#quantity",
-        actualWT: "#actualWt", chargeWT: "#chargeWt", paymentType: "#paymentType",
+        actualWT: "#actualWt", chargeWT: "#chargeWt", mainPaymentType: "#mainPaymentType",
         information: "#information", descriptionOfGoods: "#descriptionofGoods", waybillno: "#wayBillNo",
         driverCode: "#driverCode", driverName: "#driverName", driverPhoneNo: "#driverPhoneNo", driverDLNo: "#driverDLNo"
     };
@@ -184,44 +200,44 @@ $("#lrNumber").on("change", async function () {
         loadShipmentDetails(lrNumber)
     ]);
 
-    document.getElementById("addFreightRow").disabled = true;
-    document.getElementById("addVendorFreightRow").disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    if (document.getElementById("addFreightRow")) document.getElementById("addFreightRow").disabled = true;
+    if (document.getElementById("addVendorFreightRow")) document.getElementById("addVendorFreightRow").disabled = true;
+    if (saveButton) {
+        saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+        saveButton.disabled = true;
+    }
 
-    disableForm();
-    document.getElementById("modifyButton").disabled = false;
-    document.getElementById("newButton").disabled = false;
-    document.getElementById("saveButton").disabled = true;
-    document.getElementById("reportButton").disabled = false;
+    if (typeof disableForm === "function") disableForm();
+    if (modifyButton) modifyButton.disabled = false;
+    if (document.getElementById("newButton")) document.getElementById("newButton").disabled = false;
+    if (reportButton) reportButton.disabled = false;
 });
 
-document.getElementById('newButton').addEventListener('click', async function () {
-    enableForm();
-    clearForm();
+document.getElementById('newButton')?.addEventListener('click', function () {
+    if (typeof enableForm === "function") enableForm();
+    if (typeof clearForm === "function") clearForm();
 
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    reportButton.disabled = true;
-    deleteButton.disabled = true;
+    if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+    }
+    if (modifyButton) modifyButton.disabled = true;
+    if (reportButton) reportButton.disabled = true;
+    if (deleteButton) deleteButton.disabled = true;
 
-    document.getElementById('saveButton').innerHTML = '<i class="bi bi-save"></i> Save';
-    document.getElementById('lrDate').valueAsDate = new Date();
-    document.getElementById('quantity').value = "1.00";
+    const lrDateEl = document.getElementById('lrDate');
+    if (lrDateEl) lrDateEl.valueAsDate = new Date();
 
-    document.getElementById('addFreightRow').disabled = false;
-    document.getElementById('addVendorFreightRow').disabled = false;
+    const qtyEl = document.getElementById('quantity');
+    if (qtyEl) qtyEl.value = "1.00";
 
-    // Hide the Request Number container / badge if it was visible
+    if (document.getElementById('addFreightRow')) document.getElementById('addFreightRow').disabled = false;
+    if (document.getElementById('addVendorFreightRow')) document.getElementById('addVendorFreightRow').disabled = false;
+
     const requestNoEl = document.getElementById("headerPickupRequestNoText");
     const headerBadge = document.getElementById("headerPickupRequestBadge");
-
-    if (headerBadge) {
-        headerBadge.classList.add("d-none");
-    }
-
-    if (requestNoEl) {
-        requestNoEl.textContent = ""; // Correct way to clear text content of a span
-    }
+    if (headerBadge) headerBadge.classList.add("d-none");
+    if (requestNoEl) requestNoEl.textContent = "";
 
     deletedShipmentIds = [];
     currentEditShipmentId = null;
@@ -231,21 +247,26 @@ document.getElementById('newButton').addEventListener('click', async function ()
         if (table) {
             table.querySelector("tbody")?.replaceChildren();
             table.querySelector("tfoot")?.replaceChildren();
+            window.restoreEmptyStateIfNeeded?.(id);
         }
     });
 });
 
-document.getElementById('modifyButton').addEventListener('click', function () {
-    enableForm();
-    document.getElementById('saveButton').disabled = false;
-    document.getElementById('modifyButton').disabled = true;
-    document.getElementById('reportButton').disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    document.getElementById('addFreightRow').disabled = false;
-    document.getElementById('addVendorFreightRow').disabled = false;
+document.getElementById('modifyButton')?.addEventListener('click', function () {
+    if (typeof enableForm === "function") enableForm();
+    if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    }
+    if (modifyButton) modifyButton.disabled = true;
+    if (reportButton) reportButton.disabled = true;
+
+    if (document.getElementById('addFreightRow')) document.getElementById('addFreightRow').disabled = false;
+    if (document.getElementById('addVendorFreightRow')) document.getElementById('addVendorFreightRow').disabled = false;
 
     document.querySelectorAll('.deleteRow, .delete-shipment-btn, .edit-shipment-btn').forEach(btn => btn.disabled = false);
-    document.getElementById("lrNumber").disabled = true;
+    const lrNumberEl = document.getElementById("lrNumber");
+    if (lrNumberEl) lrNumberEl.disabled = true;
 });
 
 function areRequiredFieldsFilled() {
@@ -259,8 +280,6 @@ function areRequiredFieldsFilled() {
         const field = document.getElementById(fieldId);
         if (!field) continue;
 
-        // Skip fields hidden from the user (auto-derived from Shipment rows,
-        // e.g. destination*). The user cannot fill these, so don't block the save.
         if (field.closest('.d-none')) continue;
 
         if (!field.value.trim()) {
@@ -275,56 +294,47 @@ function areRequiredFieldsFilled() {
 // =========================================================================
 // SAVE BUTTON CLICKED - AUTO TARIFF & DEDUPLICATION LOGIC
 // =========================================================================
-document.getElementById("saveButton").addEventListener("click", async function (event) {
+saveButton?.addEventListener("click", async function (event) {
     event.preventDefault();
 
-    // NOTE: recalculateShipmentSummary() is intentionally NOT called here.
-    // It runs when a shipment row is added/edited/deleted. Calling it again
-    // on Save would overwrite the user's manually-entered origin fields with
-    // values taken from the Pickup shipment rows.
-
-    const saveBtn = document.getElementById("saveButton");
     const addBtn = document.getElementById("addFreightRow");
     const vendorAddBtn = document.getElementById("addVendorFreightRow");
-    let lrNumber = document.getElementById("lrNumber").value.trim();
+    let lrNumber = document.getElementById("lrNumber")?.value.trim() || "";
 
-    saveBtn.disabled = true;
-    addBtn.disabled = true;
-    vendorAddBtn.disabled = true;
+    saveButton.disabled = true;
+    if (addBtn) addBtn.disabled = true;
+    if (vendorAddBtn) vendorAddBtn.disabled = true;
 
     if (!areRequiredFieldsFilled()) {
-        saveBtn.disabled = false;
-        addBtn.disabled = false;
-        vendorAddBtn.disabled = false;
+        saveButton.disabled = false;
+        if (addBtn) addBtn.disabled = false;
+        if (vendorAddBtn) vendorAddBtn.disabled = false;
         return;
     }
 
-    if (document.querySelectorAll("#chargesDetailsTable tbody tr:not([data-status='deleted'])").length === 0) {
+    if (document.querySelectorAll("#chargesDetailsTable tbody tr:not([data-status='deleted']):not(:has(.vm-empty))").length === 0) {
         await applyCustomerTariff();
     }
-    if (document.querySelectorAll("#vendorChargesDetailsTable tbody tr:not([data-status='deleted'])").length === 0) {
+    if (document.querySelectorAll("#vendorChargesDetailsTable tbody tr:not([data-status='deleted']):not(:has(.vm-empty))").length === 0) {
         await applyVendorTariff();
     }
 
-    const isSaveAction = saveBtn.innerText.trim().toLowerCase() === "save";
+    const isSaveAction = saveButton.innerText.trim().toLowerCase() === "save";
 
     if (!lrNumber) {
         lrNumber = await generateLRNumber();
-        document.getElementById("lrNumber").value = lrNumber;
+        const lrEl = document.getElementById("lrNumber");
+        if (lrEl) lrEl.value = lrNumber;
     }
 
     const val = id => document.getElementById(id)?.value || "";
     const modeType = val("modeType");
     const transitType = modeType === "FTL" ? "By Road" : "By Sea Freight";
 
-    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
-    // console.log("headerPickupRequestNoText:", requestNoText);
-    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
+    const requestNoText = document.getElementById("headerPickupRequestNoText")?.textContent.trim() || "";
     const headerBadge = document.getElementById("headerPickupRequestBadge");
-
-    // Determine if the badge is visible and a valid request number exists
     const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
-    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
+    const finalPickupRequestNo = (isBadgeVisible && requestNoText !== "") ? requestNoText : null;
 
     let formData = {
         lr_number: lrNumber,
@@ -352,7 +362,7 @@ document.getElementById("saveButton").addEventListener("click", async function (
         quantity: val("quantity"),
         actual_weight: val("actualWt"),
         charge_weight: val("chargeWt"),
-        payment_type: val("paymentType"),
+        payment_type: val("mainPaymentType"),
         routedetails: val("routeDetails") || null,
         information: val("information"),
         description_of_goods: val("descriptionofGoods"),
@@ -386,7 +396,6 @@ document.getElementById("saveButton").addEventListener("click", async function (
                 .single();
         }
 
-
         const { data, error } = await query;
         if (error) throw error;
 
@@ -396,31 +405,31 @@ document.getElementById("saveButton").addEventListener("click", async function (
             saveCharges(bookingId, "chargesDetailsTable", "Sale"),
             saveCharges(bookingId, "vendorChargesDetailsTable", "Buy"),
             saveShipments(bookingId, lrNumber),
-            updatePickupRequestStatus(requestNoText)
+            typeof updatePickupRequestStatus === "function" ? updatePickupRequestStatus(requestNoText) : Promise.resolve()
         ]);
 
         await loadShipmentDetails(lrNumber);
 
-        disableForm();
-        saveBtn.innerHTML = `<i class="bi bi-save"></i> Update`;
-        document.getElementById("modifyButton").disabled = false;
-        document.getElementById("reportButton").disabled = false;
+        if (typeof disableForm === "function") disableForm();
+        saveButton.innerHTML = `<i class="bi bi-save"></i> Update`;
+        if (modifyButton) modifyButton.disabled = false;
+        if (reportButton) reportButton.disabled = false;
 
         alert(`Movement details ${isSaveAction ? "saved" : "updated"} successfully!\nLR Number: ${lrNumber}`);
 
     } catch (err) {
         console.error("Error saving data:", err);
         alert("Error saving movement details");
-        saveBtn.disabled = false;
-        addBtn.disabled = false;
-        vendorAddBtn.disabled = false;
+        saveButton.disabled = false;
+        if (addBtn) addBtn.disabled = false;
+        if (vendorAddBtn) vendorAddBtn.disabled = false;
     }
 });
 
 // =========================================================================
 // SHIPMENT DETAILS TABS - UI & DB LOGIC
 // =========================================================================
-addShipmentBtn.addEventListener('click', function () {
+addShipmentBtn?.addEventListener('click', function () {
     const type = document.getElementById('shipmentType').value;
     const name = document.getElementById('consigneeorConsignorName').value.trim();
     const address = document.getElementById('consigneeorConsignorAddress').value.trim();
@@ -438,6 +447,8 @@ addShipmentBtn.addEventListener('click', function () {
         alert('Please fill in Name, Address, Pincode, and City before adding.');
         return;
     }
+
+    window.clearEmptyState?.('shipmentDetailsTable');
 
     let tr = currentEditShipmentId ? shipmentTableBody.querySelector(`tr[data-id="${currentEditShipmentId}"]`) : null;
 
@@ -473,16 +484,19 @@ addShipmentBtn.addEventListener('click', function () {
 
     currentEditShipmentId = null;
     document.getElementById('shipmentId').value = '';
-    document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-plus-lg"></i> Add';
+    addShipmentBtn.innerHTML = '<i class="bi bi-plus-lg"></i> Add';
 
     ['consigneeorConsignorName', 'consigneeorConsignorAddress', 'shipmentPinCode', 'shipmentCity',
         'shipmentReferenceNumber', 'shipmentInvoiceValue', 'shipmentQuantity', 'shipmentActualWt', 'shipmentChargeWt', 'shipmentEWayBillNumber']
-        .forEach(id => document.getElementById(id).value = '');
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
 
-    document.getElementById('consigneeorConsignorName').focus();
+    document.getElementById('consigneeorConsignorName')?.focus();
 });
 
-shipmentTableBody.addEventListener('click', function (e) {
+shipmentTableBody?.addEventListener('click', function (e) {
     const deleteBtn = e.target.closest('.delete-shipment-btn');
     const editBtn = e.target.closest('.edit-shipment-btn');
 
@@ -490,6 +504,7 @@ shipmentTableBody.addEventListener('click', function (e) {
         const tr = deleteBtn.closest('tr');
         if (tr.dataset.id) deletedShipmentIds.push(tr.dataset.id);
         tr.remove();
+        window.restoreEmptyStateIfNeeded?.('shipmentDetailsTable');
         recalculateShipmentSummary();
     } else if (editBtn) {
         const tr = editBtn.closest('tr');
@@ -509,8 +524,8 @@ shipmentTableBody.addEventListener('click', function (e) {
         document.getElementById('shipmentActualWt').value = tr.dataset.actWt || '';
         document.getElementById('shipmentChargeWt').value = tr.dataset.chgWt || '';
 
-        document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-pencil"></i> Edit Item';
-        document.getElementById('consigneeorConsignorName').focus();
+        addShipmentBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit Item';
+        document.getElementById('consigneeorConsignorName')?.focus();
     }
 });
 
@@ -520,7 +535,6 @@ async function saveShipments(bookingId, lrNumber) {
     const shipmentsToUpdate = [];
 
     rows.forEach(tr => {
-        // Skip placeholder / empty rows if present
         if (tr.querySelector('.vm-empty')) return;
 
         const shipment = {
@@ -570,7 +584,6 @@ async function saveShipments(bookingId, lrNumber) {
         }
 
         if (promises.length > 0) {
-            // Promise.allSettled ensures that even if one action fails, it doesn't crash the rest
             const results = await Promise.allSettled(promises);
             results.forEach((res, idx) => {
                 if (res.status === 'rejected') {
@@ -579,7 +592,6 @@ async function saveShipments(bookingId, lrNumber) {
             });
         }
     } catch (err) {
-        // Catch any unexpected errors and ignore them so execution continues
         console.warn("Failed to update shipment details, ignoring and continuing:", err);
     } finally {
         deletedShipmentIds = [];
@@ -596,6 +608,12 @@ async function loadShipmentDetails(lrNumber) {
     shipmentTableBody.innerHTML = '';
     deletedShipmentIds = [];
     currentEditShipmentId = null;
+
+    if (data.length === 0) {
+        window.restoreEmptyStateIfNeeded?.('shipmentDetailsTable');
+        updateShipmentTotals();
+        return;
+    }
 
     data.forEach(row => {
         const tr = document.createElement('tr');
@@ -648,8 +666,15 @@ async function loadBillingCharges(lrNumber, accountType, tableId) {
 
     if (error || !data) return;
 
-    const tableBody = document.getElementById(tableId).querySelector("tbody");
+    const tableBody = document.getElementById(tableId)?.querySelector("tbody");
+    if (!tableBody) return;
     tableBody.innerHTML = "";
+
+    if (data.length === 0) {
+        window.restoreEmptyStateIfNeeded?.(tableId);
+        updateChargesTotals(tableId);
+        return;
+    }
 
     data.forEach(row => {
         const tr = document.createElement("tr");
@@ -658,14 +683,14 @@ async function loadBillingCharges(lrNumber, accountType, tableId) {
 
         tr.innerHTML = `
             <td class="align-middle">${row.ChargesType}</td>
-            <td class="align-middle">${row.TaxRate}%</td>
+            <td class="text-end align-middle">${row.TaxRate}%</td>
             <td class="text-end align-middle">${parseFloat(row.TotalAmount).toFixed(2)}</td>
             <td class="text-end align-middle">${parseFloat(row.CGSTAmt).toFixed(2)}</td>
             <td class="text-end align-middle">${parseFloat(row.SGSTAmt).toFixed(2)}</td>
             <td class="text-end align-middle">${parseFloat(row.IGSTAmt).toFixed(2)}</td>
             <td class="text-end align-middle">${parseFloat(row.TotalGSTAmt).toFixed(2)}</td>
             <td class="text-end align-middle">${parseFloat(row.GrandTotalAmt).toFixed(2)}</td>
-            <td><button type="button" class="btn btn-sm btn-danger deleteRow" disabled>Delete</button></td>
+            <td class="text-center"><button type="button" class="btn btn-sm btn-danger deleteRow" disabled>Delete</button></td>
             <td class="align-middle d-none">${row.HSNCode || ""}</td>
             <td class="align-middle d-none">${row.TaxID || ""}</td>
         `;
@@ -675,64 +700,75 @@ async function loadBillingCharges(lrNumber, accountType, tableId) {
             tr.dataset.status = "deleted";
             tr.style.display = "none";
             updateChargesTotals(tableId);
+            window.restoreEmptyStateIfNeeded?.(tableId);
         };
     });
     updateChargesTotals(tableId);
 }
 
-document.getElementById("addFreightRow").addEventListener("click", async () => {
+document.getElementById("addFreightRow")?.addEventListener("click", async () => {
     await addFreightRow("chargesDetailsTable", "chargesType", "customerFreightAmt", "partyDefaultTax");
-    await getFixedCharges("Sell");
+    if (typeof getFixedCharges === "function") await getFixedCharges("Sell");
 });
 
-document.getElementById("addVendorFreightRow").addEventListener("click", async () => {
+document.getElementById("addVendorFreightRow")?.addEventListener("click", async () => {
     await addFreightRow("vendorChargesDetailsTable", "vendorChargesType", "vendorFreightAmt", "vendorDefaultTax");
-    await getFixedCharges("Buy");
+    if (typeof getFixedCharges === "function") await getFixedCharges("Buy");
 });
 
 async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
-    const chargesType = document.getElementById(chargesInput).value.trim();
-    const amount = parseFloat(document.getElementById(amountInput).value) || 0;
-    const taxID = document.getElementById(taxInput).value || 1;
-    const HSNCode = await getDropdownDataValue(chargesType, "ChargesType");
+    const chargesType = document.getElementById(chargesInput)?.value.trim() || "";
+    const amount = parseFloat(document.getElementById(amountInput)?.value) || 0;
+    const taxID = document.getElementById(taxInput)?.value || 1;
+    const HSNCode = typeof getDropdownDataValue === "function"
+        ? await getDropdownDataValue(chargesType, "ChargesType")
+        : null;
 
     const addVendorBtn = document.getElementById("addVendorFreightRow");
     const addFreightBtn = document.getElementById("addFreightRow");
 
-    addVendorBtn.disabled = true;
-    addFreightBtn.disabled = true;
+    if (addVendorBtn) addVendorBtn.disabled = true;
+    if (addFreightBtn) addFreightBtn.disabled = true;
 
     if (!chargesType || amount <= 0) {
         alert("Enter Charges Type and Amount");
-        addVendorBtn.disabled = false;
-        addFreightBtn.disabled = false;
+        if (addVendorBtn) addVendorBtn.disabled = false;
+        if (addFreightBtn) addFreightBtn.disabled = false;
         return;
     }
 
-    const tableBody = document.getElementById(tableId).querySelector("tbody");
+    const tableBody = document.getElementById(tableId)?.querySelector("tbody");
+    if (!tableBody) return;
+
     for (let row of tableBody.querySelectorAll("tr")) {
-        if (row.dataset.status !== "deleted" && row.children[0].textContent.trim() === chargesType) {
-            addVendorBtn.disabled = false;
-            addFreightBtn.disabled = false;
+        if (row.querySelector(".vm-empty")) continue;
+        if (row.dataset.status !== "deleted" && row.children[0]?.textContent.trim() === chargesType) {
+            if (addVendorBtn) addVendorBtn.disabled = false;
+            if (addFreightBtn) addFreightBtn.disabled = false;
             return;
         }
     }
 
-    const taxes = await getTaxRatesById(taxID);
-    const taxCalculations = calculateTaxes(amount, taxes);
+    window.clearEmptyState?.(tableId);
+
+    const taxes = typeof getTaxRatesById === "function" ? await getTaxRatesById(taxID) : {};
+    const taxCalculations = typeof calculateTaxes === "function"
+        ? calculateTaxes(amount, taxes)
+        : { totalRate: 0, cgstAmt: 0, sgstAmt: 0, igstAmt: 0, totalGstAmt: 0, grandTotal: amount };
+
     const tr = document.createElement("tr");
     tr.dataset.status = "new";
 
     tr.innerHTML = `
         <td>${chargesType}</td>
-        <td>${taxCalculations.totalRate}%</td>
+        <td class="text-end">${taxCalculations.totalRate}%</td>
         <td class="text-end">${amount.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.sgstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalculations.cgstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalculations.sgstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalculations.igstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalculations.totalGstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalculations.grandTotal.toFixed(2)}</td>
-        <td><button type="button" class="btn btn-sm btn-danger deleteRow">Delete</button></td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-danger deleteRow">Delete</button></td>
         <td class="d-none">${HSNCode?.hsn_code || "0"}</td>
         <td class="d-none">${taxID}</td>
     `;
@@ -745,14 +781,17 @@ async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
             tr.style.display = "none";
         }
         updateChargesTotals(tableId);
+        window.restoreEmptyStateIfNeeded?.(tableId);
     };
 
     updateChargesTotals(tableId);
     document.getElementById(chargesInput).value = "";
     document.getElementById(amountInput).value = "";
-    document.getElementById(taxInput).selectedIndex = 0;
-    addVendorBtn.disabled = false;
-    addFreightBtn.disabled = false;
+    const taxEl = document.getElementById(taxInput);
+    if (taxEl) taxEl.selectedIndex = 0;
+
+    if (addVendorBtn) addVendorBtn.disabled = false;
+    if (addFreightBtn) addFreightBtn.disabled = false;
 }
 
 function updateChargesTotals(tableId) {
@@ -765,9 +804,8 @@ function updateChargesTotals(tableId) {
     let totals = { amount: 0, cgst: 0, sgst: 0, igst: 0, gst: 0, grand: 0 };
 
     rows.forEach(tr => {
-        if (tr.dataset.status === "deleted") return;
+        if (tr.dataset.status === "deleted" || tr.querySelector(".vm-empty")) return;
 
-        // Ensure the cells exist before accessing textContent
         totals.amount += parseFloat(tr.children[2]?.textContent) || 0;
         totals.cgst += parseFloat(tr.children[3]?.textContent) || 0;
         totals.sgst += parseFloat(tr.children[4]?.textContent) || 0;
@@ -791,7 +829,7 @@ function updateChargesTotals(tableId) {
 }
 
 async function saveCharges(bookingId, tableId, accountType) {
-    const rows = document.getElementById(tableId).querySelectorAll("tbody tr");
+    const rows = document.getElementById(tableId)?.querySelectorAll("tbody tr") || [];
     const insertData = [];
     const deleteIds = [];
 
@@ -805,26 +843,27 @@ async function saveCharges(bookingId, tableId, accountType) {
     const getNumber = val => (!val || val === "No GST") ? 0 : parseFloat(val) || 0;
 
     rows.forEach(row => {
+        if (row.querySelector(".vm-empty")) return;
         const status = row.dataset.status;
         const cells = row.querySelectorAll("td");
-        const chargeType = cells[0].textContent.trim();
+        const chargeType = cells[0]?.textContent.trim();
 
-        if (status === "new" && !existingChargeTypes.has(chargeType)) {
+        if (status === "new" && chargeType && !existingChargeTypes.has(chargeType)) {
             insertData.push({
                 ID_FT: bookingId,
-                LRNumber: document.getElementById("lrNumber").value.trim(),
+                LRNumber: document.getElementById("lrNumber")?.value.trim() || "",
                 ChargesType: chargeType,
-                TaxRate: getNumber(cells[1].textContent),
+                TaxRate: getNumber(cells[1]?.textContent),
                 Quantity: 1,
-                PerQtyAmt: getNumber(cells[2].textContent),
-                TotalAmount: getNumber(cells[2].textContent),
-                CGSTAmt: getNumber(cells[3].textContent),
-                SGSTAmt: getNumber(cells[4].textContent),
-                IGSTAmt: getNumber(cells[5].textContent),
-                TotalGSTAmt: getNumber(cells[6].textContent),
-                GrandTotalAmt: getNumber(cells[7].textContent),
-                HSNCode: cells[9].textContent || "",
-                TaxID: cells[10].textContent || "",
+                PerQtyAmt: getNumber(cells[2]?.textContent),
+                TotalAmount: getNumber(cells[2]?.textContent),
+                CGSTAmt: getNumber(cells[3]?.textContent),
+                SGSTAmt: getNumber(cells[4]?.textContent),
+                IGSTAmt: getNumber(cells[5]?.textContent),
+                TotalGSTAmt: getNumber(cells[6]?.textContent),
+                GrandTotalAmt: getNumber(cells[7]?.textContent),
+                HSNCode: cells[9]?.textContent || "",
+                TaxID: cells[10]?.textContent || "",
                 AccountType: accountType,
                 created_by: UserLoginID,
                 created_at: localtimeStamp
@@ -844,12 +883,12 @@ async function saveCharges(bookingId, tableId, accountType) {
 }
 
 async function getTariffRate(partyCode, tariffType) {
-    const movementType = document.getElementById("movementType").value;
-    const modeType = document.getElementById("modeType").value;
-    const vehicleType = document.getElementById("vehicleType").value;
-    const routeDetails = document.getElementById("routeDetails").value.toLowerCase().trim();
-    const chargeWt = parseFloat(document.getElementById("chargeWt").value) || 0;
-    const bookingDate = document.getElementById("lrDate").value;
+    const movementType = document.getElementById("movementType")?.value;
+    const modeType = document.getElementById("modeType")?.value;
+    const vehicleType = document.getElementById("vehicleType")?.value;
+    const routeDetails = document.getElementById("routeDetails")?.value.toLowerCase().trim();
+    const chargeWt = parseFloat(document.getElementById("chargeWt")?.value) || 0;
+    const bookingDate = document.getElementById("lrDate")?.value;
 
     if (!partyCode || !movementType || !modeType || !vehicleType || !routeDetails) {
         return null;
@@ -879,45 +918,45 @@ async function getTariffRate(partyCode, tariffType) {
 }
 
 async function applyCustomerTariff() {
-    const partyCode = document.getElementById("partyCode").value;
+    const partyCode = document.getElementById("partyCode")?.value;
     const rate = await getTariffRate(partyCode, "Sell");
 
     const amountInput = document.getElementById("customerFreightAmt");
     const chargesInput = document.getElementById("chargesType");
 
     if (!rate) {
-        chargesInput.value = "";
-        amountInput.value = "0.00";
+        if (chargesInput) chargesInput.value = "";
+        if (amountInput) amountInput.value = "0.00";
         return;
     }
 
-    chargesInput.value = "Freight Amount";
-    amountInput.value = rate;
+    if (chargesInput) chargesInput.value = "Freight Amount";
+    if (amountInput) amountInput.value = rate;
 
     await addFreightRow("chargesDetailsTable", "chargesType", "customerFreightAmt", "partyDefaultTax");
 }
 
 async function applyVendorTariff() {
-    const vendorCode = document.getElementById("vendorCode").value;
+    const vendorCode = document.getElementById("vendorCode")?.value;
     const rate = await getTariffRate(vendorCode, "Buy");
 
     const amountInput = document.getElementById("vendorFreightAmt");
     const chargesInput = document.getElementById("vendorChargesType");
 
     if (!rate) {
-        chargesInput.value = "";
-        amountInput.value = "0.00";
+        if (chargesInput) chargesInput.value = "";
+        if (amountInput) amountInput.value = "0.00";
         return;
     }
 
-    chargesInput.value = "Freight Amount";
-    amountInput.value = rate;
+    if (chargesInput) chargesInput.value = "Freight Amount";
+    if (amountInput) amountInput.value = rate;
 
     await addFreightRow("vendorChargesDetailsTable", "vendorChargesType", "vendorFreightAmt", "vendorDefaultTax");
 }
 
 ["lrDate", "partyCode", "modeType", "movementType", "routeDetails", "vehicleType", "chargeWt", "vendorCode"].forEach(id => {
-    document.getElementById(id).addEventListener("change", async () => {
+    document.getElementById(id)?.addEventListener("change", async () => {
         await Promise.all([applyCustomerTariff(), applyVendorTariff()]);
     });
 });
@@ -929,11 +968,15 @@ function clearAutoCharges(tableId) {
 }
 
 async function getFixedCharges(accountType = "Sell") {
-    const partyCode = accountType === "Sell" ? document.getElementById("partyCode").value : document.getElementById("vendorCode").value;
-    const movementType = document.getElementById("movementType").value;
-    const modeType = document.getElementById("modeType").value;
-    const bookingDate = document.getElementById("lrDate").value;
-    const freightAmt = accountType === "Sell" ? parseFloat(document.getElementById("customerFreightAmt").value) || 0 : parseFloat(document.getElementById("vendorFreightAmt").value) || 0;
+    const partyCode = accountType === "Sell"
+        ? document.getElementById("partyCode")?.value
+        : document.getElementById("vendorCode")?.value;
+    const movementType = document.getElementById("movementType")?.value;
+    const modeType = document.getElementById("modeType")?.value;
+    const bookingDate = document.getElementById("lrDate")?.value;
+    const freightAmt = accountType === "Sell"
+        ? parseFloat(document.getElementById("customerFreightAmt")?.value) || 0
+        : parseFloat(document.getElementById("vendorFreightAmt")?.value) || 0;
 
     if (!partyCode) return;
 
@@ -957,10 +1000,10 @@ async function getFixedCharges(accountType = "Sell") {
             applicableCharges.push({ type: row.ChargesType, amount: charge });
         }
     });
-    applyFixedCharges(applicableCharges, accountType);
+    await applyFixedCharges(applicableCharges, accountType);
 }
 
-function applyFixedCharges(charges, accountType) {
+async function applyFixedCharges(charges, accountType) {
     const tableId = accountType === "Sell" ? "chargesDetailsTable" : "vendorChargesDetailsTable";
     const chargesInput = accountType === "Sell" ? "chargesType" : "vendorChargesType";
     const amountInput = accountType === "Sell" ? "customerFreightAmt" : "vendorFreightAmt";
@@ -968,22 +1011,22 @@ function applyFixedCharges(charges, accountType) {
 
     clearAutoCharges(tableId);
 
-    charges.forEach(ch => {
+    for (const ch of charges) {
         document.getElementById(chargesInput).value = ch.type;
         document.getElementById(amountInput).value = ch.amount.toFixed(2);
-        addFreightRow(tableId, chargesInput, amountInput, taxInput);
+        await addFreightRow(tableId, chargesInput, amountInput, taxInput);
 
         const rows = document.querySelectorAll(`#${tableId} tbody tr`);
         if (rows.length > 0) rows[rows.length - 1].dataset.auto = "true";
-    });
+    }
 }
 
 async function generateLRNumber() {
     const companyId = localStorage.getItem("CompanyID");
-    const companyProfile = await getCompanyProfile(companyId);
+    const companyProfile = typeof getCompanyProfile === "function" ? await getCompanyProfile(companyId) : null;
     const { data } = await supabaseClient.rpc("generate_lr_number", {
         p_company_id: companyId,
-        p_short_code: companyProfile.short_code
+        p_short_code: companyProfile?.short_code || ""
     });
     return data;
 }
@@ -1002,17 +1045,20 @@ document.querySelectorAll('.dropdown-menu [data-print-type]').forEach(item => {
             return;
         }
 
-        if (printType === 'lr_report') {
+        if (printType === 'lr_report' && typeof generateConsignmentNote === "function") {
             await generateConsignmentNote(lrNumber);
-        } else if (printType === 'lr_annexure_Report') {
+        } else if (printType === 'lr_annexure_Report' && typeof generateConsignmentNote_annexure === "function") {
             await generateConsignmentNote_annexure(lrNumber);
         }
     });
 });
 
-document.getElementById("partyName").addEventListener("change", async function () {
+document.getElementById("partyName")?.addEventListener("change", async function () {
     const selectedPartyName = this.value.trim();
-    if (!selectedPartyName) { clearOriginFields(); return; }
+    if (!selectedPartyName) {
+        clearOriginFields();
+        return;
+    }
 
     const { data: partyData } = await supabaseClient
         .from('PartyDetails')
@@ -1040,12 +1086,15 @@ function populateOriginFields(pincode, city, address) {
     document.getElementById("originPinCode").value = pincode || "";
     document.getElementById("originCity").value = city || "";
     document.getElementById("originAddress").value = address || "";
-    document.getElementById("originPinCode").dispatchEvent(new Event('change'));
+    document.getElementById("originPinCode")?.dispatchEvent(new Event('change'));
     applyCustomerTariff();
 }
 
 function clearOriginFields() {
-    ["partyCode", "originPinCode", "originCity", "originAddress"].forEach(id => document.getElementById(id).value = "");
+    ["partyCode", "originPinCode", "originCity", "originAddress"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
 }
 
 function showAddressSelectionModal(addresses) {
@@ -1073,10 +1122,10 @@ function showAddressSelectionModal(addresses) {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "list-group-item list-group-item-action p-3";
-        btn.innerHTML = `<h6 class="mb-1 text-cap">${addr.City || 'Unknown'} - ${addr.PinCode || ''}</h6><p class="mb-1 small text-muted text-cap">${addr.Address || ''}</p>`;
+        btn.innerHTML = `<h6 class="mb-1 text-cap">${addr.City || 'Unknown'} ${addr.PinCode || ''}</h6><p class="mb-1 small text-muted text-cap">${addr.Address || ''}</p>`;
         btn.onclick = () => {
             populateOriginFields(addr.PinCode, addr.City, addr.Address);
-            bootstrap.Modal.getInstance(modalEl).hide();
+            bootstrap.Modal.getInstance(modalEl)?.hide();
         };
         listContainer.appendChild(btn);
     });
@@ -1087,37 +1136,30 @@ function showAddressSelectionModal(addresses) {
 function updateShipmentTotals() {
     let totalQty = 0, totalActWt = 0, totalChgWt = 0;
     document.querySelectorAll('#shipmentDetailsTable tbody tr').forEach(tr => {
+        if (tr.querySelector('.vm-empty')) return;
         totalQty += parseFloat(tr.dataset.qty) || 0;
         totalActWt += parseFloat(tr.dataset.actWt) || 0;
         totalChgWt += parseFloat(tr.dataset.chgWt) || 0;
     });
 
-    document.getElementById('quantity').value = totalQty.toFixed(2);
-    document.getElementById('actualWt').value = totalActWt.toFixed(2);
+    const qtyEl = document.getElementById('quantity');
+    const actWtEl = document.getElementById('actualWt');
     const chargeWtInput = document.getElementById('chargeWt');
-    chargeWtInput.value = totalChgWt.toFixed(2);
-    chargeWtInput.dispatchEvent(new Event('change'));
+
+    if (qtyEl) qtyEl.value = totalQty.toFixed(2);
+    if (actWtEl) actWtEl.value = totalActWt.toFixed(2);
+    if (chargeWtInput) {
+        chargeWtInput.value = totalChgWt.toFixed(2);
+        chargeWtInput.dispatchEvent(new Event('change'));
+    }
 }
 
 // =========================================================================
 // RECALCULATE SUMMARY FROM SHIPMENT ROWS
-// -------------------------------------------------------------------------
-// Rules:
-//   • If any row has type "Delivery"  → update destination* fields
-//   • If any row has type "Pickup"    → update origin* fields
-//   • If no row of a given type exists → leave the corresponding fields
-//     untouched (do not clear or overwrite them)
-//   • Shared fields (referenceNumber, invoiceValue, totals) are always
-//     aggregated from all rows
-//
-// NOTE: This function is called ONLY when a shipment row is added, edited,
-// or deleted — NOT on Save. That prevents the user's manually-entered
-// origin/destination values from being overwritten at save time.
 // =========================================================================
 function recalculateShipmentSummary() {
-    const allRows = [...shipmentTableBody.querySelectorAll('tr')];
+    const allRows = [...shipmentTableBody.querySelectorAll('tr')].filter(tr => !tr.querySelector('.vm-empty'));
 
-    // Nothing to do if no rows
     if (allRows.length === 0) {
         updateShipmentTotals();
         return;
@@ -1127,8 +1169,8 @@ function recalculateShipmentSummary() {
     const uniqueRefs = new Set();
     let totalInvoiceValue = 0;
 
-    let deliveryRow = null;   // first Delivery row
-    let pickupRow = null;     // first Pickup row
+    let deliveryRow = null;
+    let pickupRow = null;
 
     allRows.forEach(row => {
         if (row.dataset.city) uniqueCities.add(row.dataset.city);
@@ -1143,25 +1185,18 @@ function recalculateShipmentSummary() {
     const citiesString = Array.from(uniqueCities).join(', ');
     const refsString = Array.from(uniqueRefs).join(', ');
 
-    // ---- Destination fields ----
-    // Only update when at least one Delivery row exists.
-    // Otherwise leave the destination fields exactly as they were.
     if (deliveryRow) {
         document.getElementById('destinationPinCode').value = deliveryRow.dataset.pincode || '';
         document.getElementById('destinationCity').value = citiesString;
         document.getElementById('destinationAddress').value = deliveryRow.dataset.address || '';
     }
 
-    // ---- Origin fields ----
-    // Only update when at least one Pickup row exists.
-    // Otherwise leave the origin fields exactly as they were.
     if (pickupRow) {
         document.getElementById('originPinCode').value = pickupRow.dataset.pincode || '';
         document.getElementById('originCity').value = citiesString;
         document.getElementById('originAddress').value = pickupRow.dataset.address || '';
     }
 
-    // ---- Shared fields (always updated) ----
     document.getElementById('referenceNumber').value = refsString;
     document.getElementById('invoiceValue').value = totalInvoiceValue.toFixed(2);
 

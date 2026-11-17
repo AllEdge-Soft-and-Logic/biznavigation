@@ -1,3 +1,4 @@
+//server.js
 let supabaseClient; // Declare global variable
 
 // Configuration Constants

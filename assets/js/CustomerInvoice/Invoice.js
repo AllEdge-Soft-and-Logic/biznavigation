@@ -268,7 +268,7 @@ async function calculateInvoiceTaxableAmounts(invoiceNo, invoiceType) {
             accountType: false
         },
 
-        'Full Load Booking': {
+        'Full Truck Load': {
             detailTable: 'FullLoadBookingDetails',
             detailSelect: 'id, lr_number',
             invoiceColumn: 'invoice_number',
@@ -280,7 +280,7 @@ async function calculateInvoiceTaxableAmounts(invoiceNo, invoiceType) {
             accountType: true
         },
 
-        'DomesticBookingDetails': {
+        'Domestic': {
             detailTable: 'DomesticBookingDetails',
             detailSelect: 'id, DocketNo',
             invoiceColumn: 'InvoiceNumber',
@@ -512,21 +512,24 @@ if (saveButton) {
             const totalGstCents = cgstCents + sgstCents + igstCents;
 
             const exactGrandTotalCents = basicCents + otherCents + totalGstCents;
-            const calculatedGrandTotalCents = Math.round(exactGrandTotalCents / 100) * 100;
 
             let scrapedGrandTotalCents = toCents(getSafeAmount('totalGrand', 'totalAmount'));
             if (scrapedGrandTotalCents === 0) {
                 scrapedGrandTotalCents = toCents(getSafeAmount('totalGrandAmt'));
             }
 
-            if (scrapedGrandTotalCents === 0 && calculatedGrandTotalCents > 0) {
+            if (scrapedGrandTotalCents === 0 && exactGrandTotalCents > 0) {
                 console.warn("UI Grand Total element not found or is 0. Trusting internal calculation.");
-                scrapedGrandTotalCents = calculatedGrandTotalCents;
+                scrapedGrandTotalCents = Math.round(exactGrandTotalCents / 100) * 100;
             }
 
-            if (Math.abs(calculatedGrandTotalCents - scrapedGrandTotalCents) > 1) {
-                console.error('Mismatch details:', { calculatedGrandTotalCents, scrapedGrandTotalCents });
-                throw new Error(`Invoice total mismatch. Calculated: ${toCurrency(calculatedGrandTotalCents)}`);
+            // Calculate the round-off difference (in cents)
+            const roundOffDifferenceCents = scrapedGrandTotalCents - exactGrandTotalCents;
+
+            // Allow up to a 1.00 currency unit difference (100 cents) for UI round-offs
+            if (Math.abs(roundOffDifferenceCents) > 100) {
+                console.error('Mismatch details:', { exactGrandTotalCents, scrapedGrandTotalCents, roundOffDifferenceCents });
+                throw new Error(`Invoice total mismatch. Parts sum to ${toCurrency(exactGrandTotalCents)}, but Grand Total is ${toCurrency(scrapedGrandTotalCents)}`);
             }
 
             const amounts = {
@@ -536,7 +539,7 @@ if (saveButton) {
                 SGSTAmount: toCurrency(sgstCents),
                 IGSTAmount: toCurrency(igstCents),
                 TotalGSTAmount: toCurrency(totalGstCents),
-                GrandTotalAmount: toCurrency(calculatedGrandTotalCents)
+                GrandTotalAmount: toCurrency(scrapedGrandTotalCents)
             };
 
             const invoiceDataObj = {

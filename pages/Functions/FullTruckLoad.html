@@ -232,8 +232,14 @@
                                             <input list="partySuggestions" class="form-control" id="partyName"
                                                 name="partyName" required placeholder="Choose Customer..."
                                                 autocomplete="off">
+                                            <button type="button" class="btn btn-outline-secondary d-none"
+                                                id="openPartyBillingModalBtn" title="Manage Cash Payment Sub-Parties"
+                                                aria-label="Manage Cash Payment Sub-Parties">
+                                                <i class="bi bi-people"></i>
+                                            </button>
                                             <datalist id="partySuggestions"></datalist>
                                         </div>
+                                        <div class="form-text d-none text-primary" id="selectedSubPartyHint"></div>
                                     </div>
 
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
@@ -340,9 +346,19 @@
                                         <label for="vendorName" class="form-label">
                                             Vendor Name<span class="req">*</span>
                                         </label>
-                                        <input list="vendorSuggestions" class="form-control" id="vendorName"
-                                            name="vendorName" required placeholder="Select Vendor" autocomplete="off">
-                                        <datalist id="vendorSuggestions"></datalist>
+                                        <div class="input-group">
+                                            <input list="vendorSuggestions" class="form-control" id="vendorName"
+                                                name="vendorName" required placeholder="Select Vendor"
+                                                autocomplete="off">
+                                            <button type="button" class="btn btn-outline-secondary d-none"
+                                                id="openVendorBillingModalBtn" title="Manage Cash Payment Sub-Parties"
+                                                aria-label="Manage Cash Payment Sub-Parties">
+                                                <i class="bi bi-people"></i>
+                                            </button>
+                                            <datalist id="vendorSuggestions"></datalist>
+                                        </div>
+                                        <div class="form-text d-none text-primary" id="selectedVendorSubPartyHint">
+                                        </div>
                                     </div>
 
                                     <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
@@ -856,6 +872,128 @@
         </div>
     </div>
 
+
+    <!-- ============ CASH PAYMENT SUB-PARTY MODAL (PartyBillingAddress) ============ -->
+    <div class="modal fade" id="cashPaymentPartyModal" tabindex="-1" aria-labelledby="cashPaymentPartyModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title d-flex align-items-center gap-2" id="cashPaymentPartyModalLabel">
+                        <i class="bi bi-person-plus-fill text-primary"></i>
+                        <span>Cash Payment – Sub-Party / Billing Address</span>
+                        <span class="badge text-bg-secondary" id="cashModalParentPartyBadge"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="cashModalTargetField" value="partyName">
+                    <input type="hidden" id="cashModalParentPartyCode" value="">
+
+                    <!-- Existing Sub-Parties / Billing Addresses List -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="m-0 fw-semibold text-secondary">Select Existing Sub-Party</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="toggleAddSubPartyFormBtn">
+                            <i class="bi bi-plus-lg"></i> Add New Party Under This Party
+                        </button>
+                    </div>
+
+                    <div class="table-responsive border rounded mb-3" style="max-height: 240px;">
+                        <table class="table table-sm table-hover align-middle mb-0" id="cashSubPartyTable">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Contact / Party Name</th>
+                                    <th>Address</th>
+                                    <th>City / Pin</th>
+                                    <th>State</th>
+                                    <th>Phone</th>
+                                    <th class="text-center">Select</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cashSubPartyTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-3">
+                                        No sub-parties loaded yet. Click "Add New Party Under This Party" to create one.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Add New Party Under This Party Form (PartyBillingAddress) -->
+                    <div class="card bg-light border d-none" id="addSubPartyCard">
+                        <div class="card-body">
+                            <h6 class="card-title fw-semibold mb-3">
+                                <i class="bi bi-building-add me-1"></i> Add New Party Under <span
+                                    id="addSubPartyParentName" class="text-primary">Cash Payment</span>
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label for="subPartyContactName" class="form-label form-label-sm">Party / Contact
+                                        Name <span class="req">*</span></label>
+                                    <input type="text" class="form-control form-control-sm text-cap"
+                                        id="subPartyContactName" placeholder="Enter Party / Contact Name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="subPartyContactNumber" class="form-label form-label-sm">Contact
+                                        Number</label>
+                                    <input type="text" class="form-control form-control-sm" id="subPartyContactNumber"
+                                        placeholder="10-digit Mobile No">
+                                </div>
+                                <div class="col-12">
+                                    <label for="subPartyAddress" class="form-label form-label-sm">Address <span
+                                            class="req">*</span></label>
+                                    <input type="text" class="form-control form-control-sm text-cap"
+                                        id="subPartyAddress" placeholder="Street / Building / Area" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="subPartyCity" class="form-label form-label-sm">City <span
+                                            class="req">*</span></label>
+                                    <input type="text" class="form-control form-control-sm text-cap" id="subPartyCity"
+                                        placeholder="City" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="subPartyPinCode" class="form-label form-label-sm">PinCode <span
+                                            class="req">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" id="subPartyPinCode"
+                                        placeholder="Pincode" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="subPartyState" class="form-label form-label-sm">State</label>
+                                    <input type="text" class="form-control form-control-sm text-cap" id="subPartyState"
+                                        placeholder="State">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="subPartyCountry" class="form-label form-label-sm">Country</label>
+                                    <input type="text" class="form-control form-control-sm text-cap"
+                                        id="subPartyCountry" value="India">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="subPartyDefaultActive">
+                                        <label class="form-check-label small" for="subPartyDefaultActive">
+                                            Set as Default Active Billing Address
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    id="cancelAddSubPartyBtn">Cancel</button>
+                                <button type="button" class="btn btn-sm btn-success" id="saveSubPartyBillingBtn">
+                                    <i class="bi bi-check-lg"></i> Save Sub-Party
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============ TOASTS ============ -->
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
@@ -1027,6 +1165,234 @@
         })();
     </script>
 
+
+    <!-- ============================================================
+         CASH PAYMENT SUB-PARTY POPUP & PartyBillingAddress HANDLER
+         ============================================================ -->
+    <script>
+        (function () {
+            const CASH_PAYMENT_LABEL = 'cash payment';
+
+            function isCashPaymentValue(val) {
+                return String(val || '').trim().toLowerCase() === CASH_PAYMENT_LABEL;
+            }
+
+            function getSupabaseClient() {
+                if (window.supabaseClient) return window.supabaseClient;
+                if (window.sb) return window.sb;
+                if (window.supabase && typeof window.supabase.createClient === 'function' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+                    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+                    return window.supabaseClient;
+                }
+                return null;
+            }
+
+            async function loadSubPartiesForParty(partyCode, targetField) {
+                const tbody = document.getElementById('cashSubPartyTableBody');
+                if (!tbody) return;
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Loading sub-parties...</td></tr>';
+
+                const client = getSupabaseClient();
+                if (!client) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-warning py-3">Supabase client not initialized. You can still add a new party below.</td></tr>';
+                    return;
+                }
+
+                try {
+                    let query = await supabaseClient
+                        .from('PartyBillingAddress')
+                        .select('id, "PartyCode", "Address", "City", "PinCode", "Country", "ContactName", "ContactNumber", "DefaultActive", "State", "Status"')
+                        .eq('Status', 'Active')
+                        .order('id', { ascending: false });
+
+                    if (partyCode) {
+                        query = query.eq('PartyCode', partyCode);
+                    }
+
+                    const { data, error } = await query;
+                    if (error) throw error;
+
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No sub-parties found. Click "Add New Party Under This Party" to add one.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = '';
+                    data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        const cityPin = [row.City, row.PinCode].filter(Boolean).join(' - ');
+                        tr.innerHTML = `
+                            <td class="fw-semibold">${row.ContactName || '-'}</td>
+                            <td>${row.Address || '-'}</td>
+                            <td>${cityPin || '-'}</td>
+                            <td>${row.State || '-'}</td>
+                            <td>${row.ContactNumber || '-'}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-primary select-sub-party-btn">Select</button>
+                            </td>
+                        `;
+                        tr.querySelector('.select-sub-party-btn').addEventListener('click', () => {
+                            applySubPartySelection(row, targetField);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                } catch (err) {
+                    console.error('Error loading PartyBillingAddress:', err);
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Failed to load sub-parties.</td></tr>';
+                }
+            }
+
+            function applySubPartySelection(row, targetField) {
+                const subName = row.ContactName || row.Address || 'Cash Sub-Party';
+                if (targetField === 'vendorName') {
+                    const vendorInput = document.getElementById('vendorName');
+                    const hint = document.getElementById('selectedVendorSubPartyHint');
+                    if (vendorInput) vendorInput.value = `Cash Payment (${subName})`;
+                    if (hint) {
+                        hint.textContent = `Sub-Party: ${subName}${row.City ? ' · ' + row.City : ''}`;
+                        hint.classList.remove('d-none');
+                    }
+                } else {
+                    const partyInput = document.getElementById('partyName');
+                    const hint = document.getElementById('selectedSubPartyHint');
+                    if (partyInput) partyInput.value = `Cash Payment (${subName})`;
+                    if (hint) {
+                        hint.textContent = `Sub-Party: ${subName}${row.City ? ' · ' + row.City : ''}`;
+                        hint.classList.remove('d-none');
+                    }
+                    // Optionally pre-fill pickup address/city/pincode if empty
+                    if (row.Address && !document.getElementById('originAddress')?.value) {
+                        document.getElementById('originAddress').value = row.Address;
+                    }
+                    if (row.City && !document.getElementById('originCity')?.value) {
+                        document.getElementById('originCity').value = row.City;
+                    }
+                    if (row.PinCode && !document.getElementById('originPinCode')?.value) {
+                        document.getElementById('originPinCode').value = row.PinCode;
+                    }
+                }
+
+                const modalEl = document.getElementById('cashPaymentPartyModal');
+                if (modalEl && window.bootstrap) {
+                    const instance = bootstrap.Modal.getInstance(modalEl);
+                    if (instance) instance.hide();
+                }
+            }
+
+            function openCashPaymentModal(targetField) {
+                const isVendor = targetField === 'vendorName';
+                const parentCodeInput = document.getElementById(isVendor ? 'vendorCode' : 'partyCode');
+                const parentNameInput = document.getElementById(isVendor ? 'vendorName' : 'partyName');
+                const parentCode = parentCodeInput?.value || 'CASH';
+                const parentName = parentNameInput?.value || 'Cash Payment';
+
+                document.getElementById('cashModalTargetField').value = targetField;
+                document.getElementById('cashModalParentPartyCode').value = parentCode;
+                document.getElementById('cashModalParentPartyBadge').textContent = parentName;
+                document.getElementById('addSubPartyParentName').textContent = parentName;
+
+                // Reset add form visibility
+                document.getElementById('addSubPartyCard')?.classList.add('d-none');
+
+                loadSubPartiesForParty(parentCode === 'CASH' ? null : parentCode, targetField);
+
+                const modalEl = document.getElementById('cashPaymentPartyModal');
+                if (modalEl && window.bootstrap) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                }
+            }
+
+            function bindFieldTriggers(inputId, btnId, targetField) {
+                const input = document.getElementById(inputId);
+                const btn = document.getElementById(btnId);
+                if (!input) return;
+
+                const syncBtnState = () => {
+                    const matched = isCashPaymentValue(input.value) || input.value.trim().toLowerCase().startsWith('cash payment (');
+                    if (btn) btn.classList.toggle('d-none', !matched);
+                };
+
+                input.addEventListener('change', () => {
+                    syncBtnState();
+                    if (isCashPaymentValue(input.value)) {
+                        openCashPaymentModal(targetField);
+                    }
+                });
+
+                input.addEventListener('input', syncBtnState);
+
+                if (btn) {
+                    btn.addEventListener('click', () => openCashPaymentModal(targetField));
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                bindFieldTriggers('partyName', 'openPartyBillingModalBtn', 'partyName');
+                bindFieldTriggers('vendorName', 'openVendorBillingModalBtn', 'vendorName');
+
+                document.getElementById('toggleAddSubPartyFormBtn')?.addEventListener('click', () => {
+                    document.getElementById('addSubPartyCard')?.classList.toggle('d-none');
+                });
+
+                document.getElementById('cancelAddSubPartyBtn')?.addEventListener('click', () => {
+                    document.getElementById('addSubPartyCard')?.classList.add('d-none');
+                });
+
+                document.getElementById('saveSubPartyBillingBtn')?.addEventListener('click', async () => {
+                    const contactName = document.getElementById('subPartyContactName')?.value.trim();
+                    const address = document.getElementById('subPartyAddress')?.value.trim();
+                    const city = document.getElementById('subPartyCity')?.value.trim();
+                    const pinCode = document.getElementById('subPartyPinCode')?.value.trim();
+                    const state = document.getElementById('subPartyState')?.value.trim() || null;
+                    const country = document.getElementById('subPartyCountry')?.value.trim() || 'India';
+                    const contactNumber = document.getElementById('subPartyContactNumber')?.value.trim() || null;
+                    const defaultActive = Boolean(document.getElementById('subPartyDefaultActive')?.checked);
+                    const targetField = document.getElementById('cashModalTargetField')?.value || 'partyName';
+                    const parentPartyCode = document.getElementById('cashModalParentPartyCode')?.value || null;
+
+                    if (!contactName || !address || !city || !pinCode) {
+                        alert('Please fill Party/Contact Name, Address, City, and PinCode.');
+                        return;
+                    }
+
+                    const payload = {
+                        PartyCode: parentPartyCode || 'CASH',
+                        Address: address,
+                        City: city,
+                        PinCode: pinCode,
+                        Country: country,
+                        ContactName: contactName,
+                        ContactNumber: contactNumber,
+                        DefaultActive: defaultActive,
+                        State: state,
+                        Status: 'Active',
+                        created_at: new Date().toISOString(),
+                        created_by: window.currentUserEmail || window.currentUser?.email || 'system',
+                        company_id: window.companyId || window.currentCompanyId || null
+                    };
+
+                    const client = getSupabaseClient();
+                    if (client) {
+                        const { data, error } = await client
+                            .from('PartyBillingAddress')
+                            .insert([payload])
+                            .select()
+                            .single();
+
+                        if (error) {
+                            console.error('Insert PartyBillingAddress error:', error);
+                            alert('Error saving sub-party: ' + error.message);
+                            return;
+                        }
+                        applySubPartySelection(data, targetField);
+                    } else {
+                        applySubPartySelection(payload, targetField);
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 
 </html>

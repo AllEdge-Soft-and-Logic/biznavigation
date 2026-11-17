@@ -38,6 +38,19 @@ const storeUserDetails = ({ emp_code, user_name, user_login_id, user_type, compa
     localStorage.setItem('CompanyID', company_id);
     localStorage.setItem('WorkingBranch', working_branch || 'default');
 };
+const storeDeriveDetails = ({ driver_id, driver_name, driver_login_id, user_type, company_id, working_branch }) => {
+    // 🔥 CLEAR OLD PERMISSIONS (very important)
+    Object.keys(localStorage)
+        .filter(key => key.startsWith("permissions_"))
+        .forEach(key => localStorage.removeItem(key));
+
+    localStorage.setItem('DriverID', driver_id);
+    localStorage.setItem('DriverName', driver_name);
+    localStorage.setItem('DriverLoginID', driver_login_id);
+    localStorage.setItem('UserType', user_type);
+    localStorage.setItem('CompanyID', company_id);
+    localStorage.setItem('WorkingBranch', working_branch || 'default');
+};
 
 // Toggle loading state
 const setLoading = (isLoading) => {
@@ -65,6 +78,75 @@ async function login() {
 
     try {
         const hashedPassword = sha256(password).toString();
+
+        if (username.trim().toUpperCase().startsWith("DRV")) {
+
+            const { data, error } = await supabaseClient
+                .from('DriverAuth')
+                .select('*')
+                .eq('driver_id', username)
+                .eq('password_hash', hashedPassword)
+                .maybeSingle();
+
+            if (error || !data) {
+                showError('Invalid username or password.');
+                return;
+            }
+
+            const { data: activeSessions, error: sessionErr } = await supabaseClient
+                .from('DriverSessions')
+                .select('*')
+                .eq('driver_id', username)
+                .eq('is_active', true);
+
+            if (sessionErr) {
+                console.error(sessionErr);
+                showError('Session validation failed.');
+                return;
+            }
+
+            // If logged in from another device
+            if (activeSessions.length > 0 &&
+                !activeSessions.some(s => s.device_name === deviceId)) {
+
+                showError('You are already logged in from another device.');
+                // Optionally, you could add a "Logout Other Sessions" button here to allow the user to terminate other sessions.
+                document.getElementById('logoutOtherSessionsBtn').classList.remove('d-none');
+                return;
+            }
+
+            /* ---------- CREATE / UPDATE SESSION ---------- */
+            // sessionToken = crypto.randomUUID();
+
+            await supabaseClient
+                .from('user_sessions')
+                .upsert({
+                    driver_id: username,
+                    token_hash: sessionToken,
+                    device_id: deviceId,
+                    device_name: navigator.userAgent,
+                    ip_address: '' + (await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip)) + '',
+                    user_agent: navigator.userAgent,
+                    last_activity_at: localtimeStamp,
+                    is_active: true,
+                    issued_at: localtimeStamp,
+                    company_id: CompanyID
+                });
+
+            storeDeriveDetails(data);
+
+
+            if (password === reSetPass) {
+                localStorage.setItem('ForcePasswordReset', 'true');
+                window.location.href = '/pages/auth/new-password.html';
+                return;
+            }
+
+            window.location.href = '/pages/driver-portal/dashboard.html';
+
+            // showError('Driver login is not allowed here. Please use the mobile app.');
+            return;
+        }
 
         const { data, error } = await supabaseClient
             .from('user_login')

@@ -129,9 +129,12 @@
                         <div class="card-body pb-3">
                             <form id="vehicleMasterForm" autocomplete="off" novalidate>
 
+
                                 <!-- ============ ACTION BAR ============ -->
                                 <div
                                     class="vm-action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+
+                                    <!-- Module Title & Form State -->
                                     <h5 class="m-0 fw-bold text-dark d-none d-md-flex align-items-center gap-2">
                                         <i class="bi bi-truck-front text-primary"></i>
                                         Vehicle Master
@@ -139,40 +142,62 @@
                                             id="formStateBadge">New</span>
                                     </h5>
 
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+
+                                        <!-- New -->
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
                                             id="newButton" title="Create new vehicle" aria-label="Create new vehicle">
                                             <i class="bi bi-file-earmark-plus"></i>
                                             <span class="d-none d-lg-inline ms-1">New</span>
                                         </button>
+
+                                        <!-- Reset Password -->
+                                        <button type="button" class="btn btn-outline-secondary btn-sm bg-white"
+                                            id="resetPasswordButton" title="Reset vehicle login password"
+                                            aria-label="Reset vehicle login password">
+                                            <i class="bi bi-key"></i>
+                                            <span class="d-none d-lg-inline ms-1">Reset Password</span>
+                                        </button>
+
+                                        <!-- Modify -->
                                         <button type="button" class="btn btn-outline-warning btn-sm bg-white"
                                             id="modifyButton" disabled title="Modify vehicle"
                                             aria-label="Modify vehicle">
                                             <i class="bi bi-pencil"></i>
                                             <span class="d-none d-lg-inline ms-1">Modify</span>
                                         </button>
+
+                                        <!-- Delete -->
                                         <button type="button" class="btn btn-outline-danger btn-sm bg-white"
                                             id="deleteButton" disabled title="Delete vehicle"
                                             aria-label="Delete vehicle">
                                             <i class="bi bi-trash"></i>
                                             <span class="d-none d-lg-inline ms-1">Delete</span>
                                         </button>
+
+                                        <!-- Print -->
                                         <button type="button" class="btn btn-outline-info btn-sm bg-white"
                                             id="reportButton" disabled title="Print vehicle" aria-label="Print vehicle">
                                             <i class="bi bi-printer"></i>
                                             <span class="d-none d-lg-inline ms-1">Print</span>
                                         </button>
+
+                                        <!-- Save -->
                                         <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
                                             id="saveButton" data-mode="insert" title="Save vehicle">
-                                            <i class="bi bi-check2-circle"></i> Save
+                                            <i class="bi bi-check2-circle"></i>
+                                            <span class="ms-1">Save</span>
                                         </button>
+
                                     </div>
 
-                                    <!-- Form State & Meta Tracking -->
-                                    <input type="hidden" id="status" name="status" value="New" />
-                                    <input type="hidden" id="tempFormID" name="tempFormID" />
-                                    <input type="hidden" id="partyCode" name="partyCode" />
-                                    <input type="hidden" id="serviceProviderCode" name="serviceProviderCode" />
+                                    <!-- Hidden Form Metadata -->
+                                    <input type="hidden" id="status" name="status" value="New">
+                                    <input type="hidden" id="tempFormID" name="tempFormID">
+                                    <input type="hidden" id="partyCode" name="partyCode">
+                                    <input type="hidden" id="serviceProviderCode" name="serviceProviderCode">
+
                                 </div>
 
                                 <!-- ============ IDENTIFICATION ============ -->

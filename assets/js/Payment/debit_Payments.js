@@ -202,7 +202,7 @@ async function saveUpdatedDebitPayments() {
         }
 
         await savePaymentLineItems(paymentPayload.PaymentID);
-        await deleteRemovedLineItems();
+        await deleteRemovedLineItems(paymentPayload.PaymentID);
         showToast("Payment saved successfully");
 
         deletedPaymentLines = [];
@@ -282,24 +282,39 @@ function addBillDetailRow() {
         row.dataset.status = "New";
         row.dataset.id = "";
 
-        row.innerHTML = `
-            <td></td>
-            <td>${billInfo.BillReferenceNo}</td>
-            <td>${billInfo.BillNo || ""}</td>
-            <td>${narration}</td>
-            <td class="text-end">${accountedAmount.toFixed(2)}</td>
-            <td class="text-end">${otherDeduction.toFixed(2)}</td>
-            <td class="text-end">${tdsDeduction.toFixed(2)}</td>
-            <td class="text-end">${totalPayment.toFixed(2)}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-primary edit-row me-1" title="Edit">
-                    <i class="bi bi-pencil-square"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-danger remove-row" title="Delete">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        `;
+        const values = [
+            "",
+            billInfo.BillReferenceNo,
+            billInfo.BillNo || "",
+            narration,
+            accountedAmount.toFixed(2),
+            otherDeduction.toFixed(2),
+            tdsDeduction.toFixed(2),
+            totalPayment.toFixed(2)
+        ];
+
+        values.forEach((value, index) => {
+            const td = document.createElement("td");
+            td.textContent = value;
+
+            if (index >= 4) {
+                td.classList.add("text-end");
+            }
+
+            row.appendChild(td);
+        });
+
+        const actionCell = document.createElement("td");
+
+        actionCell.innerHTML = `
+    <button type="button" class="btn btn-sm btn-primary edit-row me-1">
+        <i class="bi bi-pencil-square"></i>
+    </button>
+    <button type="button" class="btn btn-sm btn-danger remove-row">
+        <i class="bi bi-trash"></i>
+    </button>`;
+
+        row.appendChild(actionCell);
         UI.tbody.appendChild(row);
     }
     toggleEmptyTableState("#paymentDetailsBody", "No allocation details added", 9);
@@ -430,53 +445,106 @@ function renumberRows() {
 // 6. DB OPERATIONS (Line Items & Load)
 // ==========================================
 async function savePaymentLineItems(paymentID) {
+    if (!UI.tbody) return;
+
     const newRecords = [];
     const modifiedRecords = [];
 
-    document.querySelectorAll("#paymentDetails tbody tr").forEach(row => {
+    // Read only valid payment allocation rows
+    const rows = Array.from(UI.tbody.rows).filter(row => {
+        return (
+            ["New", "Old", "Modified"].includes(row.dataset.status) &&
+            row.cells.length >= 9
+        );
+    });
+
+    for (const row of rows) {
         const status = row.dataset.status;
-        if (status === "Old") return;
+
+        // Existing unchanged records need no update
+        if (status === "Old") continue;
+
+        // Safely read cell values
+        const getCellValue = index =>
+            row.cells[index]?.textContent?.trim() ?? "";
 
         const record = {
             PaymentID: paymentID,
-            InvoiceNo: row.cells[1].textContent.trim(), // In Debit, this stores BillReferenceNo
-            VendorBillNo: row.cells[2].textContent.trim(),
-            Narration: row.cells[3].textContent.trim(),
-            PaymentAmount: parseFloat(row.cells[4].textContent) || 0,
-            OtherDeductionAmount: parseFloat(row.cells[5].textContent) || 0,
-            TDSDeductionAmount: parseFloat(row.cells[6].textContent) || 0,
+            InvoiceNo: getCellValue(1),
+            VendorBillNo: getCellValue(2),
+            Narration: getCellValue(3),
+            PaymentAmount: safeNumber(getCellValue(4)),
+            OtherDeductionAmount: safeNumber(getCellValue(5)),
+            TDSDeductionAmount: safeNumber(getCellValue(6)),
             company_id: CompanyID
         };
+
+        // Validate required fields
+        if (!record.InvoiceNo) {
+            throw new Error("Invalid bill reference in payment details.");
+        }
 
         if (status === "New") {
             record.created_by = UserLoginID;
             record.created_at = localtimeStamp;
-            newRecords.push(record);
-        } else if (status === "Modified") {
-            record.id = row.dataset.id;
-            modifiedRecords.push(record);
-        }
-    });
 
+            newRecords.push(record);
+
+        } else if (status === "Modified") {
+
+            if (!row.dataset.id) {
+                throw new Error("Missing ID for modified payment line.");
+            }
+
+            record.update_by = UserLoginID;
+            record.update_at = localtimeStamp;
+
+            modifiedRecords.push({
+                id: row.dataset.id,
+                ...record
+            });
+        }
+    }
+
+    // Insert new records in one database request
     if (newRecords.length > 0) {
-        const { error } = await supabaseClient.from("PaymentLineItems").insert(newRecords);
+        const { error } = await supabaseClient
+            .from("PaymentLineItems")
+            .insert(newRecords);
+
         if (error) throw error;
     }
 
-    if (modifiedRecords.length > 0) {
-        for (const record of modifiedRecords) {
-            const { id, ...updateData } = record;
-            const { error } = await supabaseClient.from("PaymentLineItems").update(updateData).eq("id", id);
-            if (error) throw error;
-        }
+    // Update modified records
+    for (const record of modifiedRecords) {
+        const { id, ...updateData } = record;
+
+        const { error } = await supabaseClient
+            .from("PaymentLineItems")
+            .update(updateData)
+            .eq("id", id)
+            .eq("PaymentID", paymentID)
+            .eq("company_id", CompanyID);
+
+        if (error) throw error;
     }
+
+    // Reload saved details
     await loadPaymentLineItems(paymentID);
 }
 
-async function deleteRemovedLineItems() {
-    if (deletedPaymentLines.length === 0) return;
-    const { error } = await supabaseClient.from("PaymentLineItems").delete().in("id", deletedPaymentLines);
+async function deleteRemovedLineItems(paymentID) {
+    if (!deletedPaymentLines.length) return;
+
+    const { error } = await supabaseClient
+        .from("PaymentLineItems")
+        .delete()
+        .in("id", deletedPaymentLines)
+        .eq("PaymentID", paymentID)
+        .eq("company_id", CompanyID);
+
     if (error) throw error;
+
     deletedPaymentLines = [];
 }
 

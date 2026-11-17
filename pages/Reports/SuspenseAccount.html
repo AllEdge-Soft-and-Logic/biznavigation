@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suspense Account Report</title>
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- Sidebar -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css">
+
+    <!-- Upgraded Modern Ledger Styles (Unified) -->
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+
+        #root {
+            flex: 1;
+        }
+
+        /* Card Styling */
+        .card {
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+            background-color: var(--surface-color);
+        }
+
+        .card-body {
+            padding: 1.5rem 2rem !important;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 0.4rem 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: var(--transition);
+        }
+
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+
+        /* Form Controls */
+        .form-label {
+            margin-bottom: 0.3rem !important;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #ffffff;
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Table Container */
+        .table-responsive {
+            max-height: 70vh;
+            overflow: auto;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        #suspenseTable {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        #suspenseTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            z-index: 2;
+            white-space: nowrap;
+            padding: 0.7rem 0.75rem !important;
+            border-bottom: 1px solid var(--border-color);
+            border-top: none;
+            text-align: center;
+        }
+
+        #suspenseTable tbody td {
+            vertical-align: middle;
+            font-size: 0.85rem;
+            padding: 0.6rem 0.75rem !important;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #suspenseTable tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        #suspenseTable tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Footer Rows */
+        #suspenseTable tfoot td {
+            padding: 0.7rem 0.75rem !important;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-top: 1px solid var(--border-color);
+        }
+
+        #suspenseTable tfoot .table-secondary {
+            background-color: #f1f5f9 !important;
+            color: var(--text-main);
+        }
+
+        /* Custom Scrollbar */
+        .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Pagination */
+        .pagination {
+            gap: 4px;
+        }
+
+        .pagination .page-link {
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            padding: 0.35rem 0.7rem;
+            border-radius: 6px !important;
+            transition: var(--transition);
+        }
+
+        .pagination .page-link:hover {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            border-color: #bfdbfe;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background-color: #f8fafc;
+            color: #cbd5e1;
+            border-color: var(--border-color);
+        }
+
+        /* Loading Spinner */
+        #loadingSpinner .spinner-border {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-width: 0.2rem;
+            color: var(--primary-color) !important;
+        }
+
+        /* Empty State */
+        #emptyState {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            border-radius: var(--radius-md);
+            padding: 2rem 1rem;
+        }
+
+        #emptyState h5 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        #emptyState p {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        #emptyState i {
+            color: #d97706;
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 768px) {
+            #suspenseTable thead th {
+                font-size: 0.68rem;
+                padding: 0.5rem 0.6rem !important;
+            }
+
+            #suspenseTable tbody td {
+                font-size: 0.75rem;
+                padding: 0.5rem 0.6rem !important;
+            }
+
+            .card-body {
+                padding: 1rem 1.25rem !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-content">
+
+                <div class="container-fluid mt-3 mb-4" id="root">
+
+                    <!-- Filter Section -->
+                    <div class="collapse show mb-3" id="filterSection">
+                        <div class="card">
+                            <div class="card-body">
+
+                                <!-- Action Bar -->
+                                <div
+                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Suspense Account Report</h5>
+                                </div>
+
+                                <!-- Filters Grid -->
+                                <div class="row g-3 align-items-end">
+
+                                    <!-- Party Code / Name -->
+                                    <div class="col-md-6 col-lg-4">
+                                        <label for="partyCode" class="form-label">
+                                            Party Name
+                                        </label>
+                                        <input type="text" id="partyCode" class="form-control" list="partyCodeList"
+                                            placeholder="Enter Party Name / Code" autocomplete="off"
+                                            aria-label="Party Code">
+                                        <datalist id="partyCodeList"></datalist>
+                                    </div>
+
+                                    <!-- Date Range -->
+                                    <div class="col-md-4 col-lg-3">
+                                        <label for="dateRange" class="form-label">
+                                            Receipt Date Range
+                                        </label>
+                                        <input type="text" id="dateRange" class="form-control"
+                                            placeholder="Select Date Range" readonly aria-label="Receipt Date Range">
+                                    </div>
+
+                                    <!-- Financial Year -->
+                                    <div class="col-md-4 col-lg-2">
+                                        <label for="financialYear" class="form-label">
+                                            Financial Year
+                                        </label>
+                                        <input type="text" id="financialYear" class="form-control"
+                                            list="financialYearList" placeholder="YYYY-YYYY" autocomplete="off"
+                                            aria-label="Financial Year">
+                                        <datalist id="financialYearList"></datalist>
+                                    </div>
+
+                                    <!-- Search Button -->
+                                    <div class="col-md-1 col-lg-1_5 d-grid">
+                                        <button type="button" class="btn btn-primary" id="searchBtn">
+                                            <i class="bi bi-search"></i> Search
+                                        </button>
+                                    </div>
+
+                                    <!-- Reset Button -->
+                                    <div class="col-md-1 col-lg-1_5 d-grid">
+                                        <button type="button" class="btn btn-outline-secondary bg-white" id="resetBtn">
+                                            <i class="bi bi-arrow-clockwise"></i> Reset
+                                        </button>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div id="loadingSpinner" class="d-none text-center my-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading Report...</span>
+                        </div>
+                        <p class="text-muted mt-2 small mb-0">Loading suspense records...</p>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="d-none text-center mb-3">
+                        <i class="bi bi-search fs-2"></i>
+                        <h5>No Suspense Records Found</h5>
+                        <p>Try changing filters and search again.</p>
+                    </div>
+
+                    <!-- Table Container -->
+                    <div class="card">
+                        <div class="table-responsive">
+                            <table id="suspenseTable" class="table">
+                                <caption class="visually-hidden">
+                                    Suspense Account Report
+                                </caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Sr No</th>
+                                        <th scope="col">Receipt Date</th>
+                                        <th scope="col">Payment ID</th>
+                                        <th scope="col">Party Code</th>
+                                        <th scope="col">Payment Mode</th>
+                                        <th scope="col">Reference No.</th>
+                                        <th scope="col" class="text-end">Suspense Amount</th>
+                                        <th scope="col">Narration</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="suspenseTableBody"></tbody>
+
+                                <tfoot>
+                                    <tr class="table-secondary fw-bold">
+                                        <td colspan="6" class="text-end">Total Suspense Amount</td>
+                                        <td id="totalSuspenseAmount" class="text-end">0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <!-- Pagination -->
+                        <nav aria-label="Report Pagination">
+                            <ul id="paginationControls" class="pagination mb-0 d-flex flex-wrap"></ul>
+                        </nav>
+
+                        <!-- Export Buttons -->
+                        <div class="d-flex flex-wrap gap-2">
+                            <button id="exportExcelBtn" class="btn btn-outline-success btn-sm bg-white">
+                                <i class="bi bi-file-earmark-excel"></i> Export Excel
+                            </button>
+
+                            <button id="exportPdfBtn" class="btn btn-outline-danger btn-sm bg-white">
+                                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <!-- Flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"
+        defer></script>
+
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+    <!-- Application Scripts -->
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+
+    <!-- Changed to specific suspense script -->
+    <script src="../../assets/js/Report/suspenseAccountReport.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
+
+</body>
+
+</html>
