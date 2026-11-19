@@ -1,13 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="UTF-8">
     <title>AllEdge Soft & Logic | Smart Logistics ERP</title>
     <meta name="description"
-        content="AllEdge Soft & Logic provides smart logistics software for transportation, warehousing and freight forwarding companies.">
+        content="AllEdge Soft & Logic provides smart logistics software for transportation, warehousing, and freight forwarding companies.">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#0d6efd">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:title" content="AllEdge Soft & Logic | Smart Logistics ERP">
+    <meta property="og:description"
+        content="Connect transportation, warehousing, freight forwarding, and financials in one integrated logistics ERP.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="assets/img/applogo-192x192.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AllEdge Soft & Logic | Smart Logistics ERP">
+    <meta name="twitter:description"
+        content="Connect transportation, warehousing, freight forwarding, and financials in one integrated logistics ERP.">
+
+    <!-- Structured Data (SEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "BizNavigation",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web, Android, iOS (PWA)",
+      "publisher": {
+        "@type": "Organization",
+        "name": "AllEdge Soft & Logic (OPC) Pvt. Ltd."
+      },
+      "offers": {
+        "@type": "AggregateOffer",
+        "priceCurrency": "INR",
+        "lowPrice": "799",
+        "highPrice": "4999"
+      }
+    }
+    </script>
+
+    <!-- Prevent Theme Flash Before Paint -->
+    <script>
+        (() => {
+            const saved = localStorage.getItem("biznav_theme");
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            document.documentElement.setAttribute("data-bs-theme", saved || (prefersDark ? "dark" : "light"));
+        })();
+    </script>
+
+    <!-- Network Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
     <!-- Favicon & PWA -->
     <link rel="icon" href="assets/img/applogo-192x192.png" type="image/png">
@@ -31,54 +76,90 @@
             --bg-ocean-2: #004e92;
             --bg-ocean-3: #0077b6;
             --bg-ocean-4: #012a4a;
-            --section-bg: #f8f9fa;
+            --nav-height: 72px;
+            --wave-rgb: 248, 249, 250;
+            --wave-solid: #f8f9fa;
+        }
+
+        [data-bs-theme="dark"] {
+            --wave-rgb: 43, 48, 53;
+            --wave-solid: #2b3035;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            scroll-behavior: smooth;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow-x: hidden;
         }
 
-        /* HERO: IT & LOGISTICS ARCHITECTURE BG */
+        section[id] {
+            scroll-margin-top: var(--nav-height);
+        }
+
+        /* Skip Link for Accessibility */
+        .skip-link {
+            position: fixed;
+            top: -100px;
+            left: 1rem;
+            z-index: 2000;
+            transition: top 0.2s ease;
+        }
+
+        .skip-link:focus {
+            top: 1rem;
+        }
+
+        /* Navbar Active & Glass Effect */
+        .navbar {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: box-shadow 0.25s ease;
+        }
+
+        .navbar .nav-link.active {
+            color: var(--bs-primary) !important;
+            font-weight: 700 !important;
+        }
+
+        /* HERO: GPU-ACCELERATED IT & LOGISTICS ARCHITECTURE BG */
         .hero {
             position: relative;
             background: linear-gradient(-45deg, var(--bg-ocean-1), var(--bg-ocean-2), var(--bg-ocean-3), var(--bg-ocean-4));
-            background-size: 400% 400%;
+            background-size: 300% 300%;
             animation: gradientBG 15s ease infinite;
             color: #fff;
             padding: 150px 0 170px;
             text-align: center;
             overflow: hidden;
+            isolation: isolate;
+        }
+
+        .hero::before,
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: -400px;
+            z-index: 1;
+            will-change: transform;
+            pointer-events: none;
         }
 
         .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             background-image:
                 linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Ccircle cx='50' cy='50' r='5' fill='rgba(13, 110, 253, 0.6)'/%3E%3Ccircle cx='250' cy='150' r='7' fill='rgba(13, 110, 253, 0.6)'/%3E%3Ccircle cx='100' cy='300' r='4' fill='rgba(13, 110, 253, 0.6)'/%3E%3Cpath d='M50 50 L250 150 L100 300 Z' stroke='rgba(255, 255, 255, 0.06)' stroke-width='1.5' fill='none'/%3E%3Cpath d='M50 50 L0 20 M250 150 L400 180' stroke='rgba(255, 255, 255, 0.06)' stroke-width='1.5'/%3E%3C/svg%3E");
             background-size: 40px 40px, 40px 40px, 400px 400px;
-            z-index: 1;
             animation: techPan 60s linear infinite;
         }
 
         .hero::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             background-image:
                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ccircle cx='100' cy='100' r='3' fill='rgba(255, 255, 255, 0.4)'/%3E%3Ccircle cx='250' cy='50' r='4' fill='rgba(255, 255, 255, 0.4)'/%3E%3Ccircle cx='200' cy='250' r='3' fill='rgba(255, 255, 255, 0.4)'/%3E%3Cpath d='M100 100 L250 50 L200 250 Z' stroke='rgba(255, 255, 255, 0.15)' stroke-width='1.5' fill='none' stroke-dasharray='6 6'/%3E%3C/svg%3E");
             background-size: 300px 300px;
-            z-index: 1;
             animation: techPanReverse 90s linear infinite;
         }
 
@@ -88,37 +169,39 @@
             text-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
         }
 
+        .hero-lead {
+            max-width: 700px;
+        }
+
         @keyframes gradientBG {
-            0% {
+
+            0%,
+            100% {
                 background-position: 0% 50%;
             }
 
             50% {
                 background-position: 100% 50%;
             }
-
-            100% {
-                background-position: 0% 50%;
-            }
         }
 
         @keyframes techPan {
             from {
-                background-position: 0 0, 0 0, 0 0;
+                transform: translate3d(0, 0, 0);
             }
 
             to {
-                background-position: 40px 40px, 40px 40px, 400px 400px;
+                transform: translate3d(400px, 400px, 0);
             }
         }
 
         @keyframes techPanReverse {
             from {
-                background-position: 0 0;
+                transform: translate3d(0, 0, 0);
             }
 
             to {
-                background-position: -300px -300px;
+                transform: translate3d(-300px, -300px, 0);
             }
         }
 
@@ -140,21 +223,25 @@
         .parallax>use:nth-child(1) {
             animation-delay: -2s;
             animation-duration: 7s;
+            fill: rgba(var(--wave-rgb), 0.3);
         }
 
         .parallax>use:nth-child(2) {
             animation-delay: -3s;
             animation-duration: 10s;
+            fill: rgba(var(--wave-rgb), 0.5);
         }
 
         .parallax>use:nth-child(3) {
             animation-delay: -4s;
             animation-duration: 13s;
+            fill: rgba(var(--wave-rgb), 0.7);
         }
 
         .parallax>use:nth-child(4) {
             animation-delay: -5s;
             animation-duration: 20s;
+            fill: var(--wave-solid);
         }
 
         @keyframes move-forever {
@@ -188,7 +275,7 @@
 
         /* GENERAL COMPONENTS */
         .hero .btn-lg {
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-shadow: none;
         }
 
@@ -207,17 +294,21 @@
 
         .card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: none;
+            border: 1px solid var(--bs-border-color-translucent);
         }
 
         .card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .pricing-featured {
+            border-top: 5px solid var(--bs-primary) !important;
         }
 
         .feature-icon {
             font-size: 2.5rem;
-            transition: transform 0.3s;
+            transition: transform 0.3s ease;
             margin-bottom: 1rem;
         }
 
@@ -228,7 +319,18 @@
         .price {
             font-size: 2.5rem;
             font-weight: 800;
-            color: #0d6efd;
+            color: var(--bs-primary);
+        }
+
+        .price-unit {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--bs-secondary-color);
+        }
+
+        .billing-note {
+            font-size: 0.8rem;
+            min-height: 1.2rem;
         }
 
         .swiper {
@@ -241,18 +343,25 @@
             align-items: center;
             font-size: 1.1rem;
             font-weight: 600;
-            color: #333;
-            background: #fff;
+            color: var(--bs-body-color);
+            background: var(--bs-body-bg);
             border-radius: 12px;
             height: 85px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--bs-border-color-translucent);
         }
 
         .cta-section {
             background: linear-gradient(90deg, var(--bg-ocean-2), var(--bg-ocean-3));
             color: #fff;
             padding: 80px 0;
+        }
+
+        .cta-glow {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            pointer-events: none;
         }
 
         #backToTop {
@@ -265,29 +374,70 @@
             width: 45px;
             height: 45px;
         }
+
+        #installBanner {
+            width: 90%;
+            max-width: 440px;
+        }
+
+        #networkToast {
+            position: fixed;
+            top: calc(var(--nav-height) + 12px);
+            right: 16px;
+            z-index: 1080;
+        }
+
+        /* Respect Reduced Motion Preferences */
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .hero,
+            .hero::before,
+            .hero::after,
+            .parallax>use {
+                animation: none !important;
+            }
+
+            .card,
+            .feature-icon,
+            .hero .btn-lg {
+                transition: none !important;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <a href="#mainContent" class="skip-link btn btn-primary btn-sm shadow">Skip to main content</a>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <nav class="navbar navbar-expand-lg bg-body bg-opacity-90 shadow-sm fixed-top" aria-label="Main navigation">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center fw-bold text-primary" href="#">
-                <img src="assets/img/applogo-192x192.png" alt="BizNavigation Logo" height="36" class="me-2"
-                    onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiI+PHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiBmaWxsPSIjMGQ2ZWZkIi8+PC9zdmc+'">
+                <img src="assets/img/applogo-192x192.png" alt="BizNavigation Logo" width="36" height="36" class="me-2"
+                    decoding="async"
+                    onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiI+PHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiBmaWxsPSIjMGQ2ZWZkIi8+PC9zdmc+'">
                 BizNavigation
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse justify-content-end" id="navMenu">
-                <ul class="navbar-nav align-items-center">
+            <div class="d-flex align-items-center gap-2 order-lg-3">
+                <button id="themeToggle" class="btn btn-outline-secondary btn-sm rounded-circle" type="button"
+                    aria-label="Toggle dark mode" title="Toggle theme">
+                    <i class="bi bi-moon-stars-fill" id="themeIcon" aria-hidden="true"></i>
+                </button>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"
+                    aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse justify-content-end order-lg-2" id="navMenu">
+                <ul class="navbar-nav align-items-lg-center me-lg-2">
                     <li class="nav-item"><a class="nav-link fw-medium" href="#solutions">Solutions</a></li>
                     <li class="nav-item"><a class="nav-link fw-medium" href="#features">Features</a></li>
                     <li class="nav-item"><a class="nav-link fw-medium" href="#pricing">Pricing</a></li>
                     <li class="nav-item"><a class="nav-link fw-medium" href="#industries">Industries</a></li>
+                    <li class="nav-item"><a class="nav-link fw-medium" href="#faq">FAQ</a></li>
                     <li class="nav-item ms-lg-3 mt-2 mt-lg-0">
                         <a class="btn btn-outline-primary btn-sm w-100 fw-bold px-4" href="login.html">Login</a>
                     </li>
@@ -299,243 +449,363 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container hero-content" data-aos="fade-up">
-            <span class="badge badge-logistics mb-3 px-3 py-2 rounded-pill shadow-sm">Smart Logistics ERP</span>
-            <h1 class="display-5 fw-bold mt-3 text-white">Architect Your Supply Chain Future</h1>
-            <p class="lead mt-3 mx-auto text-light" style="max-width: 700px;">
-                Connect transportation, warehousing, freight forwarding, and financials in one seamlessly integrated IT
-                infrastructure.
-            </p>
-            <div class="mt-5 d-flex justify-content-center gap-3 flex-wrap">
-                <a href="registration.html" class="btn btn-warning btn-lg fw-bold px-4">Start Free Demo</a>
-                <a href="login.html" class="btn btn-outline-light btn-lg fw-bold px-4">Access Portal</a>
-            </div>
-        </div>
+    <!-- Network Status Notification (PWA) -->
+    <div id="networkToast" class="badge rounded-pill px-3 py-2 shadow d-none" role="status" aria-live="polite"></div>
 
-        <!-- SVG Ocean Waves -->
-        <svg class="ocean-waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-            viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
-            <defs>
-                <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
-            </defs>
-            <g class="parallax">
-                <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(248, 249, 250, 0.3)" />
-                <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(248, 249, 250, 0.5)" />
-                <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(248, 249, 250, 0.7)" />
-                <use xlink:href="#gentle-wave" x="48" y="7" fill="#f8f9fa" />
-            </g>
-        </svg>
-    </section>
-
-    <!-- Solutions Section -->
-    <section id="solutions" class="py-5 bg-light">
-        <div class="container text-center mt-4">
-            <h2 class="fw-bold text-dark" data-aos="fade-up">Intelligent Logistics Solutions</h2>
-            <p class="text-muted mb-5" data-aos="fade-up">Built on robust IT architecture to scale with your operations.
-            </p>
-            <div class="row g-4">
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="50">
-                    <div class="card shadow-sm p-4 h-100 text-center border-0 rounded-4">
-                        <div class="feature-icon">🚚</div>
-                        <h6 class="fw-bold">Fleet Management</h6>
-                        <p class="text-muted small mb-0">Live GPS tracking, route optimization, POD automation.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card shadow-sm p-4 h-100 text-center border-0 rounded-4">
-                        <div class="feature-icon">🏬</div>
-                        <h6 class="fw-bold">Smart Warehousing</h6>
-                        <p class="text-muted small mb-0">Automated stock control, bin tracking, IoT integrations.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="150">
-                    <div class="card shadow-sm p-4 h-100 text-center border-0 rounded-4">
-                        <div class="feature-icon">📦</div>
-                        <h6 class="fw-bold">Freight Forwarding</h6>
-                        <p class="text-muted small mb-0">Global shipment tracking, digitized customs compliance.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card shadow-sm p-4 h-100 text-center border-0 rounded-4">
-                        <div class="feature-icon">💳</div>
-                        <h6 class="fw-bold">Financial Cloud</h6>
-                        <p class="text-muted small mb-0">GST-ready billing, vendor accounts, profit analytics.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section id="features" class="py-5">
-        <div class="container text-center">
-            <h2 class="fw-bold" data-aos="fade-up">Why BizNavigation?</h2>
-            <p class="text-muted mb-5" data-aos="fade-up">Next-gen technology for modern supply chains</p>
-            <div class="row g-4">
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="50">
-                    <div class="card shadow-sm p-4 h-100 bg-light rounded-4">
-                        <ul class="list-unstyled text-start mb-0 lh-lg text-secondary">
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Real-time Data Synchronization</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Multi-branch Architecture</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Granular Access Controls</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Cross-Platform Mobility</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card shadow-sm p-4 h-100 bg-light rounded-4">
-                        <ul class="list-unstyled text-start mb-0 lh-lg text-secondary">
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Predictive Route Analytics</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Automated Vendor Portals</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Custom BI Dashboards</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Bank-grade Cloud Security</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
-                    <div class="card shadow-sm p-4 h-100 bg-light rounded-4">
-                        <ul class="list-unstyled text-start mb-0 lh-lg text-secondary">
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Rapid Enterprise Onboarding</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Scalable Microservices</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Dedicated Tech Support</li>
-                            <li><i class="bi bi-hexagon-fill text-primary me-2"></i> Transparent Licensing</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-5 bg-light border-top">
-        <div class="container text-center">
-            <h2 class="fw-bold" data-aos="fade-up">Enterprise Pricing Plans</h2>
-            <p class="text-muted mb-4" data-aos="fade-up">Scalable licensing for logistics operations of all sizes</p>
-
-            <div class="d-flex justify-content-center mb-5" data-aos="fade-up" data-aos-delay="50">
-                <div class="btn-group bg-white rounded-pill p-1 shadow-sm" role="group">
-                    <button type="button" class="btn btn-primary rounded-pill px-4 active"
-                        id="monthlyBtn">Monthly</button>
-                    <button type="button" class="btn btn-light rounded-pill px-4 text-muted" id="yearlyBtn">Yearly (Save
-                        20%)</button>
+    <main id="mainContent">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container hero-content" data-aos="fade-up">
+                <span class="badge badge-logistics mb-3 px-3 py-2 rounded-pill shadow-sm">Smart Logistics ERP</span>
+                <h1 class="display-5 fw-bold mt-3 text-white">Architect Your Supply Chain Future</h1>
+                <p class="lead mt-3 mx-auto text-light hero-lead">
+                    Connect transportation, warehousing, freight forwarding, and financials in one seamlessly integrated
+                    IT infrastructure.
+                </p>
+                <div class="mt-5 d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="registration.html" class="btn btn-warning btn-lg fw-bold px-4">Start Free Demo</a>
+                    <a href="login.html" class="btn btn-outline-light btn-lg fw-bold px-4">Access Portal</a>
                 </div>
             </div>
 
-            <div class="row g-4 justify-content-center">
-                <!-- Basic -->
-                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card shadow-sm p-4 h-100 text-center rounded-4 border-0">
-                        <h5 class="fw-bold text-uppercase text-secondary">Basic Node</h5>
-                        <p class="text-muted small">For emerging dispatchers</p>
-                        <h2 class="price my-3" data-monthly="Coming Soon" data-yearly="Coming Soon">₹999</h2>
-                        <ul class="list-unstyled text-muted mb-4 lh-lg">
-                            <li>2 System Users</li>
-                            <li>Core Fleet Management</li>
-                            <li>Standard Reporting</li>
-                            <li>Helpdesk Support</li>
-                        </ul>
-                        <a href="registration.html" class="btn btn-outline-primary rounded-pill w-100 mt-auto">Buy
-                            Now</a>
-                    </div>
-                </div>
-                <!-- Standard -->
-                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="150">
-                    <div class="card shadow-lg p-4 h-100 text-center position-relative border-0 rounded-4"
-                        style="background: linear-gradient(to bottom, #fff, #f8f9fa); border-top: 5px solid #0d6efd !important;">
-                        <span
-                            class="badge bg-primary position-absolute top-0 start-50 translate-middle px-3 py-2 rounded-pill shadow-sm">Industry
-                            Standard</span>
-                        <h5 class="fw-bold text-uppercase text-primary mt-3">Smart Hub</h5>
-                        <p class="text-muted small">For growing logistics hubs</p>
-                        <h2 class="price my-3" data-monthly="Coming Soon" data-yearly="Coming Soon">₹1499</h2>
-                        <ul class="list-unstyled text-dark mb-4 lh-lg fw-medium">
-                            <li>5 System Users</li>
-                            <li>Warehouse & Freight Modules</li>
-                            <li>Analytics Dashboard</li>
-                            <li>Priority SLA Support</li>
-                        </ul>
-                        <a href="registration.html" class="btn btn-primary rounded-pill w-100 mt-auto shadow-sm">Buy
-                            Now</a>
-                    </div>
-                </div>
-                <!-- Enterprise -->
-                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card shadow-sm p-4 h-100 text-center rounded-4 border-0">
-                        <h5 class="fw-bold text-uppercase text-secondary">Global Network</h5>
-                        <p class="text-muted small">For multinational 3PLs</p>
-                        <h2 class="price my-3" data-monthly="Coming Soon" data-yearly="Coming Soon">₹4999*</h2>
-                        <ul class="list-unstyled text-muted mb-4 lh-lg">
-                            <li>Unlimited Users Options</li>
-                            <li>AI Route Optimization</li>
-                            <li>Dedicated IT Manager</li>
-                            <li>24/7 Network Monitoring</li>
-                        </ul>
-                        <a href="contact.html" class="btn btn-outline-dark rounded-pill w-100 mt-auto">Contact
-                            Architect</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+            <!-- SVG Ocean Waves -->
+            <svg class="ocean-waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+                viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto" aria-hidden="true">
+                <defs>
+                    <path id="gentle-wave"
+                        d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+                </defs>
+                <g class="parallax">
+                    <use xlink:href="#gentle-wave" x="48" y="0" />
+                    <use xlink:href="#gentle-wave" x="48" y="3" />
+                    <use xlink:href="#gentle-wave" x="48" y="5" />
+                    <use xlink:href="#gentle-wave" x="48" y="7" />
+                </g>
+            </svg>
+        </section>
 
-    <!-- Industries Carousel -->
-    <section id="industries" class="py-5">
-        <div class="container text-center pt-4">
-            <h2 class="fw-bold" data-aos="fade-up">Powering Industries Globally</h2>
-            <div class="swiper mySwiper mt-5" data-aos="fade-up">
-                <div class="swiper-wrapper">
-                    <div class="swiper-slide">🚛 Transporters</div>
-                    <div class="swiper-slide">🏭 Manufacturers</div>
-                    <div class="swiper-slide">🛒 Retail Chains</div>
-                    <div class="swiper-slide">📦 3PL Providers</div>
-                    <div class="swiper-slide">🌍 Global Freight</div>
-                    <div class="swiper-slide">🏗 Infrastructure</div>
+        <!-- Key Capabilities Strip -->
+        <section class="py-4 bg-body-tertiary border-bottom">
+            <div class="container">
+                <div class="row g-3 text-center">
+                    <div class="col-6 col-md-3" data-aos="fade-up">
+                        <div class="fw-bold fs-4 text-primary">99.9%</div>
+                        <small class="text-body-secondary">Cloud Uptime SLA</small>
+                    </div>
+                    <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="50">
+                        <div class="fw-bold fs-4 text-primary">GST &amp; E-Way</div>
+                        <small class="text-body-secondary">Compliance Ready</small>
+                    </div>
+                    <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="100">
+                        <div class="fw-bold fs-4 text-primary">Offline-First</div>
+                        <small class="text-body-secondary">Installable PWA</small>
+                    </div>
+                    <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="150">
+                        <div class="fw-bold fs-4 text-primary">Multi-Branch</div>
+                        <small class="text-body-secondary">Unified Ledger &amp; Ops</small>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- CTA -->
-    <section class="cta-section text-center position-relative overflow-hidden" data-aos="zoom-in">
-        <div
-            style="position:absolute; top:0; left:0; right:0; bottom:0; background: radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 60%); pointer-events: none;">
-        </div>
-        <div class="container position-relative z-1">
-            <h2 class="fw-bold display-6">Upgrade Your Logistics Architecture Today</h2>
-            <p class="mt-3 lead mb-4 text-white-50">Join AllEdge Soft & Logic and deploy a smarter software ecosystem.
-            </p>
-            <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="registration.html"
-                    class="btn btn-light btn-lg fw-bold text-primary px-5 rounded-pill shadow">Book Free Demo</a>
-                <a href="contact.html" class="btn btn-outline-light btn-lg px-5 rounded-pill">Talk to Sales</a>
+        <!-- Solutions Section -->
+        <section id="solutions" class="py-5 bg-body-tertiary">
+            <div class="container text-center mt-2">
+                <h2 class="fw-bold" data-aos="fade-up">Intelligent Logistics Solutions</h2>
+                <p class="text-body-secondary mb-5" data-aos="fade-up">Built on robust IT architecture to scale with
+                    your
+                    operations.</p>
+                <div class="row g-4">
+                    <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="50">
+                        <div class="card shadow-sm p-4 h-100 text-center rounded-4">
+                            <div class="feature-icon" aria-hidden="true">🚚</div>
+                            <h3 class="h6 fw-bold">Fleet Management</h3>
+                            <p class="text-body-secondary small mb-0">Live GPS tracking, route optimization, POD
+                                automation.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+                        <div class="card shadow-sm p-4 h-100 text-center rounded-4">
+                            <div class="feature-icon" aria-hidden="true">🏬</div>
+                            <h3 class="h6 fw-bold">Smart Warehousing</h3>
+                            <p class="text-body-secondary small mb-0">Automated stock control, bin tracking, IoT
+                                integrations.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="150">
+                        <div class="card shadow-sm p-4 h-100 text-center rounded-4">
+                            <div class="feature-icon" aria-hidden="true">📦</div>
+                            <h3 class="h6 fw-bold">Freight Forwarding</h3>
+                            <p class="text-body-secondary small mb-0">Global shipment tracking, digitized customs
+                                compliance.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+                        <div class="card shadow-sm p-4 h-100 text-center rounded-4">
+                            <div class="feature-icon" aria-hidden="true">💳</div>
+                            <h3 class="h6 fw-bold">Financial Cloud</h3>
+                            <p class="text-body-secondary small mb-0">GST-ready billing, vendor accounts, profit
+                                analytics.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-5">
+            <div class="container text-center">
+                <h2 class="fw-bold" data-aos="fade-up">Why BizNavigation?</h2>
+                <p class="text-body-secondary mb-5" data-aos="fade-up">Next-gen technology for modern supply chains</p>
+                <div class="row g-4">
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="50">
+                        <div class="card shadow-sm p-4 h-100 bg-body-tertiary rounded-4">
+                            <ul class="list-unstyled text-start mb-0 lh-lg text-body-secondary">
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Real-time
+                                    Data Synchronization</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Multi-branch
+                                    Architecture</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Granular
+                                    Access Controls</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i>
+                                    Cross-Platform Mobility</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                        <div class="card shadow-sm p-4 h-100 bg-body-tertiary rounded-4">
+                            <ul class="list-unstyled text-start mb-0 lh-lg text-body-secondary">
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Predictive
+                                    Route Analytics</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Automated
+                                    Vendor Portals</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Custom BI
+                                    Dashboards</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Bank-grade
+                                    Cloud Security</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
+                        <div class="card shadow-sm p-4 h-100 bg-body-tertiary rounded-4">
+                            <ul class="list-unstyled text-start mb-0 lh-lg text-body-secondary">
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Rapid
+                                    Enterprise Onboarding</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Scalable
+                                    Microservices</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Dedicated
+                                    Tech Support</li>
+                                <li><i class="bi bi-hexagon-fill text-primary me-2" aria-hidden="true"></i> Transparent
+                                    Licensing</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section id="pricing" class="py-5 bg-body-tertiary border-top">
+            <div class="container text-center">
+                <h2 class="fw-bold" data-aos="fade-up">Enterprise Pricing Plans</h2>
+                <p class="text-body-secondary mb-4" data-aos="fade-up">Scalable licensing for logistics operations of
+                    all sizes</p>
+
+                <div class="d-flex justify-content-center mb-5" data-aos="fade-up" data-aos-delay="50">
+                    <div class="btn-group bg-body rounded-pill p-1 shadow-sm border" role="group"
+                        aria-label="Billing frequency">
+                        <button type="button" class="btn btn-primary rounded-pill px-4 active" id="monthlyBtn"
+                            aria-pressed="true">Monthly</button>
+                        <button type="button"
+                            class="btn btn-link text-decoration-none rounded-pill px-4 text-body-secondary"
+                            id="yearlyBtn" aria-pressed="false">Yearly (Save 20%)</button>
+                    </div>
+                </div>
+
+                <div class="row g-4 justify-content-center">
+                    <!-- Basic -->
+                    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                        <div class="card shadow-sm p-4 h-100 text-center rounded-4">
+                            <h3 class="h5 fw-bold text-uppercase text-body-secondary">Basic Node</h3>
+                            <p class="text-body-secondary small">For emerging dispatchers</p>
+                            <div class="price mt-3 mb-1" data-monthly="999" data-yearly="799">₹999<span
+                                    class="price-unit">/mo</span></div>
+                            <div class="billing-note text-body-secondary mb-3">Billed monthly</div>
+                            <ul class="list-unstyled text-body-secondary mb-4 lh-lg">
+                                <li>2 System Users</li>
+                                <li>Core Fleet Management</li>
+                                <li>Standard Reporting</li>
+                                <li>Helpdesk Support</li>
+                            </ul>
+                            <a href="registration.html?plan=basic-node&billing=monthly" data-plan="basic-node"
+                                class="btn btn-outline-primary rounded-pill w-100 mt-auto plan-cta">Buy Now</a>
+                        </div>
+                    </div>
+                    <!-- Standard -->
+                    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="150">
+                        <div class="card shadow-lg p-4 h-100 text-center position-relative rounded-4 pricing-featured">
+                            <span
+                                class="badge bg-primary position-absolute top-0 start-50 translate-middle px-3 py-2 rounded-pill shadow-sm">
+                                Industry Standard
+                            </span>
+                            <h3 class="h5 fw-bold text-uppercase text-primary mt-3">Smart Hub</h3>
+                            <p class="text-body-secondary small">For growing logistics hubs</p>
+                            <div class="price mt-3 mb-1" data-monthly="1499" data-yearly="1199">₹1499<span
+                                    class="price-unit">/mo</span></div>
+                            <div class="billing-note text-body-secondary mb-3">Billed monthly</div>
+                            <ul class="list-unstyled mb-4 lh-lg fw-medium">
+                                <li>5 System Users</li>
+                                <li>Warehouse &amp; Freight Modules</li>
+                                <li>Analytics Dashboard</li>
+                                <li>Priority SLA Support</li>
+                            </ul>
+                            <a href="registration.html?plan=smart-hub&billing=monthly" data-plan="smart-hub"
+                                class="btn btn-primary rounded-pill w-100 mt-auto shadow-sm plan-cta">Buy Now</a>
+                        </div>
+                    </div>
+                    <!-- Enterprise -->
+                    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                        <div class="card shadow-sm p-4 h-100 text-center rounded-4">
+                            <h3 class="h5 fw-bold text-uppercase text-body-secondary">Global Network</h3>
+                            <p class="text-body-secondary small">For multinational 3PLs</p>
+                            <div class="price mt-3 mb-1" data-monthly="4999" data-yearly="3999" data-suffix="*">
+                                ₹4999*<span class="price-unit">/mo</span></div>
+                            <div class="billing-note text-body-secondary mb-3">Billed monthly</div>
+                            <ul class="list-unstyled text-body-secondary mb-4 lh-lg">
+                                <li>Unlimited User Options</li>
+                                <li>AI Route Optimization</li>
+                                <li>Dedicated IT Manager</li>
+                                <li>24/7 Network Monitoring</li>
+                            </ul>
+                            <a href="contact.html?plan=global-network&billing=monthly" data-plan="global-network"
+                                class="btn btn-outline-secondary rounded-pill w-100 mt-auto plan-cta">Contact
+                                Architect</a>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-body-secondary small mt-4 mb-0">*Starting base rate for custom enterprise deployments.
+                    Applicable GST extra.</p>
+            </div>
+        </section>
+
+        <!-- Industries Carousel -->
+        <section id="industries" class="py-5">
+            <div class="container text-center pt-4">
+                <h2 class="fw-bold" data-aos="fade-up">Powering Industries Globally</h2>
+                <div class="swiper mySwiper mt-5" data-aos="fade-up">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">🚛 Transporters</div>
+                        <div class="swiper-slide">🏭 Manufacturers</div>
+                        <div class="swiper-slide">🛒 Retail Chains</div>
+                        <div class="swiper-slide">📦 3PL Providers</div>
+                        <div class="swiper-slide">🌍 Global Freight</div>
+                        <div class="swiper-slide">🏗 Infrastructure</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="py-5 bg-body-tertiary border-top">
+            <div class="container" style="max-width: 820px;">
+                <div class="text-center mb-5" data-aos="fade-up">
+                    <h2 class="fw-bold">Frequently Asked Questions</h2>
+                    <p class="text-body-secondary mb-0">Quick answers for logistics teams evaluating BizNavigation</p>
+                </div>
+                <div class="accordion shadow-sm rounded-4 overflow-hidden" id="faqAccordion" data-aos="fade-up">
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#faq1" aria-expanded="true" aria-controls="faq1">
+                                Does BizNavigation support GST billing, LR/Consignment Notes, and E-Way Bills?
+                            </button>
+                        </h3>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-body-secondary">
+                                Yes. Generate GST-compliant freight invoices, consignment notes (LR), party ledgers, and
+                                financial reports directly from your dispatch and booking workflows.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed fw-semibold" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false"
+                                aria-controls="faq2">
+                                Can branches and field staff use it on mobile devices?
+                            </button>
+                        </h3>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-body-secondary">
+                                BizNavigation is built as a Progressive Web App (PWA). Staff can install it directly on
+                                Android, iOS, or desktop without an app store and work smoothly across low-connectivity
+                                routes.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h3 class="accordion-header">
+                            <button class="accordion-button collapsed fw-semibold" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false"
+                                aria-controls="faq3">
+                                How long does onboarding and data migration take?
+                            </button>
+                        </h3>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-body-secondary">
+                                Standard deployments go live within 24–48 hours, including party master imports, branch
+                                setup, and role-based access configuration.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section text-center position-relative overflow-hidden" data-aos="zoom-in">
+            <div class="cta-glow" aria-hidden="true"></div>
+            <div class="container position-relative z-1">
+                <h2 class="fw-bold display-6">Upgrade Your Logistics Architecture Today</h2>
+                <p class="mt-3 lead mb-4 text-white-50">Join AllEdge Soft &amp; Logic and deploy a smarter software
+                    ecosystem.</p>
+                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                    <a href="registration.html"
+                        class="btn btn-light btn-lg fw-bold text-primary px-5 rounded-pill shadow">Book Free Demo</a>
+                    <a href="contact.html" class="btn btn-outline-light btn-lg px-5 rounded-pill">Talk to Sales</a>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <!-- Back to Top -->
-    <button id="backToTop" class="btn btn-primary shadow" aria-label="Scroll to top">
-        <i class="bi bi-arrow-up"></i>
+    <button id="backToTop" class="btn btn-primary shadow" type="button" aria-label="Scroll to top">
+        <i class="bi bi-arrow-up" aria-hidden="true"></i>
     </button>
 
     <!-- Footer -->
-    <footer class="py-4 text-center bg-white border-top">
-        <div class="container">
-            <small class="text-muted fw-medium">&copy; 2026 AllEdge Soft & Logic OPC Pvt Ltd. All rights
+    <footer class="py-4 bg-body border-top">
+        <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-2">
+            <small class="text-body-secondary fw-medium">&copy; 2026 AllEdge Soft &amp; Logic (OPC) Pvt. Ltd. All rights
                 reserved.</small>
+            <div class="d-flex gap-3 small">
+                <a href="#solutions" class="text-body-secondary text-decoration-none">Solutions</a>
+                <a href="#pricing" class="text-body-secondary text-decoration-none">Pricing</a>
+                <a href="contact.html" class="text-body-secondary text-decoration-none">Contact</a>
+                <a href="login.html" class="text-body-secondary text-decoration-none">Portal</a>
+            </div>
         </div>
     </footer>
 
-    <!-- PWA Install Prompt -->
-    <div id="installBanner"
-        class="alert alert-primary alert-dismissible fade show position-fixed bottom-0 start-50 translate-middle-x mb-4 shadow-lg d-none z-3 border-0 rounded-3"
-        style="width: 90%; max-width: 400px;">
+    <!-- PWA Install / Update Banner -->
+    <div id="installBanner" role="status" aria-live="polite"
+        class="alert alert-primary position-fixed bottom-0 start-50 translate-middle-x mb-4 shadow-lg d-none z-3 border-0 rounded-3">
         <div class="d-flex align-items-center justify-content-between">
             <span class="banner-text fw-medium"></span>
-            <button id="installBtn" class="btn btn-sm btn-primary ms-3 rounded-pill"></button>
-            <button type="button" class="btn-close ms-2 position-relative" data-bs-dismiss="alert"
-                style="top:0; right:0; padding: 0.5rem;"></button>
+            <div class="d-flex align-items-center ms-3">
+                <button id="installBtn" type="button" class="btn btn-sm btn-primary rounded-pill"></button>
+                <button id="closeBannerBtn" type="button" class="btn-close ms-2" aria-label="Close"></button>
+            </div>
         </div>
     </div>
 
@@ -547,9 +817,35 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            // Theme Toggle (Light / Dark Mode)
+            const themeToggle = document.getElementById("themeToggle");
+            const themeIcon = document.getElementById("themeIcon");
+            const applyThemeIcon = (theme) => {
+                if (!themeIcon) return;
+                themeIcon.className = theme === "dark" ? "bi bi-sun-fill" : "bi bi-moon-stars-fill";
+            };
+            applyThemeIcon(document.documentElement.getAttribute("data-bs-theme"));
+
+            if (themeToggle) {
+                themeToggle.addEventListener("click", () => {
+                    const current = document.documentElement.getAttribute("data-bs-theme");
+                    const next = current === "dark" ? "light" : "dark";
+                    document.documentElement.setAttribute("data-bs-theme", next);
+                    localStorage.setItem("biznav_theme", next);
+                    applyThemeIcon(next);
+                });
+            }
+
             // AOS Init
             if (typeof AOS !== "undefined") {
-                AOS.init({ duration: 800, once: true, offset: 50 });
+                AOS.init({
+                    duration: 800,
+                    once: true,
+                    offset: 50,
+                    disable: prefersReducedMotion
+                });
             }
 
             // Swiper Init
@@ -558,7 +854,7 @@
                     slidesPerView: 2,
                     spaceBetween: 20,
                     loop: true,
-                    autoplay: { delay: 2500, disableOnInteraction: false },
+                    autoplay: prefersReducedMotion ? false : { delay: 2500, disableOnInteraction: false },
                     breakpoints: {
                         576: { slidesPerView: 3 },
                         768: { slidesPerView: 4 },
@@ -567,35 +863,94 @@
                 });
             }
 
-            // Scroll to Top Logic
-            const backBtn = document.getElementById("backToTop");
-            if (backBtn) {
-                window.addEventListener("scroll", () => {
-                    backBtn.style.display = window.scrollY > 400 ? "block" : "none";
-                });
-                backBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+            // Scroll-Spy for Active Navbar Links
+            const navLinks = document.querySelectorAll("#navMenu .nav-link[href^='#']");
+            const sections = document.querySelectorAll("main section[id]");
+            if ("IntersectionObserver" in window && sections.length) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const id = entry.target.getAttribute("id");
+                            navLinks.forEach(link => {
+                                link.classList.toggle("active", link.getAttribute("href") === `#${id}`);
+                            });
+                        }
+                    });
+                }, { rootMargin: "-35% 0px -55% 0px" });
+                sections.forEach(sec => observer.observe(sec));
             }
 
-            // Pricing Toggle Logic
+            // Auto-collapse mobile navbar on link click
+            const navMenu = document.getElementById("navMenu");
+            if (navMenu && typeof bootstrap !== "undefined") {
+                navMenu.querySelectorAll(".nav-link").forEach(link => {
+                    link.addEventListener("click", () => {
+                        const bsCollapse = bootstrap.Collapse.getInstance(navMenu);
+                        if (bsCollapse) bsCollapse.hide();
+                    });
+                });
+            }
+
+            // Scroll to Top Logic (Passive + rAF throttled)
+            const backBtn = document.getElementById("backToTop");
+            if (backBtn) {
+                let ticking = false;
+                window.addEventListener("scroll", () => {
+                    if (!ticking) {
+                        window.requestAnimationFrame(() => {
+                            backBtn.style.display = window.scrollY > 400 ? "block" : "none";
+                            ticking = false;
+                        });
+                        ticking = true;
+                    }
+                }, { passive: true });
+
+                backBtn.addEventListener("click", () => {
+                    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
+                });
+            }
+
+            // Pricing Toggle + Dynamic Plan Query Param Sync
             const monthlyBtn = document.getElementById("monthlyBtn");
             const yearlyBtn = document.getElementById("yearlyBtn");
             const prices = document.querySelectorAll(".price");
+            const billingNotes = document.querySelectorAll(".billing-note");
+            const planCtas = document.querySelectorAll(".plan-cta");
 
             const togglePricing = (isMonthly) => {
                 if (!monthlyBtn || !yearlyBtn) return;
+
                 monthlyBtn.classList.toggle("btn-primary", isMonthly);
-                monthlyBtn.classList.toggle("text-white", isMonthly);
-                monthlyBtn.classList.toggle("btn-light", !isMonthly);
-                monthlyBtn.classList.toggle("text-muted", !isMonthly);
+                monthlyBtn.classList.toggle("active", isMonthly);
+                monthlyBtn.classList.toggle("btn-link", !isMonthly);
+                monthlyBtn.classList.toggle("text-body-secondary", !isMonthly);
+                monthlyBtn.setAttribute("aria-pressed", String(isMonthly));
 
                 yearlyBtn.classList.toggle("btn-primary", !isMonthly);
-                yearlyBtn.classList.toggle("text-white", !isMonthly);
-                yearlyBtn.classList.toggle("btn-light", isMonthly);
-                yearlyBtn.classList.toggle("text-muted", isMonthly);
+                yearlyBtn.classList.toggle("active", !isMonthly);
+                yearlyBtn.classList.toggle("btn-link", isMonthly);
+                yearlyBtn.classList.toggle("text-body-secondary", isMonthly);
+                yearlyBtn.setAttribute("aria-pressed", String(!isMonthly));
 
-                prices.forEach(p => {
+                prices.forEach((p, idx) => {
                     const val = isMonthly ? p.dataset.monthly : p.dataset.yearly;
-                    p.innerText = isNaN(val) ? val : `₹${val}`;
+                    const suffix = p.dataset.suffix || "";
+                    if (!isNaN(val)) {
+                        p.innerHTML = `₹${val}${suffix}<span class="price-unit">/mo</span>`;
+                        if (billingNotes[idx]) {
+                            billingNotes[idx].textContent = isMonthly
+                                ? "Billed monthly"
+                                : `Billed annually (₹${Number(val) * 12}/yr)`;
+                        }
+                    } else {
+                        p.textContent = val;
+                    }
+                });
+
+                const cycle = isMonthly ? "monthly" : "yearly";
+                planCtas.forEach(cta => {
+                    const base = cta.getAttribute("href").split("?")[0];
+                    cta.setAttribute("href", `${base}?plan=${cta.dataset.plan}&billing=${cycle}`);
                 });
             };
 
@@ -604,83 +959,127 @@
                 yearlyBtn.addEventListener("click", () => togglePricing(false));
             }
 
-            // Interactive Water Ripple Effect
-            document.addEventListener('click', (e) => {
-                if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.card')) return;
-                const ripple = document.createElement('div');
-                ripple.classList.add('water-ripple');
-                const size = 100;
-                ripple.style.width = ripple.style.height = `${size}px`;
-                ripple.style.left = `${e.clientX - (size / 2)}px`;
-                ripple.style.top = `${e.clientY - (size / 2)}px`;
-                document.body.appendChild(ripple);
-                setTimeout(() => ripple.remove(), 600);
-            });
+            // Interactive Water Ripple Effect (Skipped if reduced motion is enabled)
+            if (!prefersReducedMotion) {
+                document.addEventListener("click", (e) => {
+                    if (e.target.closest("button, a, .card, .navbar, .accordion")) return;
+                    const ripple = document.createElement("div");
+                    ripple.className = "water-ripple";
+                    const size = 100;
+                    ripple.style.width = `${size}px`;
+                    ripple.style.height = `${size}px`;
+                    ripple.style.left = `${e.clientX - size / 2}px`;
+                    ripple.style.top = `${e.clientY - size / 2}px`;
+                    document.body.appendChild(ripple);
+                    setTimeout(() => ripple.remove(), 600);
+                });
+            }
 
-            // PWA & Service Worker Logic
-            const showBanner = (message, buttonText, action) => {
-                const banner = document.getElementById('installBanner');
-                if (!banner) return;
-                const bannerText = banner.querySelector('.banner-text');
-                if (bannerText) bannerText.innerText = message;
-                const btn = banner.querySelector('#installBtn');
-                if (btn) {
-                    btn.innerText = buttonText;
-                    btn.onclick = action;
+            // Offline / Online Network Status Toast (PWA)
+            const networkToast = document.getElementById("networkToast");
+            let toastTimer;
+            const showNetworkStatus = (isOnline) => {
+                if (!networkToast) return;
+                clearTimeout(toastTimer);
+                networkToast.className = `badge rounded-pill px-3 py-2 shadow ${isOnline ? "text-bg-success" : "text-bg-warning"}`;
+                networkToast.innerHTML = isOnline
+                    ? '<i class="bi bi-wifi me-1"></i> Back online'
+                    : '<i class="bi bi-wifi-off me-1"></i> Offline mode active';
+                if (isOnline) {
+                    toastTimer = setTimeout(() => networkToast.classList.add("d-none"), 3000);
                 }
-                banner.classList.remove('d-none');
             };
+            window.addEventListener("offline", () => showNetworkStatus(false));
+            window.addEventListener("online", () => showNetworkStatus(true));
 
-            if ('serviceWorker' in navigator) {
-                // Track if a Service Worker was already controlling this page
-                const hadController = !!navigator.serviceWorker.controller;
+            // PWA Banner Helpers
+            const banner = document.getElementById("installBanner");
+            const closeBannerBtn = document.getElementById("closeBannerBtn");
+            let activeBannerType = null;
 
-                navigator.serviceWorker.register('./service-worker.js', {
-                    updateViaCache: 'none'
-                }).then(registration => {
-                    // Check for updates on load
-                    registration.update();
-
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        if (newWorker) {
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    showBanner("System Updated", "Refresh Now", () => {
-                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                        window.location.reload();
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }).catch((err) => console.log("SW registration bypassed or failed", err));
-
-                // When an updated SW activates via skipWaiting(), prompt the user safely
-                // instead of force-reloading and cancelling navigation
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (hadController) {
-                        showBanner("System Updated", "Refresh Now", () => {
-                            window.location.reload();
-                        });
+            if (closeBannerBtn && banner) {
+                closeBannerBtn.addEventListener("click", () => {
+                    banner.classList.add("d-none");
+                    if (activeBannerType === "install") {
+                        localStorage.setItem("pwa_dismissed_at", String(Date.now()));
                     }
                 });
             }
 
+            const showBanner = (message, buttonText, action, type) => {
+                if (!banner) return;
+                activeBannerType = type;
+                const bannerText = banner.querySelector(".banner-text");
+                const btn = banner.querySelector("#installBtn");
+                if (bannerText) bannerText.textContent = message;
+                if (btn) {
+                    btn.textContent = buttonText;
+                    btn.onclick = action;
+                }
+                banner.classList.remove("d-none");
+            };
+
+            // Service Worker Registration & Complete Update Flow
+            if ("serviceWorker" in navigator) {
+                let userRequestedReload = false;
+
+                navigator.serviceWorker.addEventListener("controllerchange", () => {
+                    if (userRequestedReload) {
+                        userRequestedReload = false;
+                        window.location.reload();
+                    }
+                });
+
+                const promptUpdate = (worker) => {
+                    showBanner("New version available", "Refresh Now", () => {
+                        userRequestedReload = true;
+                        worker.postMessage({ type: "SKIP_WAITING" });
+                    }, "update");
+                };
+
+                navigator.serviceWorker.register("./service-worker.js", {
+                    updateViaCache: "none"
+                }).then(registration => {
+                    if (registration.waiting && navigator.serviceWorker.controller) {
+                        promptUpdate(registration.waiting);
+                    }
+
+                    registration.update();
+
+                    registration.addEventListener("updatefound", () => {
+                        const newWorker = registration.installing;
+                        if (!newWorker) return;
+                        newWorker.addEventListener("statechange", () => {
+                            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                                promptUpdate(newWorker);
+                            }
+                        });
+                    });
+                }).catch(err => console.warn("SW registration skipped:", err));
+            }
+
+            // PWA Install Prompt with 7-Day Dismissal Cooldown
             let deferredPrompt;
-            window.addEventListener('beforeinstallprompt', (e) => {
+            const DISMISS_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+            window.addEventListener("beforeinstallprompt", (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                if (!localStorage.getItem("pwa_prompt_shown")) {
-                    showBanner("Deploy App to Desktop/Mobile", "Install", async () => {
-                        if (deferredPrompt) {
-                            deferredPrompt.prompt();
-                            await deferredPrompt.userChoice;
-                            deferredPrompt = null;
-                        }
-                    });
-                    localStorage.setItem("pwa_prompt_shown", "true");
+                const dismissedAt = Number(localStorage.getItem("pwa_dismissed_at") || 0);
+                if (Date.now() - dismissedAt > DISMISS_COOLDOWN_MS) {
+                    showBanner("Install BizNavigation App", "Install", async () => {
+                        if (!deferredPrompt) return;
+                        deferredPrompt.prompt();
+                        await deferredPrompt.userChoice;
+                        deferredPrompt = null;
+                        banner.classList.add("d-none");
+                    }, "install");
                 }
+            });
+
+            window.addEventListener("appinstalled", () => {
+                deferredPrompt = null;
+                if (banner) banner.classList.add("d-none");
             });
         });
     </script>

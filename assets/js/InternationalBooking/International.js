@@ -37,10 +37,141 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     populateContainerTypes();
     setupEventListeners();
+    initDocketSearchModal();
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
     initDatalistValidation();
     loadTaxData();
 });
+
+function initDocketSearchModal() {
+    const awbInput = document.getElementById('awbNo');
+    const modalEl = document.getElementById('docketSearchModal');
+    const searchInput = document.getElementById('docketModalSearchInput');
+    const clearBtn = document.getElementById('clearDocketSearch');
+    const tableBody = document.getElementById('docketSearchTableBody');
+    const countLabel = document.getElementById('docketSearchCount');
+
+    if (!awbInput || !modalEl) return;
+
+    const docketModal = new bootstrap.Modal(modalEl);
+    let cachedBookings = [];
+
+    // Focus search box reliably after modal finishes opening
+    modalEl.addEventListener('shown.bs.modal', () => {
+        searchInput.focus();
+    });
+
+    // Open modal on double-click of Docket No
+    awbInput.addEventListener('dblclick', async () => {
+        searchInput.value = '';
+        docketModal.show();
+        await loadBookingsForModal();
+    });
+
+    // Fetch bookings from Supabase scoped to CompanyID
+    async function loadBookingsForModal() {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    <span class="spinner-border spinner-border-sm me-2"></span>Loading bookings...
+                </td>
+            </tr>`;
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('InternationalBookingView')
+                .select('DocketNo,BookedDate, CustomerName, ServiceProviderName, OriginName, DestinationName,InvoiceNumber, InvoiceStatus')
+                .eq('company_id', CompanyID)
+                .order('BookedDate', { ascending: false })
+                .limit(200);
+
+            if (error) throw error;
+
+            cachedBookings = data || [];
+            renderDocketRows(cachedBookings);
+        } catch (err) {
+            console.error('Error loading dockets:', err);
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-danger py-4">
+                        Failed to load bookings. Please try again.
+                    </td>
+                </tr>`;
+            countLabel.textContent = '0 records';
+        }
+    }
+
+    // Render filtered rows
+    function renderDocketRows(rows) {
+        countLabel.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'}`;
+
+        if (!rows.length) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No matching bookings found.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tableBody.innerHTML = rows.map(row => `
+            <tr class="docket-select-row" style="cursor: pointer;" data-docket="${escapeHtml(row.DocketNo || '')}">
+                <td class="fw-bold text-primary text-upper">${escapeHtml(row.DocketNo || '-')}</td>
+                <td>${escapeHtml(row.BookedDate || '-')}</td>
+                <td>${escapeHtml(row.CustomerName || '-')}</td>
+                <td>${escapeHtml(row.ServiceProviderName || '-')}</td>
+                <td>${escapeHtml(row.OriginName || '-')}</td>
+                <td>${escapeHtml(row.DestinationName || '-')}</td>
+                <td>${escapeHtml(row.InvoiceNumber || '-')}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Live filter across all 5 fields
+    searchInput.addEventListener('input', () => {
+        const term = searchInput.value.trim().toLowerCase();
+        if (!term) {
+            renderDocketRows(cachedBookings);
+            return;
+        }
+
+        const filtered = cachedBookings.filter(row =>
+            [row.DocketNo, row.PartyName, row.ServiceProvider, row.OriginCountry, row.DestinationCountry]
+                .some(val => (val || '').toLowerCase().includes(term))
+        );
+        renderDocketRows(filtered);
+    });
+
+    // Clear search button
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        renderDocketRows(cachedBookings);
+        searchInput.focus();
+    });
+
+    // Select a docket on row click
+    tableBody.addEventListener('click', (e) => {
+        const row = e.target.closest('.docket-select-row');
+        if (!row) return;
+
+        const selectedDocket = row.dataset.docket;
+        awbInput.value = selectedDocket;
+        docketModal.hide();
+
+        // Trigger existing listeners in International.js to load the full booking
+        awbInput.dispatchEvent(new Event('change', { bubbles: true }));
+        awbInput.focus();
+    });
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+}
 
 
 document.getElementById("awbNo")

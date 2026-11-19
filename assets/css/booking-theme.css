@@ -208,20 +208,20 @@ textarea.form-control {
     top: 0;
     background-color: #f1f5f9;
     color: var(--text-muted);
-    font-size: 0.72rem;
+    font-size: 0.82rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 600;
     z-index: 1;
-    padding: 0.6rem 0.75rem !important;
+    padding: 0.45rem 0.5rem !important;
     border-bottom: 1px solid var(--border-color);
     border-top: none;
     white-space: nowrap;
 }
 
 .table td {
-    padding: 0.6rem 0.75rem !important;
-    font-size: 0.85rem;
+    padding: 0.45rem 0.5rem !important;
+    font-size: 0.82rem;
     vertical-align: middle;
     color: var(--text-main);
     border-bottom: 1px solid var(--border-color);

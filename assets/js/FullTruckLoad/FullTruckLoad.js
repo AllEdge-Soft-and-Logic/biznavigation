@@ -45,13 +45,222 @@ document.addEventListener("DOMContentLoaded", async () => {
             setupPincodeListener('destinationPinCode', 'destinationCity'),
             setupPincodeListener('shipmentPinCode', 'shipmentCity')
         ]);
-
+        initLRSearchModal();
         document.getElementById('lrDate').valueAsDate = new Date();
 
     } catch (error) {
         console.error("Initialization error:", error);
     }
 });
+
+function initLRSearchModal() {
+    const lrNumberInput = document.getElementById('lrNumber');
+    const modalEl = document.getElementById('lrSearchModal');
+    if (!lrNumberInput || !modalEl) return;
+
+    const lrSearchModal = new bootstrap.Modal(modalEl);
+
+    const searchLrNumber = document.getElementById('searchLrNumber');
+    const searchLrDate = document.getElementById('searchLrDate');
+    const searchLrCustomer = document.getElementById('searchLrCustomer');
+    const searchLrModeType = document.getElementById('searchLrModeType');
+    const searchLrPickupCity = document.getElementById('searchLrPickupCity');
+    const searchLrDestinationCity = document.getElementById('searchLrDestinationCity');
+    const searchLrVendor = document.getElementById('searchLrVendor');
+    const searchLrVehicleNo = document.getElementById('searchLrVehicleNo');
+    const btnSearchLRs = document.getElementById('btnSearchLRs');
+    const btnResetLrSearch = document.getElementById('btnResetLrSearch');
+    const resultsBody = document.getElementById('lrSearchResultsBody');
+    const resultsCount = document.getElementById('lrSearchCount');
+
+    let searchTimer = null;
+
+    // Sync Mode Type options from the main form's #modeType dropdown
+    function syncModeTypeOptions() {
+        const mainModeSelect = document.getElementById('modeType');
+        if (!mainModeSelect) return;
+
+        const currentVal = searchLrModeType.value;
+        searchLrModeType.innerHTML = '<option value="">All Modes</option>';
+
+        Array.from(mainModeSelect.options).forEach(opt => {
+            if (opt.value) {
+                const clone = document.createElement('option');
+                clone.value = opt.value;
+                clone.textContent = opt.textContent;
+                searchLrModeType.appendChild(clone);
+            }
+        });
+        searchLrModeType.value = currentVal;
+    }
+
+    // 1. Open modal on double-click of LR Number
+    lrNumberInput.addEventListener('dblclick', () => {
+        syncModeTypeOptions();
+        searchLrNumber.value = lrNumberInput.value.trim();
+        lrSearchModal.show();
+        fetchLRsForModal();
+    });
+
+    modalEl.addEventListener('shown.bs.modal', () => {
+        searchLrNumber.focus();
+    });
+
+    // 2. Live search (debounced) & Enter key support
+    const triggerDebouncedSearch = () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(fetchLRsForModal, 300);
+    };
+
+    [
+        searchLrNumber,
+        searchLrCustomer,
+        searchLrPickupCity,
+        searchLrDestinationCity,
+        searchLrVendor,
+        searchLrVehicleNo
+    ].forEach(input => {
+        input.addEventListener('input', triggerDebouncedSearch);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchLRsForModal();
+            }
+        });
+    });
+
+    searchLrDate.addEventListener('change', fetchLRsForModal);
+    searchLrModeType.addEventListener('change', fetchLRsForModal);
+    btnSearchLRs.addEventListener('click', fetchLRsForModal);
+
+    // 3. Reset filters
+    btnResetLrSearch.addEventListener('click', () => {
+        searchLrNumber.value = '';
+        searchLrDate.value = '';
+        searchLrCustomer.value = '';
+        searchLrModeType.value = '';
+        searchLrPickupCity.value = '';
+        searchLrDestinationCity.value = '';
+        searchLrVendor.value = '';
+        searchLrVehicleNo.value = '';
+        fetchLRsForModal();
+    });
+
+    // 4. Query Supabase (adjust table & column names to match your FTL schema)
+    async function fetchLRsForModal() {
+        resultsBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    Searching LR records...
+                </td>
+            </tr>`;
+
+        try {
+            const client = await supabaseClient;
+            if (!client) throw new Error('Database client not initialized.');
+
+            const lrVal = searchLrNumber.value.trim();
+            const dateVal = searchLrDate.value.trim();
+            const customerVal = searchLrCustomer.value.trim();
+            const modeVal = searchLrModeType.value.trim();
+            const cityVal = searchLrPickupCity.value.trim();
+            const destinationVal = searchLrDestinationCity.value.trim();
+            const vendorVal = searchLrVendor.value.trim();
+            const vehicleVal = searchLrVehicleNo.value.trim();
+
+            // Replace 'FullTruckLoad' and column names with your actual Supabase table/view
+            let query = client
+                .from('FullLoadMovementDetailsView')
+                .select('LRNumber, PickupDate, CustomerName, ModeType, OriginCity,DestinationCity, VendorName, VehicleNumber')
+                .order('PickupDate', { ascending: false })
+                .eq('company_id', CompanyID)
+                .limit(50);
+
+            if (lrVal) query = query.ilike('LRNumber', `%${lrVal}%`);
+            if (dateVal) query = query.eq('PickupDate', dateVal);
+            if (customerVal) query = query.ilike('CustomerName', `%${customerVal}%`);
+            if (modeVal) query = query.eq('ModeType', modeVal);
+            if (cityVal) query = query.ilike('OriginCity', `%${cityVal}%`);
+            if (destinationVal) query = query.ilike('DestinationCity', `%${destinationVal}%`);
+            if (vendorVal) query = query.ilike('VendorName', `%${vendorVal}%`);
+            if (vehicleVal) query = query.ilike('VehicleNumber', `%${vehicleVal}%`);
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            renderLRSearchResults(data || []);
+        } catch (err) {
+            console.error('LR search error:', err);
+            resultsBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Failed to load LR records.
+                    </td>
+                </tr>`;
+            resultsCount.textContent = '0 records found';
+        }
+    }
+
+    // 5. Render rows
+    function renderLRSearchResults(rows) {
+        resultsCount.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'} found`;
+
+        if (!rows.length) {
+            resultsBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="vm-empty">
+                        <i class="bi bi-inbox"></i>
+                        No matching LR records found
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        const safe = (val) => DOMPurify.sanitize(val ?? '');
+
+        resultsBody.innerHTML = rows.map(row => `
+            <tr style="cursor: pointer;" data-lr="${safe(row.LRNumber)}">
+                <td class="fw-bold text-primary">${safe(row.LRNumber)}</td>
+                <td>${safe(row.PickupDate)}</td>
+                <td>${safe(row.CustomerName)}</td>
+                <td><span class="badge text-bg-light border">${safe(row.ModeType)}</span></td>
+                <td>${safe(row.OriginCity)}</td>
+                <td>${safe(row.DestinationCity)}</td>
+                <td>${safe(row.VendorName)}</td>
+                <td class="text-upper">${safe(row.VehicleNumber)}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 select-lr-btn">
+                        Select
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // 6. Select LR (button click or row double-click)
+    const selectLR = (lrNo) => {
+        if (!lrNo) return;
+        lrNumberInput.value = lrNo;
+        lrSearchModal.hide();
+
+        // Trigger existing change/input listeners in FullTruckLoad.js to load booking details
+        lrNumberInput.dispatchEvent(new Event('change', { bubbles: true }));
+        lrNumberInput.focus();
+    };
+
+    resultsBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('.select-lr-btn');
+        if (!btn) return;
+        const tr = btn.closest('tr');
+        selectLR(tr?.dataset.lr);
+    });
+
+    resultsBody.addEventListener('dblclick', (e) => {
+        const tr = e.target.closest('tr[data-lr]');
+        if (tr) selectLR(tr.dataset.lr);
+    });
+}
 
 // Container number validation
 document.getElementById('containerNumber').addEventListener('input', function () {

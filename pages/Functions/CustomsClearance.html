@@ -205,7 +205,8 @@
                                         <label for="jobNo" class="form-label">Job No</label>
                                         <input list="jobNoSuggestions" id="jobNo"
                                             class="form-control input-highlight fw-bold text-upper"
-                                            placeholder="Search Job No..." autocomplete="off">
+                                            placeholder="Search Job No..." title="Double-click to open full search list"
+                                            autocomplete="off">
                                         <datalist id="jobNoSuggestions"></datalist>
                                     </div>
 
@@ -731,6 +732,73 @@
                                             <button class="btn btn-primary btn-sm" id="openDuplicateRecord">
                                                 <i class="bi bi-box-arrow-in-right"></i> Open Selected
                                             </button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ============ JOB SEARCH MODAL ============ -->
+                            <div class="modal fade" id="jobSearchModal" tabindex="-1"
+                                aria-labelledby="jobSearchModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                                    <div class="modal-content">
+
+                                        <div class="modal-header bg-primary text-white py-2">
+                                            <h6 class="modal-title d-flex align-items-center gap-2"
+                                                id="jobSearchModalLabel">
+                                                <i class="bi bi-search"></i> Search Customs Clearance Jobs
+                                            </h6>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+
+                                        <div class="modal-body p-3">
+                                            <!-- Search Input -->
+                                            <div class="input-group mb-3">
+                                                <span class="input-group-text bg-white">
+                                                    <i class="bi bi-funnel text-primary"></i>
+                                                </span>
+                                                <input type="text" id="jobSearchInput" class="form-control"
+                                                    placeholder="Search by Job No, Date, Customer, Transit Type, BL/AWB, BE No, Port, or Broker..."
+                                                    autocomplete="off" />
+                                                <button class="btn btn-outline-secondary" type="button"
+                                                    id="clearJobSearch" title="Clear search">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- Results Table -->
+                                            <div class="table-container" style="max-height: 55vh; overflow-y: auto;">
+                                                <table class="table table-hover table-sm align-middle mb-0"
+                                                    id="jobSearchTable">
+                                                    <thead class="table-light sticky-top">
+                                                        <tr>
+                                                            <th scope="col">Job No</th>
+                                                            <th scope="col">Job Date</th>
+                                                            <th scope="col">Customer Name</th>
+                                                            <th scope="col">Transit Type</th>
+                                                            <th scope="col">BL / AWB No.</th>
+                                                            <th scope="col">BE No.</th>
+                                                            <th scope="col">Clearance At</th>
+                                                            <th scope="col">Customs Broker</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="jobSearchTableBody">
+                                                        <tr>
+                                                            <td colspan="8" class="vm-empty">
+                                                                <i class="bi bi-hourglass-split"></i>
+                                                                Loading jobs...
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer py-2 d-flex justify-content-between">
+                                            <small class="text-muted" id="jobSearchCount">0 records found</small>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-dismiss="modal">Close</button>
                                         </div>
 
                                     </div>

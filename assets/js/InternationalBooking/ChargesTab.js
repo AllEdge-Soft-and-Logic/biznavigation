@@ -167,7 +167,7 @@ async function addFreightRow() {
         <td class="text-center">
             <button type="button"
                 class="btn btn-sm btn-danger delete-row">
-                Delete
+                <i class="bi bi-trash"></i>
             </button>
         </td>
 
@@ -308,7 +308,7 @@ async function loadFreightCharges() {
         <td class="text-end">${(item.TotalGSTAmt || 0).toFixed(2)}</td>
         <td class="text-end">${(item.GrandTotalAmt || 0).toFixed(2)}</td>
         <td class="text-center">
-            <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
+            <button type="button" class="btn btn-sm btn-danger delete-row"><i class="bi bi-trash"></i></button>
         </td>
         <td class="d-none">${item.TaxID}</td>
        <td class="d-none">${isFSC ? 'Yes' : 'No'}</td>
@@ -504,7 +504,7 @@ async function recalcFSC() {
         <td class="text-center">
             <button type="button"
                 class="btn btn-sm btn-danger delete-row">
-                Delete
+                <i class="bi bi-trash"></i>
             </button>
         </td>
 

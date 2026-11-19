@@ -108,13 +108,115 @@
 
         .table-container table thead th {
             font-size: .8rem;
-            white-space: nowrap;
+            white-space: normal;
+            line-height: 1.25;
+            vertical-align: bottom;
         }
 
         @media (max-width: 575.98px) {
             .vm-action-bar .btn {
                 flex: 1 1 auto;
             }
+        }
+
+        /* Shared table polish */
+        #freightTable,
+        #volumetricTable,
+        #containerDetailsTable,
+        #bookingStatusTable,
+        #docketSearchTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        #freightTable td,
+        #freightTable th,
+        #volumetricTable td,
+        #volumetricTable th,
+        #containerDetailsTable td,
+        #containerDetailsTable th,
+        #bookingStatusTable td,
+        #bookingStatusTable th,
+        #docketSearchTable td,
+        #docketSearchTable th {
+            font-size: 0.82rem;
+            padding: 0.45rem 0.5rem;
+            vertical-align: middle;
+
+        }
+
+        /* Allow table headers to wrap cleanly without overlapping */
+        #freightTable thead th,
+        #volumetricTable thead th,
+        #containerDetailsTable thead th,
+        #bookingStatusTable thead th,
+        #docketSearchTable thead th {
+            white-space: normal;
+            line-height: 1.25;
+            vertical-align: middle;
+        }
+
+        /* Minimum widths to prevent squishing on smaller viewports */
+        #freightTable {
+            min-width: 1080px;
+        }
+
+        #volumetricTable {
+            min-width: 980px;
+        }
+
+        #containerDetailsTable {
+            min-width: 560px;
+        }
+
+        #bookingStatusTable {
+            min-width: 600px;
+        }
+
+        #docketSearchTable {
+            min-width: 920px;
+        }
+
+        /* Wrapping rules: allow text columns to wrap, keep numbers/codes/actions single-line */
+        #freightTable td:nth-child(1),
+        #freightTable td:nth-child(3),
+        #volumetricTable td:nth-child(1),
+        #containerDetailsTable td:nth-child(2),
+        #bookingStatusTable td:nth-child(2),
+        #bookingStatusTable td:nth-child(3),
+        #docketSearchTable td:nth-child(3),
+        #docketSearchTable td:nth-child(4) {
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        #freightTable td:nth-child(2),
+        #freightTable td:nth-child(n+4),
+        #volumetricTable td:nth-child(n+2),
+        #containerDetailsTable td:nth-child(1),
+        #containerDetailsTable td:nth-child(3),
+        #containerDetailsTable td:nth-child(4),
+        #bookingStatusTable td:nth-child(1),
+        #docketSearchTable td:nth-child(1),
+        #docketSearchTable td:nth-child(2),
+        #docketSearchTable td:nth-child(5),
+        #docketSearchTable td:nth-child(6),
+        #docketSearchTable td:nth-child(7) {
+            white-space: nowrap;
+        }
+
+        /* Right-align numeric body cells with tabular numbers */
+        #freightTable tbody td:nth-child(n+4):nth-child(-n+11),
+        #volumetricTable tbody td:nth-child(n+2):nth-child(-n+10) {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Center-align Action columns */
+        #freightTable tbody td:nth-child(12),
+        #volumetricTable tbody td:nth-child(11),
+        #containerDetailsTable tbody td:nth-child(4) {
+            text-align: center;
         }
     </style>
 
@@ -556,18 +658,26 @@
                                                 <table class="table table-hover align-middle mb-0" id="freightTable">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th scope="col">Charges Type</th>
-                                                            <th scope="col">HSN No</th>
-                                                            <th scope="col">Remarks</th>
-                                                            <th scope="col" class="text-end">Quantity</th>
-                                                            <th scope="col" class="text-end">Basic Amount</th>
-                                                            <th scope="col" class="text-end">Tax Rate</th>
-                                                            <th scope="col" class="text-end">SGST Amt</th>
-                                                            <th scope="col" class="text-end">CGST Amt</th>
-                                                            <th scope="col" class="text-end">IGST Amt</th>
-                                                            <th scope="col" class="text-end">Total GST Amt</th>
-                                                            <th scope="col" class="text-end">Grand Total</th>
-                                                            <th scope="col" class="text-center">Action</th>
+                                                            <th scope="col" style="width: 15%;">Charges Type</th>
+                                                            <th scope="col" style="width: 7%;">HSN No</th>
+                                                            <th scope="col" style="width: 13%;">Remarks</th>
+                                                            <th scope="col" class="text-end" style="width: 7%;">Qty</th>
+                                                            <th scope="col" class="text-end" style="width: 9%;">Basic
+                                                                Amt</th>
+                                                            <th scope="col" class="text-end" style="width: 6%;">Tax %
+                                                            </th>
+                                                            <th scope="col" class="text-end" style="width: 7%;">SGST Amt
+                                                            </th>
+                                                            <th scope="col" class="text-end" style="width: 7%;">CGST Amt
+                                                            </th>
+                                                            <th scope="col" class="text-end" style="width: 7%;">IGST Amt
+                                                            </th>
+                                                            <th scope="col" class="text-end" style="width: 8%;">Total
+                                                                GST</th>
+                                                            <th scope="col" class="text-end" style="width: 9%;">Grand
+                                                                Total</th>
+                                                            <th scope="col" class="text-center" style="width: 5%;">
+                                                                Action</th>
                                                             <th class="d-none">Tax Type</th>
                                                             <th class="d-none">FSC</th>
                                                         </tr>
@@ -583,7 +693,6 @@
                                                             <th class="text-end" id="totalIGST">0.00</th>
                                                             <th class="text-end" id="totalGST">0.00</th>
                                                             <th class="text-end" id="totalGrand">0.00</th>
-                                                            <th></th>
                                                             <th></th>
                                                         </tr>
                                                     </tfoot>
@@ -668,17 +777,27 @@
                                                 <table class="table table-hover align-middle mb-0" id="volumetricTable">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th scope="col">Packing Type</th>
-                                                            <th scope="col" class="text-end">Length (cm)</th>
-                                                            <th scope="col" class="text-end">Width (cm)</th>
-                                                            <th scope="col" class="text-end">Height (cm)</th>
-                                                            <th scope="col" class="text-end">Quantity</th>
-                                                            <th scope="col" class="text-end">Actual Wt (kgs)</th>
-                                                            <th scope="col" class="text-end">Total Actual Wt</th>
-                                                            <th scope="col" class="text-end">Volume Wt</th>
-                                                            <th scope="col" class="text-end">Total Vol Wt</th>
-                                                            <th scope="col" class="text-end">Chargeable Wt</th>
-                                                            <th scope="col" class="text-center">Action</th>
+                                                            <th scope="col" style="width: 16%;">Packing Type</th>
+                                                            <th scope="col" class="text-end" style="width: 8%;">Length
+                                                                (cm)</th>
+                                                            <th scope="col" class="text-end" style="width: 8%;">Width
+                                                                (cm)</th>
+                                                            <th scope="col" class="text-end" style="width: 8%;">Height
+                                                                (cm)</th>
+                                                            <th scope="col" class="text-end" style="width: 7%;">Quantity
+                                                            </th>
+                                                            <th scope="col" class="text-end" style="width: 9%;">Actual
+                                                                Wt (kgs)</th>
+                                                            <th scope="col" class="text-end" style="width: 9%;">Total
+                                                                Actual Wt</th>
+                                                            <th scope="col" class="text-end" style="width: 9%;">Volume
+                                                                Wt</th>
+                                                            <th scope="col" class="text-end" style="width: 9%;">Total
+                                                                Vol Wt</th>
+                                                            <th scope="col" class="text-end" style="width: 10%;">
+                                                                Chargeable Wt</th>
+                                                            <th scope="col" class="text-center" style="width: 7%;">
+                                                                Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
@@ -731,10 +850,11 @@
                                                     id="containerDetailsTable">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th scope="col">S No.</th>
-                                                            <th scope="col">Container Type</th>
-                                                            <th scope="col">Container Number</th>
-                                                            <th scope="col" class="text-center">Action</th>
+                                                            <th scope="col" style="width: 10%;">S No.</th>
+                                                            <th scope="col" style="width: 40%;">Container Type</th>
+                                                            <th scope="col" style="width: 38%;">Container Number</th>
+                                                            <th scope="col" class="text-center" style="width: 12%;">
+                                                                Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
@@ -750,9 +870,9 @@
                                                     id="bookingStatusTable">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th scope="col">Status Date</th>
-                                                            <th scope="col">Arrived At</th>
-                                                            <th scope="col">Information</th>
+                                                            <th scope="col" style="width: 18%;">Status Date</th>
+                                                            <th scope="col" style="width: 27%;">Arrived At</th>
+                                                            <th scope="col" style="width: 55%;">Information</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -919,6 +1039,69 @@
                                 </div>
                             </div>
 
+                            <!-- ============ DOCKET SEARCH MODAL ============ -->
+                            <div class="modal fade" id="docketSearchModal" tabindex="-1"
+                                aria-labelledby="docketSearchModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-primary text-white py-2">
+                                            <h6 class="modal-title d-flex align-items-center gap-2"
+                                                id="docketSearchModalLabel">
+                                                <i class="bi bi-search"></i> Search International Bookings
+                                            </h6>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <!-- Live Search Input -->
+                                            <div class="input-group mb-3">
+                                                <span class="input-group-text bg-white">
+                                                    <i class="bi bi-funnel text-muted"></i>
+                                                </span>
+                                                <input type="text" id="docketModalSearchInput" class="form-control"
+                                                    placeholder="Search by Docket No, Customer, Service Provider, Origin or Destination Country..."
+                                                    autocomplete="off">
+                                                <button class="btn btn-outline-secondary" type="button"
+                                                    id="clearDocketSearch" title="Clear search">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- Results Table -->
+                                            <div class="table-responsive" style="max-height: 420px;">
+                                                <table class="table table-hover table-sm align-middle mb-0"
+                                                    id="docketSearchTable">
+                                                    <thead class="table-light sticky-top">
+                                                        <tr>
+                                                            <th style="width: 14%;">Docket No</th>
+                                                            <th style="width: 11%;">Booked Date</th>
+                                                            <th style="width: 21%;">Customer</th>
+                                                            <th style="width: 18%;">Service Provider</th>
+                                                            <th style="width: 12%;">Origin Country</th>
+                                                            <th style="width: 12%;">Destination Country</th>
+                                                            <th style="width: 12%;">Invoice Number</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="docketSearchTableBody">
+                                                        <tr>
+                                                            <td colspan="7" class="text-center text-muted py-4">
+                                                                Loading bookings...
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer py-2 d-flex justify-content-between">
+                                            <small class="text-muted" id="docketSearchCount">0 records</small>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

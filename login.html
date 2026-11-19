@@ -1,42 +1,52 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BizNavigation | Enterprise Portal Login</title>
 
-    <!-- Bootstrap 5.3.2 CSS -->
+    <!-- Prevent Theme Flash (Synced with index.html) -->
+    <script>
+        (() => {
+            const saved = localStorage.getItem("biznav_theme");
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+            document.documentElement.setAttribute("data-bs-theme", saved || (prefersDark ? "dark" : "light"));
+        })();
+    </script>
+
+    <!-- Network Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Bootstrap 5.3.2 CSS & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
         crossorigin="anonymous">
 
     <!-- Google Font: Plus Jakarta Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
-
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     <!-- Primary Web App Manifest -->
     <link rel="manifest" href="/manifest.json">
 
-    <!-- Meta Theme Color -->
-    <meta name="theme-color" content="#000428" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#000428" media="(prefers-color-scheme: dark)">
-
-    <!-- PWA & iOS Safari Support -->
+    <!-- Meta Theme Color & PWA -->
+    <meta name="theme-color" content="#000428">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BizNav">
     <link rel="apple-touch-icon" href="/assets/img/applogo-192x192.png">
 
-    <!-- Defer non-critical vendor scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js" defer></script>
+    <!-- Pinned & Deferred Vendor Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"
+        defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js" crossorigin="anonymous"
+        defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js" crossorigin="anonymous" defer></script>
 
     <style>
         :root {
@@ -46,10 +56,23 @@
             --bg-ocean-1: #000428;
             --bg-ocean-2: #004e92;
             --bg-ocean-3: #0077b6;
+            --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
+            --label-color: #334155;
             --input-bg: #f8fafc;
+            --input-focus-bg: #ffffff;
             --input-border: #e2e8f0;
+        }
+
+        [data-bs-theme="dark"] {
+            --card-bg: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --label-color: #cbd5e1;
+            --input-bg: #1e293b;
+            --input-focus-bg: #0f172a;
+            --input-border: #334155;
         }
 
         * {
@@ -65,23 +88,21 @@
             justify-content: center;
             align-items: center;
             background: linear-gradient(-45deg, var(--bg-ocean-1), var(--bg-ocean-2), var(--bg-ocean-3), #012a4a);
-            background-size: 400% 400%;
+            background-size: 300% 300%;
             animation: gradientBG 16s ease infinite;
             position: relative;
             overflow-x: hidden;
         }
 
         @keyframes gradientBG {
-            0% {
+
+            0%,
+            100% {
                 background-position: 0% 50%;
             }
 
             50% {
                 background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
             }
         }
 
@@ -137,14 +158,14 @@
             width: 100%;
             max-width: 960px;
             min-height: 600px;
-            background: #ffffff;
+            background: var(--card-bg);
             border-radius: 24px;
             box-shadow: 0 25px 60px rgba(0, 4, 40, 0.45);
             display: flex;
             overflow: hidden;
             position: relative;
             z-index: 10;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.16);
             animation: entranceAnim 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -208,29 +229,59 @@
             margin-top: 2rem;
         }
 
+        .status-meta {
+            font-size: 0.75rem;
+        }
+
+        .brand-disclaimer {
+            font-size: 0.72rem;
+        }
+
         /* Right Side: Form View */
         .portal-form-side {
             flex: 1.15;
-            padding: 3.5rem 3rem;
-            background: #ffffff;
+            padding: 2.5rem 3rem 3rem;
+            background: var(--card-bg);
             display: flex;
             flex-direction: column;
             justify-content: center;
+            position: relative;
+        }
+
+        .form-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .back-home-link {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.2s ease;
+        }
+
+        .back-home-link:hover {
+            color: var(--primary-color);
         }
 
         .login-header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.75rem;
         }
 
-        /* Logo + App Name inline styling */
         .app-brand-lockup {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 0.75rem;
             width: 100%;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
         }
 
         .app-brand-lockup img {
@@ -267,14 +318,14 @@
         .field-label {
             font-size: 0.8rem;
             font-weight: 600;
-            color: #334155;
+            color: var(--label-color);
             margin-bottom: 0.4rem;
             display: block;
         }
 
         .input-group-custom {
             position: relative;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1.15rem;
         }
 
         .input-group-custom .input-icon {
@@ -296,13 +347,14 @@
             color: var(--text-main);
             font-size: 0.92rem;
             font-weight: 500;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
         }
 
         .form-control:focus {
             box-shadow: 0 0 0 4px var(--primary-glow);
             border-color: var(--primary-color);
-            background-color: #ffffff;
+            background-color: var(--input-focus-bg);
+            color: var(--text-main);
         }
 
         .input-group-custom:focus-within .input-icon {
@@ -324,7 +376,15 @@
         }
 
         .password-toggle-btn:hover {
-            color: #334155;
+            color: var(--text-main);
+        }
+
+        .caps-warning {
+            font-size: 0.76rem;
+            color: #d97706;
+            font-weight: 600;
+            margin-top: -0.75rem;
+            margin-bottom: 0.9rem;
         }
 
         .btn-primary {
@@ -336,7 +396,7 @@
             width: 100%;
             font-size: 0.95rem;
             box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.4);
-            transition: all 0.25s ease;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
             margin-top: 0.5rem;
         }
 
@@ -352,6 +412,8 @@
             justify-content: space-between;
             align-items: center;
             font-size: 0.82rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .form-links a {
@@ -365,8 +427,12 @@
             color: var(--primary-color);
         }
 
+        .forgot-link {
+            font-size: 0.76rem;
+        }
+
         .error-message {
-            background: #fff1f2;
+            background: rgba(225, 29, 72, 0.08);
             color: #e11d48;
             text-align: center;
             margin-top: 1rem;
@@ -374,14 +440,14 @@
             border-radius: 10px;
             font-weight: 500;
             font-size: 0.85rem;
-            border: 1px solid #ffe4e6;
+            border: 1px solid rgba(225, 29, 72, 0.25);
         }
 
         .footer-text {
             text-align: center;
-            margin-top: 1.75rem;
+            margin-top: 1.5rem;
             font-size: 0.72rem;
-            color: #94a3b8;
+            color: var(--text-muted);
         }
 
         /* Water Ripple Click Effect */
@@ -408,6 +474,7 @@
             .login-container {
                 flex-direction: column;
                 max-width: 440px;
+                min-height: auto;
             }
 
             .portal-brand-side {
@@ -415,7 +482,17 @@
             }
 
             .portal-form-side {
-                padding: 2.25rem 1.75rem;
+                padding: 1.75rem 1.75rem 2.25rem;
+            }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+
+            body,
+            .login-container,
+            .parallax>use {
+                animation: none !important;
             }
         }
     </style>
@@ -425,7 +502,7 @@
 
     <!-- SVG Ocean Waves -->
     <svg class="ocean-waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-        viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+        viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto" aria-hidden="true">
         <defs>
             <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
         </defs>
@@ -437,12 +514,12 @@
         </g>
     </svg>
 
-    <main class="login-container" role="main">
+    <main class="login-container">
         <!-- Brand Visual Side -->
-        <section class="portal-brand-side position-relative z-1">
+        <section class="portal-brand-side position-relative z-1" aria-label="Portal overview">
             <div>
                 <span class="brand-pill">
-                    <i class="bi bi-shield-lock-fill"></i> Enterprise Portal
+                    <i class="bi bi-shield-lock-fill" aria-hidden="true"></i> Enterprise Portal
                 </span>
                 <h2 class="display-6 fw-bold mt-4 mb-2">Smart Logistics Control</h2>
                 <p class="text-white-50 small">
@@ -453,38 +530,52 @@
 
             <div class="status-badge-card">
                 <div class="d-flex align-items-center mb-2">
-                    <span class="spinner-grow spinner-grow-sm text-info me-2" role="status"></span>
-                    <span class="small fw-semibold text-light">AllEdge Gateway Online</span>
+                    <span id="gatewayIndicator" class="spinner-grow spinner-grow-sm text-info me-2" role="status"
+                        aria-hidden="true"></span>
+                    <span id="gatewayStatusText" class="small fw-semibold text-light">AllEdge Gateway Online</span>
                 </div>
-                <div class="text-white-50" style="font-size: 0.75rem;">
+                <div id="gatewayStatusMeta" class="text-white-50 status-meta">
                     TLS 1.3 Active • Supabase Cluster Connected
                 </div>
             </div>
 
-            <div class="text-white-50 small" style="font-size: 0.72rem;">
+            <div class="text-white-50 brand-disclaimer">
                 Authorized personnel access only. Actions are logged and monitored.
             </div>
         </section>
 
         <!-- Form Interactive Side -->
-        <section class="portal-form-side">
+        <section class="portal-form-side" aria-label="Sign in form">
+            <div class="form-top-bar">
+                <a href="index.html" class="back-home-link">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> Back to Home
+                </a>
+                <button id="themeToggle" class="btn btn-outline-secondary btn-sm rounded-circle" type="button"
+                    aria-label="Toggle dark mode" title="Toggle theme">
+                    <i class="bi bi-moon-stars-fill" id="themeIcon" aria-hidden="true"></i>
+                </button>
+            </div>
+
             <div class="login-header">
-                <!-- App Name Next to Logo -->
-                <div class="app-brand-lockup d-flex justify-content-center align-items-center">
-                    <img src="assets/img/applogo.png" alt="BizNavigation Logo"
-                        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCI+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTAiIGZpbGw9IiMwMjg0YzciLz48L3N2Zz4='" />
-                    <h1 class="app-brand-title m-0">BizNavigation</h1>
+                <div class="app-brand-lockup">
+                    <img src="assets/img/applogo.png" alt="BizNavigation Logo" width="44" height="44" decoding="async"
+                        onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCI+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTAiIGZpbGw9IiMwMjg0YzciLz48L3N2Zz4='" />
+                    <h1 class="app-brand-title">BizNavigation</h1>
                 </div>
 
                 <h2>Sign In</h2>
                 <p>Enter your system operator credentials to continue</p>
             </div>
 
-            <form id="loginForm">
+            <div id="offlineAlert" class="alert alert-warning py-2 px-3 small d-none mb-3" role="status">
+                <i class="bi bi-wifi-off me-1" aria-hidden="true"></i> You are offline. Reconnect to authenticate.
+            </div>
+
+            <form id="loginForm" method="post" action="javascript:void(0);">
                 <div>
                     <label class="field-label" for="userName">Operator Identity</label>
                     <div class="input-group-custom">
-                        <i class="bi bi-person input-icon"></i>
+                        <i class="bi bi-person input-icon" aria-hidden="true"></i>
                         <input type="text" class="form-control" id="userName"
                             placeholder="Enter username or email or driver ID" autocomplete="username" required
                             autofocus />
@@ -492,18 +583,26 @@
                 </div>
 
                 <div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <label class="field-label" for="password">Security Key</label>
-                    </div>
+                    <label class="field-label" for="password">Security Key</label>
                     <div class="input-group-custom">
-                        <i class="bi bi-lock input-icon"></i>
+                        <i class="bi bi-lock input-icon" aria-hidden="true"></i>
                         <input type="password" class="form-control pe-5" id="password" placeholder="••••••••••••"
                             autocomplete="current-password" required />
                         <button type="button" class="password-toggle-btn" id="togglePasswordBtn"
-                            aria-label="Toggle password visibility">
-                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            aria-label="Toggle password visibility" aria-pressed="false">
+                            <i class="bi bi-eye" id="togglePasswordIcon" aria-hidden="true"></i>
                         </button>
                     </div>
+                    <div id="capsLockWarning" class="caps-warning d-none" role="status">
+                        <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i> Caps Lock is ON
+                    </div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="rememberUser">
+                    <label class="form-check-label small text-body-secondary" for="rememberUser">
+                        Remember Operator ID on this device
+                    </label>
                 </div>
 
                 <button id="loginButton" type="submit"
@@ -516,25 +615,25 @@
 
                 <div class="form-links">
                     <a href="/pages/Tools/UserActivation.html" id="userActivationLink1">
-                        <i class="bi bi-patch-check me-1"></i>User Activation
+                        <i class="bi bi-patch-check me-1" aria-hidden="true"></i>User Activation
                     </a>
-                    <a href="/pages/Tools/ResetPassword.html" id="forgotPasswordLink"
-                        class="text-decoration-none small text-muted" style="font-size: 0.76rem;">Forgot?</a>
+                    <a href="/pages/Tools/ResetPassword.html" id="forgotPasswordLink" class="forgot-link">Forgot?</a>
                     <a href="registration.html" id="registrationLink">
-                        <i class="bi bi-person-plus me-1"></i>Create Account
+                        <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Create Account
                     </a>
                 </div>
 
-                <div id="errorMessage" class="error-message d-none" aria-live="assertive">
+                <div id="errorMessage" class="error-message d-none" role="alert" aria-live="assertive">
                     Invalid username or password. Please try again.
                 </div>
 
-                <button id="logoutOtherSessionsBtn" class="btn btn-outline-danger mt-3 w-100 py-2 d-none fw-semibold">
-                    <i class="bi bi-box-arrow-right me-1"></i> Logout Other Sessions
+                <button id="logoutOtherSessionsBtn" type="button"
+                    class="btn btn-outline-danger mt-3 w-100 py-2 d-none fw-semibold">
+                    <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i> Logout Other Sessions
                 </button>
 
                 <div class="footer-text">
-                    <span id="versionInfo">&copy; AllEdge @ 2018 | Loading Version...</span>
+                    <span id="versionInfo">&copy; AllEdge @ 2026 | Enterprise Portal</span>
                 </div>
             </form>
         </section>
@@ -544,50 +643,131 @@
     <script src="assets/js/utils/server.js" defer></script>
     <script src="assets/js/utils/login.js" defer></script>
 
-    <!-- UI Interaction & Service Worker Sync Scripts -->
+    <!-- UI Interaction & Safe Service Worker Sync -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Password toggle
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            // Theme Toggle (Synced with index.html)
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const applyThemeIcon = (theme) => {
+                if (themeIcon) {
+                    themeIcon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+                }
+            };
+            applyThemeIcon(document.documentElement.getAttribute('data-bs-theme'));
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-bs-theme', next);
+                    localStorage.setItem('biznav_theme', next);
+                    applyThemeIcon(next);
+                });
+            }
+
+            // Password Toggle & Caps Lock Detection
             const toggleBtn = document.getElementById('togglePasswordBtn');
             const pwd = document.getElementById('password');
             const icon = document.getElementById('togglePasswordIcon');
+            const capsWarning = document.getElementById('capsLockWarning');
 
-            if (toggleBtn && pwd) {
+            if (toggleBtn && pwd && icon) {
                 toggleBtn.addEventListener('click', () => {
                     const isPwd = pwd.type === 'password';
                     pwd.type = isPwd ? 'text' : 'password';
                     icon.classList.toggle('bi-eye', !isPwd);
                     icon.classList.toggle('bi-eye-slash', isPwd);
+                    toggleBtn.setAttribute('aria-pressed', String(isPwd));
+                });
+
+                const checkCaps = (e) => {
+                    if (capsWarning && typeof e.getModifierState === 'function') {
+                        capsWarning.classList.toggle('d-none', !e.getModifierState('CapsLock'));
+                    }
+                };
+                pwd.addEventListener('keyup', checkCaps);
+                pwd.addEventListener('keydown', checkCaps);
+                pwd.addEventListener('blur', () => capsWarning && capsWarning.classList.add('d-none'));
+            }
+
+            // Remember Operator ID (Username only, never password)
+            const userInput = document.getElementById('userName');
+            const rememberCheck = document.getElementById('rememberUser');
+            const loginForm = document.getElementById('loginForm');
+
+            if (userInput && rememberCheck) {
+                const savedUser = localStorage.getItem('biznav_saved_operator');
+                if (savedUser) {
+                    userInput.value = savedUser;
+                    rememberCheck.checked = true;
+                    if (pwd) pwd.focus();
+                }
+
+                if (loginForm) {
+                    loginForm.addEventListener('submit', () => {
+                        if (rememberCheck.checked && userInput.value.trim()) {
+                            localStorage.setItem('biznav_saved_operator', userInput.value.trim());
+                        } else {
+                            localStorage.removeItem('biznav_saved_operator');
+                        }
+                    });
+                }
+            }
+
+            // Live Network / Gateway Status
+            const gatewayIndicator = document.getElementById('gatewayIndicator');
+            const gatewayStatusText = document.getElementById('gatewayStatusText');
+            const gatewayStatusMeta = document.getElementById('gatewayStatusMeta');
+            const offlineAlert = document.getElementById('offlineAlert');
+            const loginButton = document.getElementById('loginButton');
+
+            const syncNetworkUI = () => {
+                const online = navigator.onLine;
+                if (offlineAlert) offlineAlert.classList.toggle('d-none', online);
+                if (loginButton) loginButton.disabled = !online;
+                if (gatewayIndicator) {
+                    gatewayIndicator.className = online
+                        ? 'spinner-grow spinner-grow-sm text-info me-2'
+                        : 'bi bi-exclamation-circle-fill text-warning me-2';
+                }
+                if (gatewayStatusText) {
+                    gatewayStatusText.textContent = online ? 'AllEdge Gateway Online' : 'Connection Offline';
+                }
+                if (gatewayStatusMeta) {
+                    gatewayStatusMeta.textContent = online
+                        ? 'TLS 1.3 Active • Supabase Cluster Connected'
+                        : 'Waiting for network signal to reach Supabase';
+                }
+            };
+
+            syncNetworkUI();
+            window.addEventListener('online', syncNetworkUI);
+            window.addEventListener('offline', syncNetworkUI);
+
+            // Ripple Click Effect (background only, respects reduced motion)
+            if (!prefersReducedMotion) {
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('input, button, a, label, .login-container')) return;
+
+                    const size = 100;
+                    const ripple = document.createElement('div');
+                    ripple.className = 'water-ripple';
+                    ripple.style.width = `${size}px`;
+                    ripple.style.height = `${size}px`;
+                    ripple.style.left = `${e.clientX - size / 2}px`;
+                    ripple.style.top = `${e.clientY - size / 2}px`;
+
+                    document.body.appendChild(ripple);
+                    ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
                 });
             }
 
-            // Ripple click effect
-            document.addEventListener('click', (e) => {
-                if (['INPUT', 'BUTTON', 'A', 'I'].includes(e.target.tagName)) return;
-
-                const size = 100;
-                const ripple = document.createElement('div');
-                ripple.className = 'water-ripple';
-                ripple.style.width = `${size}px`;
-                ripple.style.height = `${size}px`;
-                ripple.style.left = `${e.clientX - (size / 2)}px`;
-                ripple.style.top = `${e.clientY - (size / 2)}px`;
-
-                document.body.appendChild(ripple);
-                ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
-            });
-
-            // Service Worker Registration, Auto-Update & Version Sync
+            // Service Worker Registration & Version Sync
+            // NOTE: Intentionally does NOT force-reload on controllerchange
+            // so active login submissions and redirects are never interrupted.
             if ('serviceWorker' in navigator) {
-                let refreshing = false;
-
-                // Automatically reload once when a new Service Worker takes control
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (refreshing) return;
-                    refreshing = true;
-                    window.location.reload();
-                });
-
                 const fetchSwVersion = (worker) => {
                     if (!worker) return;
                     const channel = new MessageChannel();
@@ -605,19 +785,13 @@
                 navigator.serviceWorker.register('/service-worker.js', {
                     updateViaCache: 'none'
                 }).then(registration => {
-                    // Actively check for an updated service-worker.js on load
                     registration.update();
-
-                    // Request version from the controlling or active worker
                     const activeWorker = navigator.serviceWorker.controller || registration.active;
-                    if (activeWorker) {
-                        fetchSwVersion(activeWorker);
-                    }
+                    if (activeWorker) fetchSwVersion(activeWorker);
                 }).catch(err => {
-                    console.error('[SW] Registration failed:', err);
+                    console.warn('[SW] Registration skipped:', err);
                 });
 
-                // Fallback once SW becomes ready (for very first visit)
                 navigator.serviceWorker.ready.then(registration => {
                     fetchSwVersion(navigator.serviceWorker.controller || registration.active);
                 });

@@ -1,8 +1,167 @@
-document.addEventListener('DOMContentLoaded', initializeForm);
+// document.addEventListener('DOMContentLoaded', initializeForm);
 
 // Cache common DOM elements
 const jobNoInput = document.getElementById('jobNo'); // Assuming this exists
 
+// ==========================================
+// JOB NO DOUBLE-CLICK SEARCH MODAL
+// ==========================================
+let cachedJobsList = [];
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const jobNoInput = document.getElementById("jobNo");
+    const jobSearchModalEl = document.getElementById("jobSearchModal");
+    const jobSearchInput = document.getElementById("jobSearchInput");
+    const clearJobSearchBtn = document.getElementById("clearJobSearch");
+
+    if (!jobNoInput || !jobSearchModalEl) return;
+
+    const jobSearchModal = new bootstrap.Modal(jobSearchModalEl);
+
+    await initializeForm();
+    // 1. Open modal on double-click of Job No
+    jobNoInput.addEventListener("dblclick", async () => {
+        jobSearchInput.value = "";
+        jobSearchModal.show();
+        await fetchJobsForSearchModal();
+    });
+
+    // Focus search box automatically when modal finishes opening
+    jobSearchModalEl.addEventListener("shown.bs.modal", () => {
+        jobSearchInput.focus();
+    });
+
+    // 2. Live filter across all 8 fields
+    jobSearchInput.addEventListener("input", (e) => {
+        filterJobSearchTable(e.target.value);
+    });
+
+    // Clear search button
+    clearJobSearchBtn.addEventListener("click", () => {
+        jobSearchInput.value = "";
+        filterJobSearchTable("");
+        jobSearchInput.focus();
+    });
+});
+
+async function fetchJobsForSearchModal() {
+    const tbody = document.getElementById("jobSearchTableBody");
+    const countEl = document.getElementById("jobSearchCount");
+
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="vm-empty">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div>Loading jobs...</div>
+            </td>
+        </tr>`;
+
+    try {
+        // Adjust table & column names to match your Supabase schema
+        const { data, error } = await supabaseClient
+            .from("CustomsClearanceView")
+            .select("JobID, JobDate, PartyName, TransitType, BLAWBNo, BENo, ClearancePort, CustomsBroker")
+            .order("JobDate", { ascending: false })
+            .eq("company_id", CompanyID)
+            .limit(300);
+
+        if (error) throw error;
+
+        cachedJobsList = data || [];
+        renderJobSearchTable(cachedJobsList);
+    } catch (err) {
+        console.error("Error loading jobs:", err);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="vm-empty text-danger">
+                    <i class="bi bi-exclamation-circle"></i>
+                    Failed to load jobs. Please try again.
+                </td>
+            </tr>`;
+        countEl.textContent = "Error loading records";
+    }
+}
+
+function filterJobSearchTable(searchTerm) {
+    const term = (searchTerm || "").trim().toLowerCase();
+
+    if (!term) {
+        renderJobSearchTable(cachedJobsList);
+        return;
+    }
+
+    const filtered = cachedJobsList.filter((job) => {
+        const searchableText = [
+            job.JobID,
+            job.JobDate,
+            job.PartyName,
+            job.TransitType,
+            job.BLAWBNo,
+            job.BENo,
+            job.ClearancePort,
+            job.CustomsBroker
+        ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+        return searchableText.includes(term);
+    });
+
+    renderJobSearchTable(filtered);
+}
+
+function renderJobSearchTable(jobs) {
+    const tbody = document.getElementById("jobSearchTableBody");
+    const countEl = document.getElementById("jobSearchCount");
+
+    countEl.textContent = `${jobs.length} record${jobs.length === 1 ? "" : "s"} found`;
+
+    if (!jobs.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="vm-empty">
+                    <i class="bi bi-search"></i>
+                    No matching jobs found
+                </td>
+            </tr>`;
+        return;
+    }
+
+    tbody.innerHTML = jobs
+        .map(
+            (job) => `
+        <tr class="job-search-row" style="cursor: pointer;" data-jobno="${DOMPurify.sanitize(job.JobID || "")}">
+            <td class="fw-bold text-primary text-upper">${DOMPurify.sanitize(job.JobID || "-")}</td>
+            <td class="text-nowrap">${DOMPurify.sanitize(job.JobDate || "-")}</td>
+            <td>${DOMPurify.sanitize(job.PartyName || "-")}</td>
+            <td>${DOMPurify.sanitize(job.TransitType || "-")}</td>
+            <td class="text-upper">${DOMPurify.sanitize(job.BLAWBNo || "-")}</td>
+            <td class="text-upper">${DOMPurify.sanitize(job.BENo || "-")}</td>
+            <td>${DOMPurify.sanitize(job.ClearancePort || "-")}</td>
+            <td>${DOMPurify.sanitize(job.CustomsBroker || "-")}</td>
+        </tr>`
+        )
+        .join("");
+
+    // Attach click handler to select a job
+    tbody.querySelectorAll(".job-search-row").forEach((row) => {
+        row.addEventListener("click", () => {
+            const selectedJobNo = row.getAttribute("data-jobno");
+            const jobNoInput = document.getElementById("jobNo");
+
+            jobNoInput.value = selectedJobNo;
+
+            // Close modal
+            const modalInstance = bootstrap.Modal.getInstance(document.getElementById("jobSearchModal"));
+            if (modalInstance) modalInstance.hide();
+
+            // Trigger existing change/input handlers in CustomsClearance.js to load the job
+            jobNoInput.dispatchEvent(new Event("change", { bubbles: true }));
+            jobNoInput.dispatchEvent(new Event("input", { bubbles: true }));
+        });
+    });
+}
 // ========== Core Functions ==========
 
 async function initializeForm() {

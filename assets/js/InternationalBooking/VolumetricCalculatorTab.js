@@ -13,28 +13,36 @@ async function fetchCFTDetails() {
         }
 
         const TRANSIT_MAP = {
-            'By Sea Freight': 'seaFreightInternational',
-            'By Air Freight': 'airFreightInternational',
-            'By Courier': 'courierInternational'
+            'By Sea Freight': ['seaFreightInternational', 'seaInternational'],
+            'By Air Freight': ['airFreightInternational', 'airInternational'],
+            'By Courier': ['courierInternational']
         };
 
-        const transitSelected = TRANSIT_MAP[transitTypeInput];
+        const transitKeys = TRANSIT_MAP[transitTypeInput];
 
-        if (!transitSelected) {
+        if (!transitKeys) {
             console.warn('Unsupported transit type:', transitTypeInput);
             return null;
         }
 
         const { data, error } = await supabaseClient
             .from('SettingParameters')
-            .select('FieldValue')
-            .eq('InputFieldID', transitSelected)
-            .eq('company_id', CompanyID)
-            .maybeSingle();
+            .select('InputFieldID, FieldValue')
+            .in('InputFieldID', transitKeys)
+            .eq('company_id', CompanyID);
 
         if (error) throw error;
+        if (!data || data.length === 0) return null;
 
-        return Number(data?.FieldValue) || null;
+        // Check primary key first, then fallback key
+        for (const key of transitKeys) {
+            const match = data.find(
+                row => row.InputFieldID?.trim() === key && Number(row.FieldValue) > 0
+            );
+            if (match) return Number(match.FieldValue);
+        }
+
+        return null;
     } catch (err) {
         console.error('Error fetching CFT details:', err.message);
         return null;
@@ -70,6 +78,7 @@ async function calculateVolumetric() {
         const heightCM = Number(document.getElementById('heightCM')?.value);
         const quantity = Number(document.getElementById('quantityV')?.value);
         const actualWt = Number(document.getElementById('actualWtV')?.value);
+        const transitType = document.getElementById('transitTypeI')?.value;
         let uomVal = document.getElementById('uOMType')?.value;
 
         if (![lengthCM, widthCM, heightCM, quantity, actualWt].every(v => v > 0)) {
@@ -77,9 +86,21 @@ async function calculateVolumetric() {
         }
 
         const cft = await fetchCFTDetails();
+
         if (!cft || cft <= 0) {
             console.warn('Invalid CFT value:', cft);
-            return;
+
+            // Clear stale calculated fields
+            document.getElementById('volumeWtV').value = '';
+            document.getElementById('totalVolumeWtV').value = '';
+            document.getElementById('chargeableWtV').value = '';
+
+            const message = transitType
+                ? `CFT value is not configured for "${transitType}". Please update CFT details in Settings.`
+                : 'CFT value is missing. Please select a Transit Type and update CFT details in Settings.';
+
+            showCFTWarning(message);
+            return null;
         }
 
         const actualWeight = actualWt * quantity;
@@ -98,8 +119,6 @@ async function calculateVolumetric() {
 
         switch (uomVal) {
             case 'kgs':
-                chargeableWeight = Math.ceil(maxChargeableWeight);
-                break;
             case 'tons':
                 chargeableWeight = Math.ceil(maxChargeableWeight);
                 break;
@@ -112,9 +131,6 @@ async function calculateVolumetric() {
             }
 
             case 'fixed':
-                chargeableWeight = maxChargeableWeight;
-                break;
-
             default:
                 chargeableWeight = maxChargeableWeight;
         }
@@ -126,6 +142,18 @@ async function calculateVolumetric() {
     } catch (err) {
         console.error('Error calculating volumetric:', err.message);
         return null;
+    }
+}
+
+function showCFTWarning(message) {
+    const toastEl = document.getElementById('errorToast');
+    const toastMsgEl = document.getElementById('errorToastMessage');
+
+    if (toastEl && toastMsgEl && window.bootstrap) {
+        toastMsgEl.textContent = message;
+        bootstrap.Toast.getOrCreateInstance(toastEl).show();
+    } else {
+        alert(message);
     }
 }
 
@@ -322,7 +350,7 @@ async function loadVolumetricDetails() {
                 <td>${row.VolumePerPcs}</td>
                 <td>${row.VolumeWt}</td>
                 <td>${row.ChargableWt}</td>
-                <td><button class="btn btn-sm btn-danger remove-row">Delete</button></td>
+                <td><button class="btn btn-sm btn-danger remove-row"><i class="bi bi-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
         }

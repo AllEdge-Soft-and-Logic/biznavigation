@@ -2,12 +2,14 @@ const docketNoInput = document.getElementById('docketNo');
 
 document.addEventListener("DOMContentLoaded", async () => {
     enableForm();
+
     await Promise.all([
-        await loadSuggestions('customerNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
-        await loadSuggestions('consignorNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
-        await loadSuggestions('serviceProviderSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+        loadSuggestions('customerNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+        loadSuggestions('consignorNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+        loadSuggestions('serviceProviderSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         loadDatalist('departmentList', 'Department')
     ]);
+
     await setupPincodeListener('originPinCode', 'orgincity');
     await initChargeableWeightCalculator("#actualWeight", "#volumetricWeight", "#chargeableWeight", "#uOMType");
 
@@ -18,6 +20,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
     initDatalistValidation();
     loadTaxData();
+    initDocketSearchModal();
+
     const urlParams = new URLSearchParams(window.location.search);
     const incomingRequestNo = urlParams.get('pickupRequestNo');
     const headerBadge = document.getElementById("headerPickupRequestBadge");
@@ -28,6 +32,165 @@ document.addEventListener("DOMContentLoaded", async () => {
         headerBadge.classList.remove("d-none");
     }
 });
+
+function initDocketSearchModal() {
+    const docketNoInput = document.getElementById('docketNo');
+    const modalEl = document.getElementById('docketSearchModal');
+    if (!docketNoInput || !modalEl) return;
+
+    const docketSearchModal = new bootstrap.Modal(modalEl);
+
+    const searchDocketNo = document.getElementById('searchDocketNo');
+    const searchCustomerName = document.getElementById('searchCustomerName');
+    const searchTransitType = document.getElementById('searchTransitType');
+    const searchServiceProvider = document.getElementById('searchServiceProvider');
+    const btnSearchDockets = document.getElementById('btnSearchDockets');
+    const btnResetDocketSearch = document.getElementById('btnResetDocketSearch');
+    const resultsBody = document.getElementById('docketSearchResultsBody');
+    const resultsCount = document.getElementById('docketSearchCount');
+
+    let searchTimer = null;
+
+    // 1. Open modal on double-click of Docket No
+    docketNoInput.addEventListener('dblclick', () => {
+        searchDocketNo.value = docketNoInput.value.trim();
+        docketSearchModal.show();
+        fetchDocketsForModal();
+    });
+
+    // Focus Docket No filter when modal opens
+    modalEl.addEventListener('shown.bs.modal', () => {
+        searchDocketNo.focus();
+    });
+
+    // 2. Live search (debounced) & Enter key support
+    const triggerDebouncedSearch = () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(fetchDocketsForModal, 300);
+    };
+
+    [searchDocketNo, searchCustomerName, searchServiceProvider].forEach(input => {
+        input.addEventListener('input', triggerDebouncedSearch);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                fetchDocketsForModal();
+            }
+        });
+    });
+
+    searchTransitType.addEventListener('change', fetchDocketsForModal);
+    btnSearchDockets.addEventListener('click', fetchDocketsForModal);
+
+    // 3. Reset filters
+    btnResetDocketSearch.addEventListener('click', () => {
+        searchDocketNo.value = '';
+        searchCustomerName.value = '';
+        searchTransitType.value = '';
+        searchServiceProvider.value = '';
+        fetchDocketsForModal();
+    });
+
+    // 4. Query Supabase (adjust table & column names to match your schema)
+    async function fetchDocketsForModal() {
+        resultsBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-4 text-muted">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                    Searching dockets...
+                </td>
+            </tr>`;
+
+        try {
+            const docketVal = searchDocketNo.value.trim();
+            const customerVal = searchCustomerName.value.trim();
+            const transitVal = searchTransitType.value.trim();
+            const providerVal = searchServiceProvider.value.trim();
+
+            // Replace 'domestic_booking' and column names with your actual Supabase table/view
+            let query = await supabaseClient
+                .from('DomesticBookingView')
+                .select('DocketNo, BookingDate, CustomerName, TransitType, ServiceProvider, OriginCity, DestinationCity')
+                .order('BookingDate', { ascending: false })
+                .limit(50);
+
+            if (docketVal) query = query.ilike('DocketNo', `%${docketVal}%`);
+            if (customerVal) query = query.ilike('CustomerName', `%${customerVal}%`);
+            if (transitVal) query = query.eq('TransitType', transitVal);
+            if (providerVal) query = query.ilike('ServiceProvider', `%${providerVal}%`);
+
+            const { data, error } = await query;
+            if (error) throw error;
+
+            renderDocketSearchResults(data || []);
+        } catch (err) {
+            console.error('Docket search error:', err);
+            resultsBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Failed to load dockets.
+                    </td>
+                </tr>`;
+            resultsCount.textContent = '0 records found';
+        }
+    }
+
+    // 5. Render rows
+    function renderDocketSearchResults(rows) {
+        resultsCount.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'} found`;
+
+        if (!rows.length) {
+            resultsBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="vm-empty">
+                        <i class="bi bi-inbox"></i>
+                        No matching dockets found
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        const safe = (val) => DOMPurify.sanitize(val ?? '');
+
+        resultsBody.innerHTML = rows.map(row => `
+            <tr style="cursor: pointer;" data-docket="${safe(row.DocketNo)}">
+                <td class="fw-bold text-primary">${safe(row.DocketNo)}</td>
+                <td>${safe(row.BookingDate)}</td>
+                <td>${safe(row.CustomerName)}</td>
+                <td><span class="badge text-bg-light border">${safe(row.TransitType)}</span></td>
+                <td>${safe(row.ServiceProvider)}</td>
+                <td class="small text-muted">${safe(row.OriginCity)} → ${safe(row.DestinationCity)}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2 select-docket-btn">
+                        Select
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // 6. Select docket (button click or row double-click)
+    const selectDocket = (docketNo) => {
+        if (!docketNo) return;
+        docketNoInput.value = docketNo;
+        docketSearchModal.hide();
+
+        docketNoInput.dispatchEvent(new Event('change', { bubbles: true }));
+        docketNoInput.focus();
+    };
+
+    resultsBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('.select-docket-btn');
+        if (!btn) return;
+        const tr = btn.closest('tr');
+        selectDocket(tr?.dataset.docket);
+    });
+
+    resultsBody.addEventListener('dblclick', (e) => {
+        const tr = e.target.closest('tr[data-docket]');
+        if (tr) selectDocket(tr.dataset.docket);
+    });
+}
 
 document.getElementById("docketNo").addEventListener("input", e => loadDocketDetails(e.target.value));
 
