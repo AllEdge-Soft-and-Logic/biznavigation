@@ -1,4 +1,5 @@
-const VERSION = 'v3.04.09.25';
+// IMPORTANT: Increment this version on every deployment to clear old caches
+const VERSION = 'v3.04.09.26';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
 const API_CACHE = `biznav-api-${VERSION}`;
@@ -130,7 +131,7 @@ self.addEventListener('fetch', event => {
                     const preloadResponse = await event.preloadResponse;
                     if (preloadResponse) return preloadResponse;
 
-                    return await fetch(request);
+                    return await fetch(request, { cache: 'no-cache' });
                 } catch {
                     const cachedPage = await caches.match(request);
                     if (cachedPage) return cachedPage;
@@ -143,7 +144,32 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // 5. Static Assets (CSS, JS, Fonts, Images): Stale-While-Revalidate
+    // 5. JS & CSS: Network-First (prevents rollback to old code)
+    if (request.destination === 'script' || request.destination === 'style') {
+        event.respondWith(
+            (async () => {
+                try {
+                    const networkResponse = await fetch(request, { cache: 'no-cache' });
+                    if (
+                        networkResponse &&
+                        networkResponse.status === 200 &&
+                        (networkResponse.type === 'basic' || networkResponse.type === 'cors')
+                    ) {
+                        const cache = await caches.open(DYNAMIC_CACHE);
+                        cache.put(request, networkResponse.clone());
+                        limitCache(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
+                    }
+                    return networkResponse;
+                } catch {
+                    const cached = await caches.match(request);
+                    return cached || new Response('Offline', { status: 503 });
+                }
+            })()
+        );
+        return;
+    }
+
+    // 6. Images, Fonts & Other Assets: Stale-While-Revalidate (with event.waitUntil)
     event.respondWith(
         (async () => {
             const cachedResponse = await caches.match(request);
@@ -156,8 +182,8 @@ self.addEventListener('fetch', event => {
                         (networkResponse.type === 'basic' || networkResponse.type === 'cors')
                     ) {
                         const cache = await caches.open(DYNAMIC_CACHE);
-                        cache.put(request, networkResponse.clone());
-                        limitCache(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
+                        await cache.put(request, networkResponse.clone());
+                        await limitCache(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
                     }
                     return networkResponse;
                 })
@@ -168,7 +194,13 @@ self.addEventListener('fetch', event => {
                     return null;
                 });
 
-            return cachedResponse || (await networkFetch);
+            if (cachedResponse) {
+                // Keep the Service Worker alive until the background cache update finishes
+                event.waitUntil(networkFetch);
+                return cachedResponse;
+            }
+
+            return await networkFetch;
         })()
     );
 });

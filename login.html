@@ -544,7 +544,7 @@
     <script src="assets/js/utils/server.js" defer></script>
     <script src="assets/js/utils/login.js" defer></script>
 
-    <!-- UI Interaction & Version Sync Scripts -->
+    <!-- UI Interaction & Service Worker Sync Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Password toggle
@@ -577,21 +577,49 @@
                 ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
             });
 
-            // Dynamic Version Sync with Service Worker
+            // Service Worker Registration, Auto-Update & Version Sync
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(registration => {
-                    if (navigator.serviceWorker.controller) {
-                        const channel = new MessageChannel();
-                        channel.port1.onmessage = (event) => {
-                            if (event.data && event.data.version) {
-                                const versionElement = document.getElementById('versionInfo');
-                                if (versionElement) {
-                                    versionElement.innerHTML = `&copy; AllEdge @ 2018 | ${event.data.version} | Build: ${new Date().toLocaleDateString('en-GB')}`;
-                                }
+                let refreshing = false;
+
+                // Automatically reload once when a new Service Worker takes control
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (refreshing) return;
+                    refreshing = true;
+                    window.location.reload();
+                });
+
+                const fetchSwVersion = (worker) => {
+                    if (!worker) return;
+                    const channel = new MessageChannel();
+                    channel.port1.onmessage = (event) => {
+                        if (event.data && event.data.version) {
+                            const versionElement = document.getElementById('versionInfo');
+                            if (versionElement) {
+                                versionElement.innerHTML = `&copy; AllEdge @ 2026 | ${event.data.version} | Build: ${new Date().toLocaleDateString('en-GB')}`;
                             }
-                        };
-                        navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+                        }
+                    };
+                    worker.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+                };
+
+                navigator.serviceWorker.register('/service-worker.js', {
+                    updateViaCache: 'none'
+                }).then(registration => {
+                    // Actively check for an updated service-worker.js on load
+                    registration.update();
+
+                    // Request version from the controlling or active worker
+                    const activeWorker = navigator.serviceWorker.controller || registration.active;
+                    if (activeWorker) {
+                        fetchSwVersion(activeWorker);
                     }
+                }).catch(err => {
+                    console.error('[SW] Registration failed:', err);
+                });
+
+                // Fallback once SW becomes ready (for very first visit)
+                navigator.serviceWorker.ready.then(registration => {
+                    fetchSwVersion(navigator.serviceWorker.controller || registration.active);
                 });
             }
         });

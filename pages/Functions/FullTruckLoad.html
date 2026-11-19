@@ -183,6 +183,17 @@
                                                         Print</a></li>
                                                 <li><a class="dropdown-item" href="#"
                                                         data-print-type="lr_annexure_Report">LR Annexure</a></li>
+
+                                                <!-- NEW: Cash Voucher Print Option -->
+                                                <li>
+                                                    <hr class="dropdown-divider" id="cashVoucherDivider">
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="#" id="printCashVoucherBtn">
+                                                        <i class="bi bi-receipt text-success me-2"></i>Vendor Cash
+                                                        Voucher
+                                                    </a>
+                                                </li>
                                             </ul>
                                         </div>
 
@@ -873,15 +884,15 @@
     </div>
 
 
-    <!-- ============ CASH PAYMENT SUB-PARTY MODAL (PartyBillingAddress) ============ -->
+    <!-- ============ SUB-PARTY / BILLING ADDRESS MODAL ============ -->
     <div class="modal fade" id="cashPaymentPartyModal" tabindex="-1" aria-labelledby="cashPaymentPartyModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title d-flex align-items-center gap-2" id="cashPaymentPartyModalLabel">
-                        <i class="bi bi-person-plus-fill text-primary"></i>
-                        <span>Cash Payment – Sub-Party / Billing Address</span>
+                        <i class="bi bi-person-lines-fill text-primary"></i>
+                        <span>Select Billing Address / Sub-Party</span>
                         <span class="badge text-bg-secondary" id="cashModalParentPartyBadge"></span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -892,9 +903,9 @@
 
                     <!-- Existing Sub-Parties / Billing Addresses List -->
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="m-0 fw-semibold text-secondary">Select Existing Sub-Party</h6>
+                        <h6 class="m-0 fw-semibold text-secondary">Select Existing Address</h6>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="toggleAddSubPartyFormBtn">
-                            <i class="bi bi-plus-lg"></i> Add New Party Under This Party
+                            <i class="bi bi-plus-lg"></i> Add New Address
                         </button>
                     </div>
 
@@ -902,7 +913,7 @@
                         <table class="table table-sm table-hover align-middle mb-0" id="cashSubPartyTable">
                             <thead class="table-light sticky-top">
                                 <tr>
-                                    <th>Contact / Party Name</th>
+                                    <th>Contact / Name</th>
                                     <th>Address</th>
                                     <th>City / Pin</th>
                                     <th>State</th>
@@ -913,23 +924,23 @@
                             <tbody id="cashSubPartyTableBody">
                                 <tr>
                                     <td colspan="6" class="text-center text-muted py-3">
-                                        No sub-parties loaded yet. Click "Add New Party Under This Party" to create one.
+                                        No addresses loaded yet.
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <!-- Add New Party Under This Party Form (PartyBillingAddress) -->
+                    <!-- Add New Party Under This Party Form -->
                     <div class="card bg-light border d-none" id="addSubPartyCard">
                         <div class="card-body">
                             <h6 class="card-title fw-semibold mb-3">
-                                <i class="bi bi-building-add me-1"></i> Add New Party Under <span
-                                    id="addSubPartyParentName" class="text-primary">Cash Payment</span>
+                                <i class="bi bi-building-add me-1"></i> Add New Address Under <span
+                                    id="addSubPartyParentName" class="text-primary"></span>
                             </h6>
                             <div class="row g-2">
                                 <div class="col-md-6">
-                                    <label for="subPartyContactName" class="form-label form-label-sm">Party / Contact
+                                    <label for="subPartyContactName" class="form-label form-label-sm">Contact
                                         Name <span class="req">*</span></label>
                                     <input type="text" class="form-control form-control-sm text-cap"
                                         id="subPartyContactName" placeholder="Enter Party / Contact Name" required>
@@ -981,7 +992,7 @@
                                 <button type="button" class="btn btn-sm btn-outline-secondary"
                                     id="cancelAddSubPartyBtn">Cancel</button>
                                 <button type="button" class="btn btn-sm btn-success" id="saveSubPartyBillingBtn">
-                                    <i class="bi bi-check-lg"></i> Save Sub-Party
+                                    <i class="bi bi-check-lg"></i> Save Address
                                 </button>
                             </div>
                         </div>
@@ -1071,7 +1082,7 @@
             };
 
             /**
-             * Remove the placeholder row (any <tr> containing a td.vm-empty).
+- Remove the placeholder row (any <tr> containing a td.vm-empty).
              */
             function clearEmptyState(tableId) {
                 const table = document.getElementById(tableId);
@@ -1086,7 +1097,7 @@
             }
 
             /**
-             * Re-insert the placeholder when the tbody has no data rows left.
+- Re-insert the placeholder when the tbody has no data rows left.
              */
             function restoreEmptyStateIfNeeded(tableId) {
                 const table = document.getElementById(tableId);
@@ -1117,8 +1128,8 @@
             }
 
             /**
-             * Set up a MutationObserver on the tbody of each table.
-             * When rows are added/removed, we adjust the placeholder accordingly.
+- Set up a MutationObserver on the tbody of each table.
+- When rows are added/removed, we adjust the placeholder accordingly.
              */
             function observeTable(tableId) {
                 const table = document.getElementById(tableId);
@@ -1165,55 +1176,42 @@
         })();
     </script>
 
-
     <!-- ============================================================
-         CASH PAYMENT SUB-PARTY POPUP & PartyBillingAddress HANDLER
+         SUB-PARTY, BILLING ADDRESS & CASH VOUCHER HANDLER
          ============================================================ -->
     <script>
         (function () {
             const CASH_PAYMENT_LABEL = 'cash payment';
 
             function isCashPaymentValue(val) {
-                return String(val || '').trim().toLowerCase() === CASH_PAYMENT_LABEL;
-            }
-
-            function getSupabaseClient() {
-                if (window.supabaseClient) return window.supabaseClient;
-                if (window.sb) return window.sb;
-                if (window.supabase && typeof window.supabase.createClient === 'function' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
-                    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-                    return window.supabaseClient;
-                }
-                return null;
+                return String(val || '').trim().toLowerCase().includes(CASH_PAYMENT_LABEL);
             }
 
             async function loadSubPartiesForParty(partyCode, targetField) {
                 const tbody = document.getElementById('cashSubPartyTableBody');
                 if (!tbody) return;
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Loading sub-parties...</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Loading addresses...</td></tr>';
 
-                const client = getSupabaseClient();
+                const client = await supabaseClient;
                 if (!client) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-warning py-3">Supabase client not initialized. You can still add a new party below.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-warning py-3">Database client not initialized.</td></tr>';
                     return;
                 }
 
                 try {
-                    let query = await supabaseClient
+                    let query = client
                         .from('PartyBillingAddress')
                         .select('id, "PartyCode", "Address", "City", "PinCode", "Country", "ContactName", "ContactNumber", "DefaultActive", "State", "Status"')
                         .eq('Status', 'Active')
                         .order('id', { ascending: false });
 
-                    if (partyCode) {
-                        query = query.eq('PartyCode', partyCode);
-                    }
+                    query = query.eq('PartyCode', partyCode || 'CASH');
 
                     const { data, error } = await query;
                     if (error) throw error;
 
                     if (!data || data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No sub-parties found. Click "Add New Party Under This Party" to add one.</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No addresses found. Click "Add New Address" to create one.</td></tr>';
                         return;
                     }
 
@@ -1238,36 +1236,41 @@
                     });
                 } catch (err) {
                     console.error('Error loading PartyBillingAddress:', err);
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Failed to load sub-parties.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Failed to load addresses. Check console for details.</td></tr>';
                 }
             }
 
             function applySubPartySelection(row, targetField) {
-                const subName = row.ContactName || row.Address || 'Cash Sub-Party';
+                const inputEl = document.getElementById(targetField);
+                const subName = row.ContactName || row.Address || 'Sub-Party';
+
                 if (targetField === 'vendorName') {
-                    const vendorInput = document.getElementById('vendorName');
                     const hint = document.getElementById('selectedVendorSubPartyHint');
-                    if (vendorInput) vendorInput.value = `Cash Payment (${subName})`;
+                    if (inputEl) {
+                        inputEl.value = `Cash Payment (${subName})`;
+                        inputEl.dispatchEvent(new Event('input'));
+                    }
                     if (hint) {
-                        hint.textContent = `Sub-Party: ${subName}${row.City ? ' · ' + row.City : ''}`;
+                        hint.textContent = `Billing: ${subName}${row.City ? ' · ' + row.City : ''}`;
                         hint.classList.remove('d-none');
                     }
                 } else {
-                    const partyInput = document.getElementById('partyName');
                     const hint = document.getElementById('selectedSubPartyHint');
-                    if (partyInput) partyInput.value = `Cash Payment (${subName})`;
+                    if (inputEl) {
+                        inputEl.value = `Cash Payment (${subName})`;
+                        inputEl.dispatchEvent(new Event('input'));
+                    }
                     if (hint) {
-                        hint.textContent = `Sub-Party: ${subName}${row.City ? ' · ' + row.City : ''}`;
+                        hint.textContent = `Billing: ${subName}${row.City ? ' · ' + row.City : ''}`;
                         hint.classList.remove('d-none');
                     }
-                    // Optionally pre-fill pickup address/city/pincode if empty
-                    if (row.Address && !document.getElementById('originAddress')?.value) {
+                    if (row.Address && document.getElementById('originAddress')) {
                         document.getElementById('originAddress').value = row.Address;
                     }
-                    if (row.City && !document.getElementById('originCity')?.value) {
+                    if (row.City && document.getElementById('originCity')) {
                         document.getElementById('originCity').value = row.City;
                     }
-                    if (row.PinCode && !document.getElementById('originPinCode')?.value) {
+                    if (row.PinCode && document.getElementById('originPinCode')) {
                         document.getElementById('originPinCode').value = row.PinCode;
                     }
                 }
@@ -1283,18 +1286,21 @@
                 const isVendor = targetField === 'vendorName';
                 const parentCodeInput = document.getElementById(isVendor ? 'vendorCode' : 'partyCode');
                 const parentNameInput = document.getElementById(isVendor ? 'vendorName' : 'partyName');
-                const parentCode = parentCodeInput?.value || 'CASH';
-                const parentName = parentNameInput?.value || 'Cash Payment';
+
+                const pVal = parentNameInput?.value || '';
+                const isCash = isCashPaymentValue(pVal) || pVal.trim() === '';
+
+                const parentCode = parentCodeInput?.value || (isCash ? 'CASH' : '');
+                const parentName = pVal || 'Cash Payment';
 
                 document.getElementById('cashModalTargetField').value = targetField;
                 document.getElementById('cashModalParentPartyCode').value = parentCode;
                 document.getElementById('cashModalParentPartyBadge').textContent = parentName;
                 document.getElementById('addSubPartyParentName').textContent = parentName;
 
-                // Reset add form visibility
                 document.getElementById('addSubPartyCard')?.classList.add('d-none');
 
-                loadSubPartiesForParty(parentCode === 'CASH' ? null : parentCode, targetField);
+                loadSubPartiesForParty(parentCode, targetField);
 
                 const modalEl = document.getElementById('cashPaymentPartyModal');
                 if (modalEl && window.bootstrap) {
@@ -1306,18 +1312,52 @@
             function bindFieldTriggers(inputId, btnId, targetField) {
                 const input = document.getElementById(inputId);
                 const btn = document.getElementById(btnId);
+                const isVendor = targetField === 'vendorName';
+                const codeInputId = isVendor ? 'vendorCode' : 'partyCode';
+
                 if (!input) return;
 
                 const syncBtnState = () => {
-                    const matched = isCashPaymentValue(input.value) || input.value.trim().toLowerCase().startsWith('cash payment (');
-                    if (btn) btn.classList.toggle('d-none', !matched);
+                    const hasValue = input.value.trim().length > 0;
+                    if (btn) btn.classList.toggle('d-none', !hasValue);
+
+                    if (targetField === 'vendorName') {
+                        const isCash = isCashPaymentValue(input.value);
+                        const voucherBtn = document.getElementById('printCashVoucherBtn');
+                        const voucherDiv = document.getElementById('cashVoucherDivider');
+                        const mainPrintBtn = document.getElementById('reportButton');
+
+                        if (voucherBtn) voucherBtn.classList.toggle('d-none', !isCash);
+                        if (voucherDiv) voucherDiv.classList.toggle('d-none', !isCash);
+
+                        if (isCash && mainPrintBtn) {
+                            mainPrintBtn.disabled = false;
+                        }
+                    }
+                };
+
+                window[`checkAndPromptBillingAddresses_${targetField}`] = async function () {
+                    const codeInput = document.getElementById(codeInputId);
+                    const pCode = codeInput?.value || (isCashPaymentValue(input.value) ? 'CASH' : '');
+
+                    if (pCode) {
+                        const client = await supabaseClient;
+                        if (client) {
+                            const { count } = await client.from('PartyBillingAddress')
+                                .select('id', { count: 'exact', head: true })
+                                .eq('Status', 'Active')
+                                .eq('PartyCode', pCode);
+
+                            if ((count && count > 1) || pCode === 'CASH') {
+                                openCashPaymentModal(targetField);
+                            }
+                        }
+                    }
                 };
 
                 input.addEventListener('change', () => {
                     syncBtnState();
-                    if (isCashPaymentValue(input.value)) {
-                        openCashPaymentModal(targetField);
-                    }
+                    setTimeout(() => window[`checkAndPromptBillingAddresses_${targetField}`](), 250);
                 });
 
                 input.addEventListener('input', syncBtnState);
@@ -1330,6 +1370,13 @@
             document.addEventListener('DOMContentLoaded', function () {
                 bindFieldTriggers('partyName', 'openPartyBillingModalBtn', 'partyName');
                 bindFieldTriggers('vendorName', 'openVendorBillingModalBtn', 'vendorName');
+
+                document.getElementById('newButton')?.addEventListener('click', () => {
+                    const hintV = document.getElementById('selectedVendorSubPartyHint');
+                    const hintC = document.getElementById('selectedSubPartyHint');
+                    if (hintV) { hintV.textContent = ''; hintV.classList.add('d-none'); }
+                    if (hintC) { hintC.textContent = ''; hintC.classList.add('d-none'); }
+                });
 
                 document.getElementById('toggleAddSubPartyFormBtn')?.addEventListener('click', () => {
                     document.getElementById('addSubPartyCard')?.classList.toggle('d-none');
@@ -1372,16 +1419,10 @@
                         company_id: window.companyId || window.currentCompanyId || null
                     };
 
-                    const client = getSupabaseClient();
+                    const client = await supabaseClient;
                     if (client) {
-                        const { data, error } = await client
-                            .from('PartyBillingAddress')
-                            .insert([payload])
-                            .select()
-                            .single();
-
+                        const { data, error } = await client.from('PartyBillingAddress').insert([payload]).select().single();
                         if (error) {
-                            console.error('Insert PartyBillingAddress error:', error);
                             alert('Error saving sub-party: ' + error.message);
                             return;
                         }
@@ -1392,6 +1433,91 @@
                 });
             });
         })();
+
+        // Generate and Print Cash Voucher
+        document.getElementById('printCashVoucherBtn')?.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            const lrNumber = document.getElementById('lrNumber')?.value || 'DRAFT';
+            const vendorName = document.getElementById('vendorName')?.value || 'Cash Payment';
+            const vehicleNo = document.getElementById('vehicleNumber')?.value || '-';
+            const origin = document.getElementById('originCity')?.value || '';
+            const destination = document.getElementById('destinationCity')?.value || '';
+            const route = origin && destination ? `${origin} to ${destination}` : '-';
+
+            let totalAmount = 0;
+            const vendorRows = document.querySelectorAll('#vendorChargesDetailsTable tbody tr:not(.vm-empty)');
+            vendorRows.forEach(row => {
+                const rowTotal = parseFloat(row.cells[7]?.textContent || 0);
+                if (!isNaN(rowTotal)) totalAmount += rowTotal;
+            });
+
+            if (totalAmount === 0) {
+                alert('Please add vendor charges before generating a cash voucher.');
+                return;
+            }
+
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Cash Voucher - ${lrNumber}</title>
+                    <style>
+                        body { font-family: 'Inter', Arial, sans-serif; padding: 40px; color: #333; }
+                        .voucher-box { border: 2px solid #2c3e50; padding: 30px; max-width: 700px; margin: 0 auto; position: relative; }
+                        .header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px; }
+                        .header h2 { margin: 0; color: #2c3e50; text-transform: uppercase; letter-spacing: 2px; }
+                        .header p { margin: 5px 0 0; font-size: 14px; color: #666; }
+                        .row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 15px; }
+                        .label { font-weight: 600; width: 150px; display: inline-block; }
+                        .value { border-bottom: 1px dashed #999; flex-grow: 1; padding-left: 10px; }
+                        .amount-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; }
+                        .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
+                        .sig-line { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 14px; }
+                        @media print { body { padding: 0; } .voucher-box { border: none; } }
+                    </style>
+                </head>
+                <body onload="window.print();">
+                    <div class="voucher-box">
+                        <div class="header">
+                            <h2>Cash Payment Voucher</h2>
+                            <p>AllEdge Soft & Logic (OPC) Pvt. Ltd.</p>
+                        </div>
+                        <div class="row">
+                            <div><span class="label">Voucher Date:</span> <span>${new Date().toLocaleDateString('en-IN')}</span></div>
+                            <div><span class="label">LR Number:</span> <span>${lrNumber}</span></div>
+                        </div>
+                        <div class="row" style="margin-top: 25px;">
+                            <span class="label">Paid To:</span>
+                            <span class="value">${vendorName}</span>
+                        </div>
+                        <div class="row">
+                            <span class="label">Vehicle No:</span>
+                            <span class="value">${vehicleNo}</span>
+                        </div>
+                        <div class="row">
+                            <span class="label">Route:</span>
+                            <span class="value">${route}</span>
+                        </div>
+                        <div class="amount-box">
+                            ₹ ${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div class="row">
+                            <span class="label">Being payment for:</span>
+                            <span class="value">Freight charges for LR ${lrNumber}</span>
+                        </div>
+                        <div class="signatures">
+                            <div class="sig-line">Receiver's Signature</div>
+                            <div class="sig-line">Authorised Signatory</div>
+                        </div>
+                    </div>
+                </` + `body>
+                </` + `html>
+            `;
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+        });
     </script>
 </body>
 

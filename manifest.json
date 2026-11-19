@@ -1,15 +1,14 @@
 {
-  "id": "/?source=pwa",
+  "id": "/",
   "name": "BizNavigation",
   "short_name": "BizNav",
   "description": "Smart logistics software for transportation, warehousing & freight forwarding.",
   "lang": "en-US",
   "dir": "ltr",
-  "start_url": "/index.html?source=pwa",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "display_override": [
-    "window-controls-overlay",
     "standalone",
     "minimal-ui"
   ],
@@ -131,33 +130,6 @@
     {
       "protocol": "web+biznav",
       "url": "/track.html?id=%s"
-    }
-  ],
-  "share_target": {
-    "action": "/share.html",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "name",
-      "text": "description",
-      "url": "link",
-      "files": [
-        {
-          "name": "documents",
-          "accept": ["application/pdf", "image/*"]
-        }
-      ]
-    }
-  },
-  "related_applications": [
-    {
-      "platform": "play",
-      "url": "https://play.google.com/store/apps/details?id=com.biznavigation.app",
-      "id": "com.biznavigation.app"
-    },
-    {
-      "platform": "itunes",
-      "url": "https://apps.apple.com/app/id123456789"
     }
   ],
   "prefer_related_applications": false
