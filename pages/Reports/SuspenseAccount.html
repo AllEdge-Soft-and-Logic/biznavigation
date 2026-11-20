@@ -29,7 +29,6 @@
     <style>
         :root {
             --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
             --bg-color: #f8fafc;
             --surface-color: #ffffff;
             --border-color: #e2e8f0;
@@ -54,12 +53,12 @@
         .card {
             border: 1px solid rgba(226, 232, 240, 0.8);
             border-radius: var(--radius-lg);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
             background-color: var(--surface-color);
         }
 
         .card-body {
-            padding: 1.5rem 2rem !important;
+            padding: 1.5rem 2rem;
         }
 
         /* Action Bar */
@@ -72,9 +71,10 @@
         .btn {
             font-weight: 500;
             border-radius: 6px;
-            padding: 0.4rem 0.875rem;
+            padding: 0.45rem 0.875rem;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.35rem;
             transition: var(--transition);
         }
@@ -85,7 +85,7 @@
 
         /* Form Controls */
         .form-label {
-            margin-bottom: 0.3rem !important;
+            margin-bottom: 0.3rem;
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-muted);
@@ -95,8 +95,8 @@
 
         .form-control,
         .form-select {
-            padding: 0.45rem 0.75rem !important;
-            font-size: 0.875rem !important;
+            padding: 0.45rem 0.75rem;
+            font-size: 0.875rem;
             background-color: #f8fafc;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
@@ -118,15 +118,6 @@
 
         .form-control::placeholder {
             color: #94a3b8;
-        }
-
-        /* Filter Panel */
-        .filter-panel {
-            background-color: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            padding: 1.25rem;
-            margin-bottom: 1.25rem;
         }
 
         /* Table Container */
@@ -155,7 +146,7 @@
             font-weight: 600;
             z-index: 2;
             white-space: nowrap;
-            padding: 0.7rem 0.75rem !important;
+            padding: 0.7rem 0.75rem;
             border-bottom: 1px solid var(--border-color);
             border-top: none;
             text-align: center;
@@ -164,7 +155,7 @@
         #suspenseTable tbody td {
             vertical-align: middle;
             font-size: 0.85rem;
-            padding: 0.6rem 0.75rem !important;
+            padding: 0.6rem 0.75rem;
             color: var(--text-main);
             border-bottom: 1px solid var(--border-color);
         }
@@ -179,14 +170,17 @@
 
         /* Footer Rows */
         #suspenseTable tfoot td {
-            padding: 0.7rem 0.75rem !important;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            padding: 0.7rem 0.75rem;
             font-size: 0.85rem;
             font-weight: 600;
             border-top: 1px solid var(--border-color);
         }
 
-        #suspenseTable tfoot .table-secondary {
-            background-color: #f1f5f9 !important;
+        #suspenseTable tfoot .table-secondary td {
+            background-color: #f1f5f9;
             color: var(--text-main);
         }
 
@@ -219,7 +213,7 @@
             color: var(--text-muted);
             font-size: 0.8rem;
             padding: 0.35rem 0.7rem;
-            border-radius: 6px !important;
+            border-radius: 6px;
             transition: var(--transition);
         }
 
@@ -246,7 +240,7 @@
             width: 2.5rem;
             height: 2.5rem;
             border-width: 0.2rem;
-            color: var(--primary-color) !important;
+            color: var(--primary-color);
         }
 
         /* Empty State */
@@ -277,16 +271,16 @@
         @media (max-width: 768px) {
             #suspenseTable thead th {
                 font-size: 0.68rem;
-                padding: 0.5rem 0.6rem !important;
+                padding: 0.5rem 0.6rem;
             }
 
             #suspenseTable tbody td {
                 font-size: 0.75rem;
-                padding: 0.5rem 0.6rem !important;
+                padding: 0.5rem 0.6rem;
             }
 
             .card-body {
-                padding: 1rem 1.25rem !important;
+                padding: 1rem 1.25rem;
             }
         }
     </style>
@@ -303,7 +297,6 @@
         <!-- Main Content -->
         <main class="main-content">
             <div class="page-content">
-
                 <div class="container-fluid mt-3 mb-4" id="root">
 
                     <!-- Filter Section -->
@@ -314,7 +307,7 @@
                                 <!-- Action Bar -->
                                 <div
                                     class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Suspense Account Report</h5>
+                                    <h5 class="m-0 fw-bold text-dark">Suspense Account Report</h5>
                                 </div>
 
                                 <!-- Filters Grid -->
@@ -322,51 +315,39 @@
 
                                     <!-- Party Code / Name -->
                                     <div class="col-md-6 col-lg-4">
-                                        <label for="partyCode" class="form-label">
-                                            Party Name
-                                        </label>
+                                        <label for="partyCode" class="form-label">Party Name</label>
                                         <input type="text" id="partyCode" class="form-control" list="partyCodeList"
-                                            placeholder="Enter Party Name / Code" autocomplete="off"
-                                            aria-label="Party Code">
+                                            placeholder="Enter Party Name / Code" autocomplete="off">
                                         <datalist id="partyCodeList"></datalist>
                                     </div>
 
                                     <!-- Date Range -->
-                                    <div class="col-md-4 col-lg-3">
-                                        <label for="dateRange" class="form-label">
-                                            Receipt Date Range
-                                        </label>
+                                    <div class="col-md-6 col-lg-3">
+                                        <label for="dateRange" class="form-label">Receipt Date Range</label>
                                         <input type="text" id="dateRange" class="form-control"
-                                            placeholder="Select Date Range" readonly aria-label="Receipt Date Range">
+                                            placeholder="Select Date Range" readonly>
                                     </div>
 
                                     <!-- Financial Year -->
-                                    <div class="col-md-4 col-lg-2">
-                                        <label for="financialYear" class="form-label">
-                                            Financial Year
-                                        </label>
+                                    <div class="col-md-6 col-lg-2">
+                                        <label for="financialYear" class="form-label">Financial Year</label>
                                         <input type="text" id="financialYear" class="form-control"
-                                            list="financialYearList" placeholder="YYYY-YYYY" autocomplete="off"
-                                            aria-label="Financial Year">
+                                            list="financialYearList" placeholder="YYYY-YYYY" autocomplete="off">
                                         <datalist id="financialYearList"></datalist>
                                     </div>
 
-                                    <!-- Search Button -->
-                                    <div class="col-md-1 col-lg-1_5 d-grid">
-                                        <button type="button" class="btn btn-primary" id="searchBtn">
+                                    <!-- Action Buttons -->
+                                    <div class="col-md-6 col-lg-3 d-flex gap-2">
+                                        <button type="button" class="btn btn-primary flex-fill" id="searchBtn">
                                             <i class="bi bi-search"></i> Search
                                         </button>
-                                    </div>
-
-                                    <!-- Reset Button -->
-                                    <div class="col-md-1 col-lg-1_5 d-grid">
-                                        <button type="button" class="btn btn-outline-secondary bg-white" id="resetBtn">
+                                        <button type="button" class="btn btn-outline-secondary bg-white flex-fill"
+                                            id="resetBtn">
                                             <i class="bi bi-arrow-clockwise"></i> Reset
                                         </button>
                                     </div>
 
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -390,9 +371,7 @@
                     <div class="card">
                         <div class="table-responsive">
                             <table id="suspenseTable" class="table">
-                                <caption class="visually-hidden">
-                                    Suspense Account Report
-                                </caption>
+                                <caption class="visually-hidden">Suspense Account Report</caption>
                                 <thead>
                                     <tr>
                                         <th scope="col">Sr No</th>
@@ -401,8 +380,8 @@
                                         <th scope="col">Party Code</th>
                                         <th scope="col">Payment Mode</th>
                                         <th scope="col">Reference No.</th>
-                                        <th scope="col" class="text-end">Suspense Amount</th>
                                         <th scope="col">Narration</th>
+                                        <th scope="col" class="text-end">Suspense Amount</th>
                                     </tr>
                                 </thead>
 
@@ -410,9 +389,8 @@
 
                                 <tfoot>
                                     <tr class="table-secondary fw-bold">
-                                        <td colspan="6" class="text-end">Total Suspense Amount</td>
+                                        <td colspan="7" class="text-end">Total Suspense Amount</td>
                                         <td id="totalSuspenseAmount" class="text-end">0.00</td>
-                                        <td></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -428,21 +406,18 @@
 
                         <!-- Export Buttons -->
                         <div class="d-flex flex-wrap gap-2">
-                            <button id="exportExcelBtn" class="btn btn-outline-success btn-sm bg-white">
+                            <button type="button" id="exportExcelBtn" class="btn btn-outline-success btn-sm bg-white">
                                 <i class="bi bi-file-earmark-excel"></i> Export Excel
                             </button>
-
-                            <button id="exportPdfBtn" class="btn btn-outline-danger btn-sm bg-white">
+                            <button type="button" id="exportPdfBtn" class="btn btn-outline-danger btn-sm bg-white">
                                 <i class="bi bi-file-earmark-pdf"></i> Export PDF
                             </button>
                         </div>
                     </div>
 
                 </div>
-
             </div>
         </main>
-
     </div>
 
     <!-- Bootstrap -->
@@ -451,21 +426,20 @@
     <!-- Flatpickr -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
 
+    <!-- jsPDF & AutoTable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"
         defer></script>
 
-    <!-- Supabase -->
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <!-- Supabase (pinned v2 via jsDelivr) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
     <!-- Application Scripts -->
     <script src="../../assets/js/utils/server.js" defer></script>
     <script src="../../assets/js/utils/navbar.js" defer></script>
     <script src="../../assets/js/utils/utils.js" defer></script>
-
-    <!-- Changed to specific suspense script -->
     <script src="../../assets/js/Report/suspenseAccountReport.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
-
 </body>
 
 </html>

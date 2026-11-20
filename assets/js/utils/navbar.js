@@ -59,7 +59,8 @@ const Navbar = (() => {
                 { label: "Outstanding Details", icon: "bi-currency-rupee", href: "/pages/Reports/outstandingDetails.html" },
                 { label: "Tax Details", icon: "bi-percent", href: "/pages/Reports/reportGSTDetails.html" },
                 { label: "Accounting Ledger", icon: "bi-journal-bookmark", href: "/pages/Reports/accountingLedger.html" },
-                { label: "Bank Account Ledger", icon: "bi-wallet2", href: "/pages/Reports/bankAccountLedger.html" }
+                { label: "Bank Account Ledger", icon: "bi-wallet2", href: "/pages/Reports/bankAccountLedger.html" },
+                { label: "Suspense Account Ledger", icon: "bi-receipt", href: "/pages/Reports/suspenseAccount.html" }
             ]
         },
         {
@@ -345,7 +346,7 @@ const Navbar = (() => {
 
                 const breadcrumb = document.getElementById("breadcrumb");
                 if (breadcrumb) {
-                    breadcrumb.innerHTML = `<div class="breadcrumb-box">Home / <span class="text-primary">${escapeHTML(item.dataset.label)}</span></div>`;
+                    breadcrumb.innerHTML = `<div class="breadcrumb-box d-none">Home / <span class="text-primary">${escapeHTML(item.dataset.label)}</span></div>`;
                 }
             }
         });
@@ -367,7 +368,7 @@ const Navbar = (() => {
 
         const breadcrumb = document.getElementById("breadcrumb");
         if (breadcrumb && label) {
-            breadcrumb.innerHTML = `<div class="breadcrumb-box">Home / <span class="text-primary">${escapeHTML(label)}</span></div>`;
+            breadcrumb.innerHTML = `<div class="breadcrumb-box d-none">Home / <span class="text-primary">${escapeHTML(label)}</span></div>`;
         }
     }
 

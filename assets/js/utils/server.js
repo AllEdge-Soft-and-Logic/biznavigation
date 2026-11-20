@@ -221,6 +221,8 @@ function redirectToLogin() {
 }
 
 async function autoUnlockMultipleTables() {
+    if (!NetworkService.isOnline) return;
+
     const tables = [
         'international_booking',
         'FullLoadBookingDetails',
@@ -228,16 +230,12 @@ async function autoUnlockMultipleTables() {
         'CustomsClearance_Details'
     ];
 
-    const fiveMinutesAgo = new Date(Date.now() - 6 * 60 * 1000)
-        .toISOString()
-        .slice(0, 19)
-        .replace('T', ' ');
+    const cutoffTime = new Date(Date.now() - 6 * 60 * 1000).toISOString();
+    const client = SupabaseService.client;
 
-    // console.log("Unlock records before:", fiveMinutesAgo);
-
-    try {
-        for (const tableName of tables) {
-            const { error } = await supabaseClient
+    const results = await Promise.allSettled(
+        tables.map(async (tableName) => {
+            const { error } = await client
                 .from(tableName)
                 .update({
                     IsLocked: false,
@@ -246,17 +244,19 @@ async function autoUnlockMultipleTables() {
                 })
                 .eq('IsLocked', true)
                 .not('LockedAt', 'is', null)
-                .lt('LockedAt', fiveMinutesAgo);
+                .lt('LockedAt', cutoffTime);
 
             if (error) {
-                console.error(`Error in ${tableName}:`, error.message);
-            } else {
-                // console.log(`Unlocked records in ${tableName}`);
+                throw new Error(`${tableName}: ${error.message}`);
             }
+        })
+    );
+
+    results.forEach((result) => {
+        if (result.status === 'rejected') {
+            console.warn('Auto-unlock warning:', result.reason.message);
         }
-    } catch (err) {
-        console.error('Auto-unlock failed:', err.message);
-    }
+    });
 }
 
 // Listen for a new service worker taking control and auto-reload the page
