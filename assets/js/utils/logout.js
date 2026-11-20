@@ -100,19 +100,32 @@ async function logoutUser() {
 
 async function logoutLocalStorageAndDB() {
     const userLoginID = localStorage.getItem('UserLoginID');
-    const sessionToken = sessionStorage.getItem('session_token');
+    const sessionToken =
+        sessionStorage.getItem('session_token') ||
+        localStorage.getItem('session_token');
 
     try {
-        if (userLoginID && sessionToken) {
-            // Mark THIS session inactive in the database
-            await supabase
+        if (userLoginID) {
+            // Do NOT await here — build the query first
+            let query = supabaseClient
                 .from('user_sessions')
                 .update({
                     is_active: false,
                     last_active: new Date().toISOString()
                 })
-                .eq('user_id', userLoginID)
-                .eq('session_token', sessionToken);
+                .eq('user_id', userLoginID);
+
+            if (sessionToken) {
+                query = query.eq('session_token', sessionToken);
+            } else {
+                query = query.eq('is_active', true);
+            }
+
+            // Execute once all filters are chained
+            const { error } = await query;
+            if (error) {
+                console.error("Supabase logout update error:", error.message, error);
+            }
         }
     } catch (error) {
         console.error("Database session logout failed:", error);
@@ -123,12 +136,13 @@ async function logoutLocalStorageAndDB() {
 
         [
             'EmpCode', 'UserName', 'UserLoginID', 'UserType',
-            'CompanyID', 'WorkingBranch', 'CompanyShortCode', 'lastActivityTime'
+            'CompanyID', 'WorkingBranch', 'CompanyShortCode',
+            'lastActivityTime', 'session_token'
         ].forEach(key => localStorage.removeItem(key));
 
         sessionStorage.removeItem('session_token');
 
-        window.location.href = '../../index.html';
+        (window.top || window).location.replace('/index.html');
     }
 }
 
@@ -158,6 +172,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.addEventListener(evt, updateLastActivityTime, { passive: true })
         );
 
+    // document.addEventListener("click", async (e) => {
+    //     const logoutBtn = e.target.closest("#logoutBtn"); // Replace #logoutBtn with your button's actual ID or class
+    //     if (!logoutBtn) return;
+
+    //     e.preventDefault();
+    //     await logoutUser();
+    // });
+
     updateLastActivityTime();
     startIdleMonitor();
     startSessionValidation();
@@ -165,4 +187,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (localStorage.getItem('UserLoginID')) {
         await autoUnlockMultipleTables();
     }
+
 });

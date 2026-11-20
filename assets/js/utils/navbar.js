@@ -683,7 +683,9 @@ const Navbar = (() => {
         container.prepend(navbar);
         setupThemeToggle();
 
-        navbar.querySelector("#logoutBtn")?.addEventListener("click", async () => {
+        navbar.querySelector("#logoutBtn")?.addEventListener("click", async (e) => {
+            e.preventDefault();
+
             try {
                 const userRaw = localStorage.getItem("user");
                 if (userRaw) {
@@ -692,17 +694,21 @@ const Navbar = (() => {
                         await logoutOtherSessions(user.id);
                     }
                 }
-            } catch (e) {
-                console.error("Logout session error:", e);
-            } finally {
+            } catch (err) {
+                console.error("Logout session error:", err);
+            }
+
+            // Let logoutUser() update user_sessions while UserLoginID is still in localStorage
+            if (typeof logoutUser === "function") {
+                await logoutUser();
+            } else {
+                // Fallback only if logout.js is not loaded on the page
                 const savedTheme = localStorage.getItem("biznav_theme");
                 const savedSidebar = localStorage.getItem("biznav_sidebar_collapsed");
                 localStorage.clear();
                 if (savedTheme) localStorage.setItem("biznav_theme", savedTheme);
                 if (savedSidebar) localStorage.setItem("biznav_sidebar_collapsed", savedSidebar);
-
-                if (typeof logoutUser === "function") logoutUser();
-                else window.location.replace("/index.html");
+                window.location.replace("/index.html");
             }
         });
     }

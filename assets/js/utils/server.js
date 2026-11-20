@@ -161,6 +161,7 @@ function handleUserTypePermissions() {
 
 async function logoutOtherSessions(userId) {
     try {
+        console.log('Logging out other sessions for user:', userId);
         const { error } = await supabaseClient
             .from('user_sessions')
             .update({ is_active: false })
