@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FTL Performance Report Management" />
+    <title>FTL Performance Report | BizNavigation</title>
+
+    <!-- Performance: Preconnect to critical domains -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    </noscript>
+
+    <!-- External CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
+    <!-- Application Styles -->
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --pivot-header-bg: #6f8d38;
+            --pivot-month-bg: #c4d79b;
+            --pivot-month-hover: #b5cc84;
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', system-ui, sans-serif;
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #root {
+            flex: 1;
+        }
+
+        /* Card Styling */
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+            background-color: var(--surface-color);
+        }
+
+        .card-body {
+            padding: 1.5rem 2rem;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 0.4rem 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: var(--transition);
+        }
+
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.25rem;
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 0.65rem 1.25rem;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--text-main);
+            border-color: transparent;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--pivot-header-bg);
+            background-color: transparent;
+            border-bottom: 2px solid var(--pivot-header-bg);
+        }
+
+        /* Chart Container */
+        .chart-card {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Form Controls */
+        .form-label {
+            margin-bottom: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.45rem 0.75rem;
+            font-size: 0.875rem;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #ffffff;
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Pivot Summary Table (Shared for Month & Year tabs) */
+        .table-responsive {
+            max-height: 65vh;
+            overflow: auto;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+        }
+
+        .pivot-table {
+            width: 100%;
+            min-width: 720px;
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .pivot-table thead th {
+            position: sticky;
+            top: 0;
+            background-color: var(--pivot-header-bg);
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            z-index: 3;
+            white-space: nowrap;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid #5a742b;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .pivot-table thead th:first-child {
+            text-align: left;
+            width: 44%;
+        }
+
+        .pivot-table thead th:not(:first-child) {
+            text-align: right;
+            width: 14%;
+        }
+
+        .pivot-table tbody td,
+        .pivot-table tfoot td {
+            vertical-align: middle;
+            white-space: nowrap;
+            font-size: 0.875rem;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #d9e2cc;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .pivot-table td:not(:first-child) {
+            text-align: right;
+        }
+
+        /* Parent Group Row (Month / Year) */
+        .pivot-table tbody tr.group-row {
+            background-color: var(--pivot-month-bg);
+            color: #1f2937;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .pivot-table tbody tr.group-row:hover {
+            background-color: var(--pivot-month-hover);
+        }
+
+        .group-toggle-btn {
+            background: #ffffff;
+            border: 1px solid #6b7280;
+            color: #1f2937;
+            width: 18px;
+            height: 18px;
+            padding: 0;
+            margin-right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            line-height: 1;
+            border-radius: 2px;
+            vertical-align: middle;
+        }
+
+        /* Customer Child Row */
+        .pivot-table tbody tr.customer-row {
+            background-color: #ffffff;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .pivot-table tbody tr.customer-row:hover {
+            background-color: #f8fafc;
+        }
+
+        .pivot-table tbody tr.customer-row td:first-child {
+            padding-left: 2.75rem;
+        }
+
+        /* Grand Total Footer Row */
+        .pivot-table tfoot tr.grand-total-row td {
+            position: sticky;
+            bottom: 0;
+            background-color: #ffffff;
+            color: #000000;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-top: 2px solid var(--pivot-header-bg);
+            border-bottom: none;
+            z-index: 2;
+        }
+
+        /* Loading Spinner */
+        #loadingSpinner .spinner-border {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-width: 0.2rem;
+            color: var(--primary-color) !important;
+        }
+
+        /* Empty State */
+        .empty-row td {
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center !important;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem;
+            }
+
+            .chart-wrapper {
+                height: 240px;
+            }
+
+            .pivot-table thead th,
+            .pivot-table tbody td,
+            .pivot-table tfoot td {
+                font-size: 0.78rem;
+                padding: 0.55rem 0.65rem;
+            }
+
+            .pivot-table tbody tr.customer-row td:first-child {
+                padding-left: 1.75rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-wrapper d-flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" aria-label="Main Navigation">
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex-grow-1">
+            <div class="page-content">
+                <div class="container-fluid mt-3 mb-4" id="root">
+                    <div class="card border-0">
+                        <div class="card-body">
+
+                            <!-- Action Bar -->
+                            <header
+                                class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                <h1 class="h5 m-0 fw-bold text-dark">FTL Performance Report</h1>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-secondary btn-sm bg-white" type="button"
+                                        id="toggleExpandAllBtn">
+                                        <i class="bi bi-arrows-expand" aria-hidden="true"></i> Expand All
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm bg-white" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#filterSection" aria-expanded="false"
+                                        aria-controls="filterSection">
+                                        <i class="bi bi-funnel" aria-hidden="true"></i> Toggle Filters
+                                    </button>
+                                </div>
+                            </header>
+
+                            <!-- Filters Section -->
+                            <div class="collapse" id="filterSection">
+                                <section class="filter-panel" aria-label="Search Filters">
+                                    <form class="row g-3" id="searchFilters" onsubmit="event.preventDefault();">
+
+                                        <div class="col-12 col-md-6 col-lg-3">
+                                            <label for="customerName" class="form-label">Customer Name</label>
+                                            <input type="text" id="customerName" class="form-control"
+                                                list="customerNameList" placeholder="Enter Customer Name">
+                                            <datalist id="customerNameList"></datalist>
+                                        </div>
+
+                                        <div class="col-6 col-md-2 col-lg-2">
+                                            <label for="bookedMonth" class="form-label">Booked Month</label>
+                                            <input type="month" id="bookedMonth" class="form-control">
+                                        </div>
+
+                                        <div class="col-6 col-md-4 col-lg-2">
+                                            <label for="financialYear" class="form-label">Financial Year</label>
+                                            <input type="text" id="financialYear" class="form-control"
+                                                placeholder="YYYY-YYYY" list="financialYearList">
+                                            <datalist id="financialYearList"></datalist>
+                                        </div>
+
+                                        <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
+                                            <button type="submit" class="btn btn-primary" id="searchBtn"
+                                                aria-label="Search records">
+                                                <i class="bi bi-search" aria-hidden="true"></i> Search
+                                            </button>
+                                        </div>
+                                    </form>
+                                </section>
+                            </div>
+
+                            <!-- Tabs Navigation -->
+                            <ul class="nav nav-tabs" id="reportTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="month-tab" data-bs-toggle="tab"
+                                        data-bs-target="#monthTabPane" type="button" role="tab"
+                                        aria-controls="monthTabPane" aria-selected="true" data-tab-type="month">
+                                        <i class="bi bi-calendar-month me-1"></i> Month-wise
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="year-tab" data-bs-toggle="tab"
+                                        data-bs-target="#yearTabPane" type="button" role="tab"
+                                        aria-controls="yearTabPane" aria-selected="false" data-tab-type="year">
+                                        <i class="bi bi-calendar-range me-1"></i> Year-wise
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Spinner -->
+                            <div id="loadingSpinner" class="text-center my-4" style="display: none;" aria-live="polite">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading records...</span>
+                                </div>
+                                <p class="text-muted mt-2 small mb-0">Loading records...</p>
+                            </div>
+
+                            <!-- Tab Panes -->
+                            <div class="tab-content" id="reportTabsContent">
+
+                                <!-- MONTH-WISE TAB -->
+                                <div class="tab-pane fade show active" id="monthTabPane" role="tabpanel"
+                                    aria-labelledby="month-tab" tabindex="0">
+                                    <!-- Month-wise Pivot Table -->
+                                    <div class="table-responsive" tabindex="0">
+                                        <table class="table pivot-table" id="bookingTable" data-tab="month">
+                                            <thead>
+                                                <tr>
+                                                    <th data-key="Label">Month</th>
+                                                    <th data-key="TotalSales">Total Sales</th>
+                                                    <th data-key="TotalPurchase">Total Purchase</th>
+                                                    <th data-key="TotalMargin">Total Margin</th>
+                                                    <th data-key="MarginPer">Margin %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tableBody">
+                                                <tr class="empty-row">
+                                                    <td colspan="5">
+                                                        <i class="bi bi-inbox fs-3 d-block mb-2 opacity-50"></i>
+                                                        No data found
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot id="tableFoot" style="display: none;">
+                                                <tr class="grand-total-row">
+                                                    <td>Grand Total</td>
+                                                    <td id="grandTotalSales">0</td>
+                                                    <td id="grandTotalPurchase">0</td>
+                                                    <td id="grandTotalMargin">0</td>
+                                                    <td id="grandTotalMarginPer">0.00%</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                    <!-- Month-wise Line Chart -->
+                                    <div class="chart-card">
+                                        <div class="chart-wrapper">
+                                            <canvas id="monthLineChart"></canvas>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                                <!-- YEAR-WISE TAB -->
+                                <div class="tab-pane fade" id="yearTabPane" role="tabpanel" aria-labelledby="year-tab"
+                                    tabindex="0">
+
+                                    <!-- Year-wise Pivot Table -->
+                                    <div class="table-responsive" tabindex="0">
+                                        <table class="table pivot-table" id="yearTable" data-tab="year">
+                                            <thead>
+                                                <tr>
+                                                    <th data-key="Label">Financial Year</th>
+                                                    <th data-key="TotalSales">Total Sales</th>
+                                                    <th data-key="TotalPurchase">Total Purchase</th>
+                                                    <th data-key="TotalMargin">Total Margin</th>
+                                                    <th data-key="MarginPer">Margin %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="yearTableBody">
+                                                <tr class="empty-row">
+                                                    <td colspan="5">
+                                                        <i class="bi bi-inbox fs-3 d-block mb-2 opacity-50"></i>
+                                                        No data found
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                            <tfoot id="yearTableFoot" style="display: none;">
+                                                <tr class="grand-total-row">
+                                                    <td>Grand Total</td>
+                                                    <td id="yearGrandTotalSales">0</td>
+                                                    <td id="yearGrandTotalPurchase">0</td>
+                                                    <td id="yearGrandTotalMargin">0</td>
+                                                    <td id="yearGrandTotalMarginPer">0.00%</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                    <!-- Year-wise Line Chart -->
+                                    <div class="chart-card">
+                                        <div class="chart-wrapper">
+                                            <canvas id="yearLineChart"></canvas>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- Footer & Export -->
+                            <footer
+                                class="mt-4 pt-3 border-top d-flex justify-content-end align-items-center flex-wrap gap-3">
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button class="btn btn-outline-success btn-sm bg-white" id="exportExcelBtn">
+                                        <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Export to Excel
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm bg-white" id="exportPdfBtn">
+                                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Export to PDF
+                                    </button>
+                                </div>
+                            </footer>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Deferred Library Scripts -->
+    <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script defer
+        src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script defer src="https://unpkg.com/@supabase/supabase-js"></script>
+
+    <!-- App Scripts -->
+    <script defer src="../../assets/js/utils/server.js"></script>
+    <script defer src="../../assets/js/utils/navbar.js"></script>
+    <script defer src="../../assets/js/utils/utils.js"></script>
+    <script defer src="../../assets/js/Report/ftlPerformanceReport.js"></script>
+    <script defer src="../../assets/js/utils/logout.js"></script>
+</body>
+
+</html>

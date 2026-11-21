@@ -85,7 +85,7 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
     // ==========================================
     // FOOTER
     // ==========================================
-    drawaddFooterToAllPages(doc, PAGE, y);
+    // drawaddFooterToAllPages(doc, PAGE, y);
 
     // ==========================================
     // SAVE PDF

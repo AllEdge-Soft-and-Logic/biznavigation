@@ -157,10 +157,10 @@ async function generate_Clear_InvoicePDF_Main(
         // ==========================================
         // GLOBAL ITEMS
         // ==========================================
-        drawaddFooterToAllPages(
-            doc,
-            PAGE
-        );
+        // drawaddFooterToAllPages(
+        //     doc,
+        //     PAGE
+        // );
 
         drawInvoiceBorderAllPages(doc, PAGE, "Customs Clearance");
 

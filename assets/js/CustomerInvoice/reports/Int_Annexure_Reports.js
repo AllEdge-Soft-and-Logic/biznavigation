@@ -64,7 +64,7 @@ async function generate_International_InvoicePDF_Annexure(header, lines = []) {
         y = drawAmountInWords(doc, PAGE, FONT, shipmentResult?.grandTotal || 0, y);
         y = drawBankDetailsSection(doc, PAGE, FONT, company, bank, y);
 
-        drawaddFooterToAllPages(doc, PAGE, y);
+        // drawaddFooterToAllPages(doc, PAGE, y);
         drawInvoiceBorderAllPages(doc, PAGE);
 
         // SAVE PDF

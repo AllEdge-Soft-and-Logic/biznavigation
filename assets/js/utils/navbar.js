@@ -60,7 +60,9 @@ const Navbar = (() => {
                 { label: "Tax Details", icon: "bi-percent", href: "/pages/Reports/reportGSTDetails.html" },
                 { label: "Accounting Ledger", icon: "bi-journal-bookmark", href: "/pages/Reports/accountingLedger.html" },
                 { label: "Bank Account Ledger", icon: "bi-wallet2", href: "/pages/Reports/bankAccountLedger.html" },
-                { label: "Suspense Account Ledger", icon: "bi-receipt", href: "/pages/Reports/suspenseAccount.html" }
+                { label: "Suspense Account Ledger", icon: "bi-receipt", href: "/pages/Reports/suspenseAccount.html" },
+                { label: "FTL Performance", icon: "bi-truck", href: "/pages/Reports/ftlPerformanceReport.html" },
+                { label: "Master Data", icon: "bi-truck", href: "/pages/Reports/masterDataReport.html" },
             ]
         },
         {

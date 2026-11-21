@@ -61,7 +61,7 @@ async function fetchPartyDetails(header) {
     }
 
     const data = await getPartyProfile(header.PartyCode);
-    console.log("Party Profile", data);
+
     // Normalize RCM value (Handles booleans, strings, null/undefined)
     const rawRcm = data?.RCM ?? data?.rcm;
     let rcmValue = "Yes"; // default
@@ -149,29 +149,29 @@ function drawBankDetailsSection(doc, PAGE, FONT, company, bank, y) {
 // ==========================================
 // ADD FOOTER TO ALL PAGES
 // ==========================================
-function drawaddFooterToAllPages(doc, PAGE, y) {
-    const totalPages = doc.getNumberOfPages();
+// function drawaddFooterToAllPages(doc, PAGE, y) {
+//     const totalPages = doc.getNumberOfPages();
 
-    for (let pageNo = 1; pageNo <= totalPages; pageNo++) {
-        doc.setPage(pageNo);
-        const footerYPos = doc.internal.pageSize.getHeight() - 4;
+//     for (let pageNo = 1; pageNo <= totalPages; pageNo++) {
+//         doc.setPage(pageNo);
+//         const footerYPos = doc.internal.pageSize.getHeight() - 4;
 
-        PDF_FONT.bold(doc, 8);
-        doc.setTextColor(0, 102, 204);
-        doc.text("AllEdge Technology for BizNavigation", PAGE.x, footerYPos);
+//         PDF_FONT.bold(doc, 8);
+//         doc.setTextColor(0, 102, 204);
+//         doc.text("AllEdge Technology for BizNavigation", PAGE.x, footerYPos);
 
-        PDF_FONT.italic(doc, 8);
-        doc.setTextColor(180, 0, 0);
-        doc.text("This is a computer-generated invoice. No signature required.", PAGE.x + (PAGE.w / 2), footerYPos, { align: "center" });
+//         PDF_FONT.italic(doc, 8);
+//         doc.setTextColor(180, 0, 0);
+//         doc.text("This is a computer-generated invoice. No signature required.", PAGE.x + (PAGE.w / 2), footerYPos, { align: "center" });
 
-        PDF_FONT.normal(doc, 8);
-        doc.setTextColor(180, 0, 0);
-        doc.text(`Page ${pageNo} of ${totalPages}`, PAGE.x + PAGE.w, footerYPos, { align: "right" });
-    }
+//         PDF_FONT.normal(doc, 8);
+//         doc.setTextColor(180, 0, 0);
+//         doc.text(`Page ${pageNo} of ${totalPages}`, PAGE.x + PAGE.w, footerYPos, { align: "right" });
+//     }
 
-    PDF_FONT.normal(doc, 8);
-    doc.setTextColor(0, 0, 0);
-}
+//     PDF_FONT.normal(doc, 8);
+//     doc.setTextColor(0, 0, 0);
+// }
 
 // ==========================================
 // PDF FONT HELPER

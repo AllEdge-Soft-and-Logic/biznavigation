@@ -41,7 +41,7 @@ async function generate_International_InvoicePDF_Main(header, lines = []) {
     y = drawAmountInWords(doc, PAGE, FONT, shipmentResult.grandTotal, y);
     y = drawBankDetailsSection(doc, PAGE, FONT, company, bank, y);
 
-    drawaddFooterToAllPages(doc, PAGE, y);
+    // drawaddFooterToAllPages(doc, PAGE, y);
     drawInvoiceBorderAllPages(doc, PAGE);
 
     const fileName = `${header?.InvoiceNo || "NA"}_${party?.name || "NA"}.pdf`;

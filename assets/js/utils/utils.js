@@ -2617,3 +2617,62 @@ function formatToReadableDate(dateString) {
 
     return `${day}${suffix} ${months[monthIndex]} ${year}`;
 }
+
+
+// Automatically add footer & page numbers to every jsPDF export
+(function attachGlobalPdfFooter() {
+    window.addEventListener('DOMContentLoaded', () => {
+        if (!window.jspdf || !window.jspdf.jsPDF) return;
+
+        const OriginalJsPDF = window.jspdf.jsPDF;
+
+        window.jspdf.jsPDF = function (...args) {
+            const doc = new OriginalJsPDF(...args);
+
+            if (typeof doc.save === 'function') {
+                const originalSave = doc.save.bind(doc);
+                doc.save = function (...saveArgs) {
+                    addBizNavPdfFooter(doc);
+                    return originalSave(...saveArgs);
+                };
+            }
+
+            return doc;
+        };
+
+        // Preserve static properties & prototype (required for jspdf-autotable)
+        Object.assign(window.jspdf.jsPDF, OriginalJsPDF);
+        window.jspdf.jsPDF.prototype = OriginalJsPDF.prototype;
+    });
+})();
+
+function addBizNavPdfFooter(doc) {
+    const totalPages = doc.internal.getNumberOfPages();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const footerYPos = pageHeight - 7; // 7mm from bottom
+    const leftPadding = 15;  // Adjust left padding (mm)
+    const rightPadding = 6;  // Adjust right padding (mm)
+
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7.5);
+
+        // Left: Company branding (Blue)
+        doc.setTextColor(37, 99, 235);
+        doc.text('AllEdge Technology for BizNavigation', leftPadding, footerYPos);
+
+        // Center: Computer-generated disclaimer (Red)
+        doc.setTextColor(220, 38, 38);
+        doc.text(
+            'This is a computer-generated document. No signature required.',
+            pageWidth / 2,
+            footerYPos,
+            { align: 'center' }
+        );
+
+        // Right: Page number (Black)
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - rightPadding, footerYPos, { align: 'right' });
+    }
+}
