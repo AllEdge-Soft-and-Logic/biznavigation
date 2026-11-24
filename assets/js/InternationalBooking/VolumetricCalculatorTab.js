@@ -200,7 +200,7 @@ document.getElementById("addVolumetricRow").addEventListener("click", function (
         <td>${volumeWtRow}</td>
         <td>${totalVolWtRow}</td>
         <td>${chargableWtRow}</td>
-        <td><button class="btn btn-sm btn-danger remove-row">Delete</button></td>
+        <td><button type="button" class="btn btn-sm btn-danger remove-row">Delete</button></td>
     `;
 
     table.appendChild(row);
@@ -350,7 +350,7 @@ async function loadVolumetricDetails() {
                 <td>${row.VolumePerPcs}</td>
                 <td>${row.VolumeWt}</td>
                 <td>${row.ChargableWt}</td>
-                <td><button class="btn btn-sm btn-danger remove-row"><i class="bi bi-trash"></i></button></td>
+                <td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="bi bi-trash"></i></button></td>
             `;
             tbody.appendChild(tr);
         }
@@ -362,29 +362,32 @@ async function loadVolumetricDetails() {
 }
 
 document.getElementById('volumetricTable').addEventListener('click', async function (e) {
-    if (e.target.classList.contains('remove-row')) {
-        const row = e.target.closest('tr');
-        const status = row.dataset.volumetricStatus;
-        const id = row.dataset.volumetricId;
+    const removeBtn = e.target.closest('.remove-row');
+    if (!removeBtn) return;
 
-        // Confirm delete
-        if (!confirm('Are you sure you want to delete this row?')) return;
+    e.preventDefault(); // Extra safeguard against form submission
 
-        // If it's a saved row, delete from Supabase
-        if (status === 'saved' && id) {
-            const { error } = await supabaseClient
-                .from('VolumetricDetails')
-                .delete()
-                .eq('id', id);
+    const row = removeBtn.closest('tr');
+    const status = row.dataset.volumetricStatus;
+    const id = row.dataset.volumetricId;
 
-            if (error) {
-                alert('Error deleting row from database: ' + error.message);
-                return;
-            }
+    // Confirm delete
+    if (!confirm('Are you sure you want to delete this row?')) return;
+
+    // If it's a saved row, delete from Supabase
+    if (status === 'saved' && id) {
+        const { error } = await supabaseClient
+            .from('VolumetricDetails')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            alert('Error deleting row from database: ' + error.message);
+            return;
         }
-
-        // Remove row from DOM
-        row.remove();
-        updateTotals();
     }
+
+    // Remove row from DOM
+    row.remove();
+    updateTotals();
 });

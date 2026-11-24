@@ -153,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // console.log('Session Data:', SessionService.getSession());
 });
+
 function handleUserTypePermissions() {
     saveButton.disabled = !(UserType === 1 || UserType === 2);
     console.log("UserType:", UserType);

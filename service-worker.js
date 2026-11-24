@@ -1,5 +1,5 @@
 // IMPORTANT: Increment this version on every deployment to clear old caches
-const VERSION = 'v3.04.09.31';
+const VERSION = 'v3.04.09.32';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
 const API_CACHE = `biznav-api-${VERSION}`;
