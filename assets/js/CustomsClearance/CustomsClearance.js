@@ -1,7 +1,5 @@
-// document.addEventListener('DOMContentLoaded', initializeForm);
-
 // Cache common DOM elements
-const jobNoInput = document.getElementById('jobNo'); // Assuming this exists
+const jobNoInput = document.getElementById('jobNo');
 
 // ==========================================
 // JOB NO DOUBLE-CLICK SEARCH MODAL
@@ -19,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const jobSearchModal = new bootstrap.Modal(jobSearchModalEl);
 
     await initializeForm();
+
     // 1. Open modal on double-click of Job No
     jobNoInput.addEventListener("dblclick", async () => {
         jobSearchInput.value = "";
@@ -57,7 +56,6 @@ async function fetchJobsForSearchModal() {
         </tr>`;
 
     try {
-        // Adjust table & column names to match your Supabase schema
         const { data, error } = await supabaseClient
             .from("CustomsClearanceView")
             .select("JobID, JobDate, PartyName, TransitType, BLAWBNo, BENo, ClearancePort, CustomsBroker")
@@ -156,35 +154,25 @@ function renderJobSearchTable(jobs) {
             const modalInstance = bootstrap.Modal.getInstance(document.getElementById("jobSearchModal"));
             if (modalInstance) modalInstance.hide();
 
-            // Trigger existing change/input handlers in CustomsClearance.js to load the job
+            // Trigger existing change/input handlers to load the job
             jobNoInput.dispatchEvent(new Event("change", { bubbles: true }));
             jobNoInput.dispatchEvent(new Event("input", { bubbles: true }));
         });
     });
 }
+
 // ========== Core Functions ==========
 
 async function initializeForm() {
     try {
         await Promise.all([
-            // await loadJobNoSuggestions(),
-            await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
-            await loadSuggestions('customsBrokerSuggestions', 'PartyDetails', CompanyID),
-            await loadBlAwbNumberSuggestions(CompanyID),
-            await loadBeNumberSuggestions(CompanyID),
+            loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
+            loadSuggestions('customsBrokerSuggestions', 'PartyDetails', CompanyID),
+            loadBlAwbNumberSuggestions(CompanyID),
+            loadBeNumberSuggestions(CompanyID),
         ]);
-        const urlParams = new URLSearchParams(window.location.search);
-        const incomingRequestNo = urlParams.get('pickupRequestNo');
-        const headerBadge = document.getElementById("headerPickupRequestBadge");
-        const headerText = document.getElementById("headerPickupRequestNoText");
-
-        if (incomingRequestNo) {
-            headerText.textContent = incomingRequestNo;
-            headerBadge.classList.remove("d-none");
-        }
 
         loadTaxData();
-
     } catch (error) {
         console.error('Failed to load suggestions:', error);
     }
@@ -194,16 +182,11 @@ function getDateValue(id) {
     const value = document.getElementById(id).value.trim();
     return value === "" ? null : value;
 }
+
 /**
  * Retrieves trimmed form data from input fields.
  */
 function getFormData() {
-    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
-    const headerBadge = document.getElementById("headerPickupRequestBadge");
-
-    // Determine if the badge is visible and a valid request number exists
-    const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
-    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
     return {
         JobDate: getDateValue('jobDate'),
         PartyCode: document.getElementById('partyCode').value.trim(),
@@ -232,8 +215,7 @@ function getFormData() {
         ClearancePort: clearancePortInput.value.trim(),
         CustomsBroker: document.getElementById('customsBroker').value.trim(),
         PONo: document.getElementById('poNo').value.trim(),
-        AnyInformation: document.getElementById('information').value.trim(),
-        pickup_request_no: finalPickupRequestNo
+        AnyInformation: document.getElementById('information').value.trim()
     };
 }
 
@@ -241,7 +223,6 @@ function getFormData() {
  * Generates unique JobID based on last record for the company.
  */
 async function generateJobID(companyID) {
-
     const { data, error } = await supabaseClient
         .from("CustomsClearance_Details")
         .select("JobID, JobRunningNo")
@@ -294,11 +275,10 @@ function validateFormData(data) {
  */
 async function saveFormData() {
     let formData = getFormData();
-    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
     if (!validateFormData(formData)) return;
 
     try {
-        let response, headerData, headerRow, parentId, jobID;
+        let parentId, jobID;
 
         if (isUpdateMode()) {
             jobID = jobNoInput ? jobNoInput.value.trim() : '';
@@ -309,8 +289,6 @@ async function saveFormData() {
             formData.update_by = UserLoginID;
             formData.update_at = localtimeStamp;
 
-            // Get the parent id for linking to charges (needed if you want to update charges too)
-            // Optionally select the record to get "id" if needed for charges linkage
             const { data: idData, error: idError } = await supabaseClient
                 .from('CustomsClearance_Details')
                 .select('id')
@@ -321,7 +299,7 @@ async function saveFormData() {
                 alert('Could not find record id for updating charges.');
                 return;
             }
-            parentId = idData.id; // id for charges table
+            parentId = idData.id;
 
             const { data, error } = await supabaseClient
                 .from("CustomsClearance_Details")
@@ -336,11 +314,9 @@ async function saveFormData() {
             jobID = data.JobID;
 
         } else {
-
             // Generate Job ID
             const jobIDResult = await generateJobID(CompanyID);
 
-            // Validate generated Job ID
             if (
                 !jobIDResult ||
                 typeof jobIDResult !== "object" ||
@@ -370,28 +346,17 @@ async function saveFormData() {
 
             if (error) throw error;
 
-            headerRow = data;
-            parentId = data.id;
-            jobID = data.JobID;
-
-            if (error) {
-                throw error;
-            }
-
-            headerRow = data;
             parentId = data.id;
             jobID = data.JobID;
         }
 
-
         document.querySelectorAll('.btn-delete-row').forEach(button => {
             button.disabled = true;
         });
-        addChargesRow.disabled = true; // Enable add row button
+        addChargesRow.disabled = true;
         disableForm();
 
         alert('Data saved successfully!');
-
 
         // Reset save button to insert mode after successful save
         saveButton.setAttribute('data-mode', 'insert');
@@ -399,10 +364,9 @@ async function saveFormData() {
         saveButton.disabled = true;
         if (modifyButton) modifyButton.disabled = false;
 
-        // Save charges (for both insert/update, if needed)
+        // Save linked charges and equipment details
         await saveChargesTableToSupabase(parentId, jobID);
-        await saveEquipmentDetails(); // Save equipment details linked to this job
-        await updatePickupRequestStatus(requestNoText);
+        await saveEquipmentDetails();
 
     } catch (error) {
         console.error('Error saving data:', error);
@@ -413,19 +377,14 @@ async function saveFormData() {
 // ========== Event Listeners ==========
 
 saveButton.addEventListener('click', async function () {
-    await saveFormData();                // Your main form save
-
+    await saveFormData();
 });
 
-
 if (clearancePortInput) {
-
     clearancePortInput.addEventListener('input', updateSuggestionsAndCountry);
 
     clearancePortInput.addEventListener('change', () => {
-
         const val = clearancePortInput.value.trim().toLowerCase();
-
         const matchedPort = currentSuggestions.find(
             s => s.label.toLowerCase() === val
         );
@@ -435,7 +394,6 @@ if (clearancePortInput) {
             : null;
 
         console.log("Selected Port Data:", selectedPortData);
-
     });
 }
 
@@ -450,20 +408,16 @@ if (modifyButton) {
         document.querySelectorAll('.btn-delete-row').forEach(button => {
             button.disabled = false;
         });
-        addChargesRow.disabled = false; // Enable add row button
-
+        addChargesRow.disabled = false;
     });
 }
 
-
 jobNoInput.addEventListener('input', async function () {
-
     const searchText = this.value.trim();
 
     if (searchText.length < 2) return;
 
     try {
-
         const { data, error } = await supabaseClient
             .from('CustomsClearance_Details')
             .select('JobID')
@@ -481,20 +435,13 @@ jobNoInput.addEventListener('input', async function () {
         datalist.innerHTML = '';
 
         data.forEach(item => {
-
             const option = document.createElement('option');
             option.value = item.JobID;
-
             datalist.appendChild(option);
-
         });
-
     } catch (err) {
-
         console.error(err);
-
     }
-
 });
 
 async function loadBlAwbNumberSuggestions(companyID) {
@@ -588,9 +535,6 @@ function populateForm(data) {
     document.getElementById('information').value = data.AnyInformation || '';
     document.getElementById('poNo').value = data.PONo || '';
 
-
-
-    // Also update the data-mode and enable form for updating, if applicable
     toggleContainerTab(data.ModeType);
     saveButton.setAttribute('data-mode', 'update');
     saveButton.disabled = true;
@@ -602,8 +546,7 @@ function populateForm(data) {
         modifyButton.disabled = true;
     }
 
-    disableForm(); // Disable form inputs for viewing
-    // optionally enable form editing here
+    disableForm();
 }
 
 // Function to fetch record by a field and value
@@ -617,10 +560,9 @@ async function loadRecordByField(fieldName, value) {
             .select('*')
             .eq(fieldName, trimmedValue)
             .eq('company_id', CompanyID)
-            .single(); // since limit(1) + maybeSingle not needed
+            .single();
 
         if (error) {
-            // If no record found, don't treat as critical error
             if (error.code !== 'PGRST116') {
                 console.error('Error fetching form data:', error);
             }
@@ -639,7 +581,6 @@ async function loadRecordByField(fieldName, value) {
     }
 }
 
-// Event listeners - trigger on `change` or `input` as you prefer
 jobNoInput.addEventListener('change', async e => {
     let record = await loadRecordByField('JobID', e.target.value.trim());
     if (record?.JobID) {
@@ -648,10 +589,8 @@ jobNoInput.addEventListener('change', async e => {
     }
 });
 
-
-
 newButton.addEventListener('click', () => {
-    jobNoInput.value = ''; // Clear job number input
+    jobNoInput.value = '';
     saveButton.setAttribute('data-mode', 'insert');
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
     enableForm();
@@ -659,18 +598,7 @@ newButton.addEventListener('click', () => {
     saveButton.disabled = false;
     if (modifyButton) modifyButton.disabled = true;
     const tbody = document.querySelector('#chargesTable tbody');
-    tbody.innerHTML = ''; // Clear current rows
-    // Hide the Request Number container / badge if it was visible
-    const requestNoEl = document.getElementById("headerPickupRequestNoText");
-    const headerBadge = document.getElementById("headerPickupRequestBadge");
-
-    if (headerBadge) {
-        headerBadge.classList.add("d-none");
-    }
-
-    if (requestNoEl) {
-        requestNoEl.textContent = ""; // Correct way to clear text content of a span
-    }
+    tbody.innerHTML = '';
     resetTotalsRow();
 });
 
@@ -686,7 +614,6 @@ let selectedDuplicateRecord = null;
 // Check Duplicate
 // =============================
 async function checkDuplicate(type) {
-
     let value = "";
 
     if (type === "BL") {
@@ -730,7 +657,6 @@ async function checkDuplicate(type) {
 // Populate Duplicate Modal
 // =============================
 function populateDuplicateModal(records) {
-
     const tbody = document.getElementById("duplicateRecordBody");
 
     tbody.innerHTML = "";
@@ -738,7 +664,6 @@ function populateDuplicateModal(records) {
     selectedDuplicateRecord = records[0];
 
     records.forEach((row, index) => {
-
         tbody.innerHTML += `
             <tr>
                 <td>
@@ -749,32 +674,23 @@ function populateDuplicateModal(records) {
                         ${index === 0 ? "checked" : ""}
                     >
                 </td>
-
                 <td>${row.JobID}</td>
                 <td>${row.PartyName}</td>
                 <td>${row.BLAWBNo ?? ""}</td>
                 <td>${row.BENo ?? ""}</td>
             </tr>
         `;
-
     });
 
     document
         .querySelectorAll("input[name='duplicateRecord']")
         .forEach(radio => {
-
             radio.addEventListener("change", function () {
-
                 const selectedId = Number(this.value);
-
                 selectedDuplicateRecord = records.find(
                     record => record.id === selectedId
                 );
-
-                // console.log("Selected Record:", selectedDuplicateRecord);
-
             });
-
         });
 
     new bootstrap.Modal(
@@ -786,7 +702,6 @@ function populateDuplicateModal(records) {
 // Open Selected Duplicate
 // =============================
 document.getElementById("openDuplicateRecord").addEventListener("click", async () => {
-
     if (!selectedDuplicateRecord) {
         return;
     }
@@ -795,12 +710,7 @@ document.getElementById("openDuplicateRecord").addEventListener("click", async (
         .getInstance(document.getElementById("duplicateRecordModal"))
         .hide();
 
-    // console.log("Selected Record:", selectedDuplicateRecord);
-
     await loadRecordByField("JobID", selectedDuplicateRecord.JobID);
-
     await loadChargesByJobID(selectedDuplicateRecord.JobID);
-
     await fetchEquipmentDetails(selectedDuplicateRecord.id);
-
 });
