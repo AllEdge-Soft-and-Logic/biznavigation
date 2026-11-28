@@ -9,18 +9,18 @@
     <meta name="theme-color" content="#0d6efd">
     <title>International Booking · BizNavigation</title>
 
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <!-- Preconnect (consolidated to jsdelivr + Google Fonts) -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Modern Font -->
+    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Remove Select2 CSS/JS & jQuery if not used by external scripts -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 
     <!-- Sidebar CSS -->
@@ -28,6 +28,10 @@
 
     <!-- Page-scoped polish -->
     <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
         .vm-action-bar {
             position: sticky;
             top: 0;
@@ -43,7 +47,7 @@
             display: flex;
             align-items: center;
             gap: .5rem;
-            margin: 1.25rem 0 .25rem;
+            margin: 1.25rem 0 .5rem;
             font-size: .75rem;
             font-weight: 600;
             letter-spacing: .06em;
@@ -103,54 +107,28 @@
             overflow-x: auto;
         }
 
-        .table-container table thead th {
-            font-size: .8rem;
-            white-space: normal;
-            line-height: 1.25;
-            vertical-align: bottom;
-        }
-
-        @media (max-width: 575.98px) {
-            .vm-action-bar .btn {
-                flex: 1 1 auto;
-            }
+        .docket-search-scroll {
+            max-height: 420px;
+            overflow-y: auto;
         }
 
         /* Shared table polish */
-        #freightTable,
-        #volumetricTable,
-        #containerDetailsTable,
-        #bookingStatusTable,
-        #docketSearchTable {
+        .vm-table {
             table-layout: fixed;
             width: 100%;
         }
 
-        #freightTable td,
-        #freightTable th,
-        #volumetricTable td,
-        #volumetricTable th,
-        #containerDetailsTable td,
-        #containerDetailsTable th,
-        #bookingStatusTable td,
-        #bookingStatusTable th,
-        #docketSearchTable td,
-        #docketSearchTable th {
-            font-size: 0.82rem;
-            padding: 0.45rem 0.5rem;
+        .vm-table td,
+        .vm-table th {
+            font-size: .82rem;
+            padding: .45rem .5rem;
             vertical-align: middle;
-
         }
 
-        /* Allow table headers to wrap cleanly without overlapping */
-        #freightTable thead th,
-        #volumetricTable thead th,
-        #containerDetailsTable thead th,
-        #bookingStatusTable thead th,
-        #docketSearchTable thead th {
+        .vm-table thead th {
+            font-size: .8rem;
             white-space: normal;
             line-height: 1.25;
-            vertical-align: middle;
         }
 
         /* Minimum widths to prevent squishing on smaller viewports */
@@ -174,7 +152,7 @@
             min-width: 920px;
         }
 
-        /* Wrapping rules: allow text columns to wrap, keep numbers/codes/actions single-line */
+        /* Wrapping rules: text wraps, numbers/codes/actions stay single-line */
         #freightTable td:nth-child(1),
         #freightTable td:nth-child(3),
         #volumetricTable td:nth-child(1),
@@ -215,11 +193,13 @@
         #containerDetailsTable tbody td:nth-child(4) {
             text-align: center;
         }
-    </style>
 
-    <!-- Core Scripts (Deferred) -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+        @media (max-width: 575.98px) {
+            .vm-action-bar .btn {
+                flex: 1 1 auto;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -233,7 +213,6 @@
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-content">
-
                 <div class="container-fluid mt-3 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-body pb-3">
@@ -249,7 +228,8 @@
                                             id="formStateBadge">New</span>
                                     </h5>
 
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <div class="d-flex flex-wrap gap-2" role="group"
+                                        aria-label="Booking action buttons">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
                                             id="newButton" title="Create new booking" aria-label="New booking">
                                             <i class="bi bi-file-earmark-plus"></i>
@@ -279,7 +259,7 @@
                                     </div>
 
                                     <input type="text" class="form-control bg-light d-none" id="status" value="New"
-                                        readonly>
+                                        readonly aria-hidden="true">
                                     <input type="hidden" id="tempFormID">
                                     <input type="hidden" id="partyCode">
                                     <input type="hidden" id="serviceProviderCode">
@@ -287,17 +267,9 @@
                                 </div>
 
                                 <!-- ============ BOOKING INFORMATION ============ -->
-                                <p class="vm-section-title d-flex justify-content-between align-items-center">
-                                    <span>
-                                        <i class="bi bi-journal-text"></i> Booking Information
-                                    </span>
-                                    <!-- This badge will dynamically show the request number when incomingRequestNo is present -->
-                                    <span id="headerPickupRequestBadge" class="badge text-bg-primary fw-normal d-none"
-                                        style="font-size: 0.75rem;">
-                                        Req No: <span id="headerPickupRequestNoText"></span>
-                                    </span>
-                                </p>
-
+                                <!-- <p class="vm-section-title">
+                                    <i class="bi bi-journal-text"></i> Booking Information
+                                </p> -->
 
                                 <div class="row g-3">
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
@@ -346,9 +318,7 @@
                                             <option value="By Sea Freight">By Sea Freight</option>
                                         </select>
                                     </div>
-                                </div>
 
-                                <div class="row g-3">
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label class="form-label" for="modeTypeI">Mode Type<span
                                                 class="req">*</span></label>
@@ -392,9 +362,9 @@
                                 </div>
 
                                 <!-- ============ ADDRESSES ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-geo-alt"></i> Addresses
-                                </p>
+                                <!-- <p class="vm-section-title">
+                                    <i class="bi bi-geo-alt"></i> Addresses &amp; Consignee
+                                </p> -->
 
                                 <div class="row g-3">
                                     <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
@@ -439,20 +409,24 @@
                                             onchange="updateDeliveryAddress()" placeholder="Consignee Name">
                                         <datalist id="consigneeNameSuggestions"></datalist>
                                     </div>
-                                </div>
 
-                                <div class="row g-3">
-                                    <div class="col-xl-5 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="col-xl-6 col-lg-8 col-md-8 col-sm-12">
                                         <label class="form-label" for="deliveryAddress">Delivery Address</label>
                                         <textarea class="form-control text-cap" id="deliveryAddress" rows="1"
                                             placeholder="Full Delivery Address"></textarea>
                                     </div>
+
+                                    <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
+                                        <label class="form-label" for="infomation">Information</label>
+                                        <input type="text" class="form-control" id="infomation"
+                                            placeholder="Enter additional information">
+                                    </div>
                                 </div>
 
                                 <!-- ============ SHIPMENT DETAILS ============ -->
-                                <p class="vm-section-title">
+                                <!-- <p class="vm-section-title">
                                     <i class="bi bi-box-seam"></i> Shipment Details
-                                </p>
+                                </p> -->
 
                                 <div class="row g-3">
                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
@@ -500,9 +474,7 @@
                                             oninput="CountryDetails(this.value, 'destinationCountrySuggestions', 'destinationCountry')">
                                         <datalist id="destinationCountrySuggestions"></datalist>
                                     </div>
-                                </div>
 
-                                <div class="row g-3">
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                                         <label class="form-label" for="portOfDischarge">Port of Discharge<span
                                                 class="req">*</span></label>
@@ -557,14 +529,6 @@
                                         <label class="form-label" for="chargeableWeight">Char Wt</label>
                                         <input type="number" class="form-control text-end bg-light"
                                             id="chargeableWeight" value="0" min="0" step="0.01" disabled>
-                                    </div>
-                                </div>
-
-                                <div class="row g-3">
-                                    <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
-                                        <label class="form-label" for="infomation">Information</label>
-                                        <input type="text" class="form-control" id="infomation"
-                                            placeholder="Enter additional information">
                                     </div>
                                 </div>
 
@@ -652,7 +616,8 @@
                                             </div>
 
                                             <div class="table-container">
-                                                <table class="table table-hover align-middle mb-0" id="freightTable">
+                                                <table class="table table-hover align-middle mb-0 vm-table"
+                                                    id="freightTable">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th scope="col" style="width: 15%;">Charges Type</th>
@@ -691,6 +656,8 @@
                                                             <th class="text-end" id="totalGST">0.00</th>
                                                             <th class="text-end" id="totalGrand">0.00</th>
                                                             <th></th>
+                                                            <th class="d-none"></th>
+                                                            <th class="d-none"></th>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
@@ -771,7 +738,8 @@
                                             </div>
 
                                             <div class="table-container">
-                                                <table class="table table-hover align-middle mb-0" id="volumetricTable">
+                                                <table class="table table-hover align-middle mb-0 vm-table"
+                                                    id="volumetricTable">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th scope="col" style="width: 16%;">Packing Type</th>
@@ -843,7 +811,7 @@
                                             </div>
 
                                             <div class="table-container">
-                                                <table class="table table-hover align-middle mb-0"
+                                                <table class="table table-hover align-middle mb-0 vm-table"
                                                     id="containerDetailsTable">
                                                     <thead class="table-light">
                                                         <tr>
@@ -863,7 +831,7 @@
                                         <div class="tab-pane fade" id="booking-status" role="tabpanel"
                                             aria-labelledby="status-tab" tabindex="0">
                                             <div class="table-container">
-                                                <table class="table table-hover align-middle mb-0"
+                                                <table class="table table-hover align-middle mb-0 vm-table"
                                                     id="bookingStatusTable">
                                                     <thead class="table-light">
                                                         <tr>
@@ -884,231 +852,214 @@
                                             </div>
                                         </div>
 
-                                    </div><!-- tab-content -->
-                                </div><!-- mt-4 -->
+                                    </div>
+                                </div>
 
                             </form>
-
-                            <!-- ============ ADD CONSIGNEE MODAL ============ -->
-                            <div class="modal fade" id="addConsigneeModal" tabindex="-1"
-                                aria-labelledby="addConsigneeModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header bg-primary text-white">
-                                            <h5 class="modal-title" id="addConsigneeModalLabel">
-                                                <i class="bi bi-person-plus me-1"></i> Add New Consignee
-                                            </h5>
-                                            <button type="button" class="btn-close btn-close-white"
-                                                data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <form id="consigneeForm">
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="newConsigneeName">Consignee Name<span
-                                                            class="req">*</span></label>
-                                                    <input type="text" class="form-control" id="newConsigneeName"
-                                                        required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="newConsigneeAddress">Consignee
-                                                        Address<span class="req">*</span></label>
-                                                    <textarea class="form-control" id="newConsigneeAddress" rows="2"
-                                                        required></textarea>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="newContactPerson">Contact Person<span
-                                                            class="req">*</span></label>
-                                                    <input type="text" class="form-control" id="newContactPerson"
-                                                        required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="newContactNumber">Contact Number<span
-                                                            class="req">*</span></label>
-                                                    <input type="tel" class="form-control" id="newContactNumber"
-                                                        required>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="newEmailID">Email ID<span
-                                                            class="req">*</span></label>
-                                                    <input type="email" class="form-control" id="newEmailID" required>
-                                                </div>
-                                            </form>
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                data-bs-dismiss="modal">Cancel</button>
-                                            <button type="button" class="btn btn-primary btn-sm"
-                                                onclick="addNewConsignee(event)">
-                                                <i class="bi bi-check2-circle"></i> Add Consignee
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ============ ADD FOV CHARGES MODAL ============ -->
-                            <div class="modal fade" id="addFOVChargesModal" tabindex="-1"
-                                aria-labelledby="addFOVChargesModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header bg-primary text-white">
-                                            <h5 class="modal-title" id="addFOVChargesModalLabel">
-                                                <i class="bi bi-shield-check me-1"></i> FOV Charges
-                                            </h5>
-                                            <button type="button" class="btn-close btn-close-white"
-                                                data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <form id="fovForm">
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="fovPercentage">FOV Percentage
-                                                        (%)</label>
-                                                    <input type="number" class="form-control text-end"
-                                                        id="fovPercentage" value="0.2" step="0.01">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="fovAmount">FOV Amount</label>
-                                                    <input type="number" class="form-control text-end" id="fovAmount"
-                                                        readonly>
-                                                </div>
-                                            </form>
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                data-bs-dismiss="modal">Cancel</button>
-                                            <button type="button" class="btn btn-primary btn-sm"
-                                                onclick="addFOVCharges(event)">
-                                                <i class="bi bi-check2-circle"></i> Confirm
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ============ ADD FUEL SURCHARGE MODAL ============ -->
-                            <div class="modal fade" id="addFuelSurchargeModal" tabindex="-1"
-                                aria-labelledby="addFuelSurchargeModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header bg-primary text-white">
-                                            <h5 class="modal-title" id="addFuelSurchargeModalLabel">
-                                                <i class="bi bi-fuel-pump me-1"></i> Fuel Surcharge
-                                            </h5>
-                                            <button type="button" class="btn-close btn-close-white"
-                                                data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <form id="fuelSurchargeForm">
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="totalAmount">Total Amount</label>
-                                                    <input type="number" class="form-control text-end" id="totalAmount"
-                                                        value="0.2" step="0.01">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="fuelSurchargePercentage">Fuel
-                                                        Surcharge Percentage (%)</label>
-                                                    <input type="number" class="form-control text-end"
-                                                        id="fuelSurchargePercentage" value="0.2" step="0.01">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="fuelSurchargeAmount">Fuel Surcharge
-                                                        Amount</label>
-                                                    <input type="number" class="form-control text-end"
-                                                        id="fuelSurchargeAmount" readonly>
-                                                </div>
-                                            </form>
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                data-bs-dismiss="modal">Cancel</button>
-                                            <button type="button" class="btn btn-primary btn-sm"
-                                                onclick="addFuelSurcharge(event)">
-                                                <i class="bi bi-check2-circle"></i> Confirm
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ============ DOCKET SEARCH MODAL ============ -->
-                            <div class="modal fade" id="docketSearchModal" tabindex="-1"
-                                aria-labelledby="docketSearchModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                                    <div class="modal-content">
-                                        <div class="modal-header bg-primary text-white py-2">
-                                            <h6 class="modal-title d-flex align-items-center gap-2"
-                                                id="docketSearchModalLabel">
-                                                <i class="bi bi-search"></i> Search International Bookings
-                                            </h6>
-                                            <button type="button" class="btn-close btn-close-white"
-                                                data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <!-- Live Search Input -->
-                                            <div class="input-group mb-3">
-                                                <span class="input-group-text bg-white">
-                                                    <i class="bi bi-funnel text-muted"></i>
-                                                </span>
-                                                <input type="text" id="docketModalSearchInput" class="form-control"
-                                                    placeholder="Search by Docket No, Customer, Service Provider, Origin or Destination Country..."
-                                                    autocomplete="off">
-                                                <button class="btn btn-outline-secondary" type="button"
-                                                    id="clearDocketSearch" title="Clear search">
-                                                    <i class="bi bi-x-lg"></i>
-                                                </button>
-                                            </div>
-
-                                            <!-- Results Table -->
-                                            <div class="table-responsive" style="max-height: 420px;">
-                                                <table class="table table-hover table-sm align-middle mb-0"
-                                                    id="docketSearchTable">
-                                                    <thead class="table-light sticky-top">
-                                                        <tr>
-                                                            <th style="width: 14%;">Docket No</th>
-                                                            <th style="width: 11%;">Booked Date</th>
-                                                            <th style="width: 21%;">Customer</th>
-                                                            <th style="width: 18%;">Service Provider</th>
-                                                            <th style="width: 12%;">Origin Country</th>
-                                                            <th style="width: 12%;">Destination Country</th>
-                                                            <th style="width: 12%;">Invoice Number</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="docketSearchTableBody">
-                                                        <tr>
-                                                            <td colspan="7" class="text-center text-muted py-4">
-                                                                Loading bookings...
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-
-                                        <div class="modal-footer py-2 d-flex justify-content-between">
-                                            <small class="text-muted" id="docketSearchCount">0 records</small>
-                                            <button type="button" class="btn btn-secondary btn-sm"
-                                                data-bs-dismiss="modal">Close</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- ============ MODALS (Direct children of body to prevent stacking issues) ============ -->
+
+    <!-- Add Consignee Modal -->
+    <div class="modal fade" id="addConsigneeModal" tabindex="-1" aria-labelledby="addConsigneeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addConsigneeModalLabel">
+                        <i class="bi bi-person-plus me-1"></i> Add New Consignee
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="consigneeForm" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label" for="newConsigneeName">Consignee Name<span
+                                    class="req">*</span></label>
+                            <input type="text" class="form-control" id="newConsigneeName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="newConsigneeAddress">Consignee Address<span
+                                    class="req">*</span></label>
+                            <textarea class="form-control" id="newConsigneeAddress" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="newContactPerson">Contact Person<span
+                                    class="req">*</span></label>
+                            <input type="text" class="form-control" id="newContactPerson" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="newContactNumber">Contact Number<span
+                                    class="req">*</span></label>
+                            <input type="tel" class="form-control" id="newContactNumber" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="newEmailID">Email ID<span class="req">*</span></label>
+                            <input type="email" class="form-control" id="newEmailID" required>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addNewConsignee(event)">
+                        <i class="bi bi-check2-circle"></i> Add Consignee
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add FOV Charges Modal -->
+    <div class="modal fade" id="addFOVChargesModal" tabindex="-1" aria-labelledby="addFOVChargesModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addFOVChargesModalLabel">
+                        <i class="bi bi-shield-check me-1"></i> FOV Charges
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="fovForm" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label" for="fovPercentage">FOV Percentage (%)</label>
+                            <input type="number" class="form-control text-end" id="fovPercentage" value="0.2"
+                                step="0.01" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="fovAmount">FOV Amount</label>
+                            <input type="number" class="form-control text-end" id="fovAmount" readonly>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addFOVCharges(event)">
+                        <i class="bi bi-check2-circle"></i> Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Fuel Surcharge Modal -->
+    <div class="modal fade" id="addFuelSurchargeModal" tabindex="-1" aria-labelledby="addFuelSurchargeModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addFuelSurchargeModalLabel">
+                        <i class="bi bi-fuel-pump me-1"></i> Fuel Surcharge
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="fuelSurchargeForm" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label" for="totalAmount">Total Amount</label>
+                            <input type="number" class="form-control text-end" id="totalAmount" value="0.2" step="0.01"
+                                min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="fuelSurchargePercentage">Fuel Surcharge Percentage
+                                (%)</label>
+                            <input type="number" class="form-control text-end" id="fuelSurchargePercentage" value="0.2"
+                                step="0.01" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="fuelSurchargeAmount">Fuel Surcharge Amount</label>
+                            <input type="number" class="form-control text-end" id="fuelSurchargeAmount" readonly>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addFuelSurcharge(event)">
+                        <i class="bi bi-check2-circle"></i> Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Docket Search Modal -->
+    <div class="modal fade" id="docketSearchModal" tabindex="-1" aria-labelledby="docketSearchModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white py-2">
+                    <h6 class="modal-title d-flex align-items-center gap-2" id="docketSearchModalLabel">
+                        <i class="bi bi-search"></i> Search International Bookings
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-funnel text-muted"></i>
+                        </span>
+                        <input type="text" id="docketModalSearchInput" class="form-control"
+                            placeholder="Search by Docket No, Customer, Service Provider, Origin or Destination Country..."
+                            autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="clearDocketSearch"
+                            title="Clear search" aria-label="Clear search">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+
+                    <div class="table-container docket-search-scroll">
+                        <table class="table table-hover table-sm align-middle mb-0 vm-table" id="docketSearchTable">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th scope="col" style="width: 14%;">Docket No</th>
+                                    <th scope="col" style="width: 11%;">Booked Date</th>
+                                    <th scope="col" style="width: 21%;">Customer</th>
+                                    <th scope="col" style="width: 18%;">Service Provider</th>
+                                    <th scope="col" style="width: 12%;">Origin Country</th>
+                                    <th scope="col" style="width: 12%;">Destination Country</th>
+                                    <th scope="col" style="width: 12%;">Invoice Number</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docketSearchTableBody">
+                                <tr>
+                                    <td colspan="7" class="vm-empty">
+                                        <i class="bi bi-hourglass-split"></i>
+                                        Loading bookings...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="modal-footer py-2 d-flex justify-content-between">
+                    <small class="text-muted" id="docketSearchCount">0 records</small>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- ============ TOASTS ============ -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite"
+        aria-atomic="true">
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -1134,11 +1085,12 @@
         </div>
     </div>
 
-    <!-- External Library Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
-        crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <!-- External Library Scripts (deferred in execution order) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
     <!-- Local Scripts -->
     <script src="../../assets/js/utils/server.js" defer></script>

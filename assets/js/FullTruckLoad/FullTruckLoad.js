@@ -1,25 +1,68 @@
+// FullTruckLoad.js
 let movementDetails = [];
-const addShipmentBtn = document.getElementById('addShipmentRow');
-const shipmentTableBody = document.querySelector('#shipmentDetailsTable tbody');
-
-// Variables for Tracking Shipment State
 let deletedShipmentIds = [];
 let currentEditShipmentId = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
+const addShipmentBtn = document.getElementById('addShipmentRow');
+const shipmentTableBody = document.querySelector('#shipmentDetailsTable tbody');
+
+// ============ UTILITIES ============
+function debounce(fn, delay = 250) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
+
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function notify(message, type = 'info') {
+    if (typeof showToast === 'function') {
+        showToast(message, type);
+    } else {
+        alert(message);
+    }
+}
+
+function setFormStateBadge(label, badgeClass = 'text-bg-light border') {
+    const badge = document.getElementById('formStateBadge');
+    if (!badge) return;
+    badge.textContent = label;
+    badge.className = `badge rounded-pill fw-normal ${badgeClass}`;
+}
+
+function getActiveRows(tableId) {
+    return Array.from(document.querySelectorAll(`#${tableId} tbody tr`)).filter(
+        tr => !tr.querySelector('td.vm-empty') && tr.dataset.status !== 'deleted'
+    );
+}
+
+// ============ INITIALIZATION ============
+document.addEventListener('DOMContentLoaded', async () => {
     enableForm();
+
+    const saveBtn = document.getElementById('saveButton');
+    if (saveBtn) saveBtn.dataset.mode = 'insert';
 
     try {
         const suggestionTasks = [
             loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
-            loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+            loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName')
         ];
 
         const dropdownConfigs = [
             ['departmentList', 'Department'],
             ['MovementType', 'movementType'],
             ['ModeType', 'modeType'],
-            ['PaymentType', 'paymentType'],
+            ['PaymentType', 'mainPaymentType'],
             ['ChargesType', 'chargesTypeList'],
             ['ChargesType', 'vendorChargesTypeList'],
             ['VehicleType', 'vehicleType']
@@ -27,15 +70,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const urlParams = new URLSearchParams(window.location.search);
         const incomingRequestNo = urlParams.get('pickupRequestNo');
-        const headerBadge = document.getElementById("headerPickupRequestBadge");
-        const headerText = document.getElementById("headerPickupRequestNoText");
+        const headerBadge = document.getElementById('headerPickupRequestBadge');
+        const headerText = document.getElementById('headerPickupRequestNoText');
 
-        if (incomingRequestNo) {
+        if (incomingRequestNo && headerBadge && headerText) {
             headerText.textContent = incomingRequestNo;
-            headerBadge.classList.remove("d-none");
+            headerBadge.classList.remove('d-none');
         }
 
-        const dropdownTasks = dropdownConfigs.map(([id, table]) => loadDropdownOptions(id, table));
+        const dropdownTasks = dropdownConfigs.map(([tableOrId, target]) => loadDropdownOptions(tableOrId, target));
         const otherTasks = [loadRouteSuggestions(), loadTaxData()];
 
         await Promise.all([...suggestionTasks, ...dropdownTasks, ...otherTasks]);
@@ -45,14 +88,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             setupPincodeListener('destinationPinCode', 'destinationCity'),
             setupPincodeListener('shipmentPinCode', 'shipmentCity')
         ]);
-        initLRSearchModal();
-        document.getElementById('lrDate').valueAsDate = new Date();
 
+        initLRSearchModal();
+
+        const lrDateEl = document.getElementById('lrDate');
+        if (lrDateEl) lrDateEl.valueAsDate = new Date();
     } catch (error) {
-        console.error("Initialization error:", error);
+        console.error('Initialization error:', error);
     }
 });
 
+// ============ LR SEARCH MODAL ============
 function initLRSearchModal() {
     const lrNumberInput = document.getElementById('lrNumber');
     const modalEl = document.getElementById('lrSearchModal');
@@ -73,12 +119,9 @@ function initLRSearchModal() {
     const resultsBody = document.getElementById('lrSearchResultsBody');
     const resultsCount = document.getElementById('lrSearchCount');
 
-    let searchTimer = null;
-
-    // Sync Mode Type options from the main form's #modeType dropdown
     function syncModeTypeOptions() {
         const mainModeSelect = document.getElementById('modeType');
-        if (!mainModeSelect) return;
+        if (!mainModeSelect || !searchLrModeType) return;
 
         const currentVal = searchLrModeType.value;
         searchLrModeType.innerHTML = '<option value="">All Modes</option>';
@@ -94,23 +137,18 @@ function initLRSearchModal() {
         searchLrModeType.value = currentVal;
     }
 
-    // 1. Open modal on double-click of LR Number
     lrNumberInput.addEventListener('dblclick', () => {
         syncModeTypeOptions();
-        searchLrNumber.value = lrNumberInput.value.trim();
+        if (searchLrNumber) searchLrNumber.value = lrNumberInput.value.trim();
         lrSearchModal.show();
         fetchLRsForModal();
     });
 
     modalEl.addEventListener('shown.bs.modal', () => {
-        searchLrNumber.focus();
+        searchLrNumber?.focus();
     });
 
-    // 2. Live search (debounced) & Enter key support
-    const triggerDebouncedSearch = () => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(fetchLRsForModal, 300);
-    };
+    const triggerDebouncedSearch = debounce(fetchLRsForModal, 300);
 
     [
         searchLrNumber,
@@ -120,6 +158,7 @@ function initLRSearchModal() {
         searchLrVendor,
         searchLrVehicleNo
     ].forEach(input => {
+        if (!input) return;
         input.addEventListener('input', triggerDebouncedSearch);
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -129,28 +168,30 @@ function initLRSearchModal() {
         });
     });
 
-    searchLrDate.addEventListener('change', fetchLRsForModal);
-    searchLrModeType.addEventListener('change', fetchLRsForModal);
-    btnSearchLRs.addEventListener('click', fetchLRsForModal);
+    searchLrDate?.addEventListener('change', fetchLRsForModal);
+    searchLrModeType?.addEventListener('change', fetchLRsForModal);
+    btnSearchLRs?.addEventListener('click', fetchLRsForModal);
 
-    // 3. Reset filters
-    btnResetLrSearch.addEventListener('click', () => {
-        searchLrNumber.value = '';
-        searchLrDate.value = '';
-        searchLrCustomer.value = '';
-        searchLrModeType.value = '';
-        searchLrPickupCity.value = '';
-        searchLrDestinationCity.value = '';
-        searchLrVendor.value = '';
-        searchLrVehicleNo.value = '';
+    btnResetLrSearch?.addEventListener('click', () => {
+        [
+            searchLrNumber,
+            searchLrDate,
+            searchLrCustomer,
+            searchLrModeType,
+            searchLrPickupCity,
+            searchLrDestinationCity,
+            searchLrVendor,
+            searchLrVehicleNo
+        ].forEach(el => {
+            if (el) el.value = '';
+        });
         fetchLRsForModal();
     });
 
-    // 4. Query Supabase (adjust table & column names to match your FTL schema)
     async function fetchLRsForModal() {
         resultsBody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center py-4 text-muted">
+                <td colspan="9" class="text-center py-4 text-muted">
                     <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                     Searching LR records...
                 </td>
@@ -160,21 +201,20 @@ function initLRSearchModal() {
             const client = await supabaseClient;
             if (!client) throw new Error('Database client not initialized.');
 
-            const lrVal = searchLrNumber.value.trim();
-            const dateVal = searchLrDate.value.trim();
-            const customerVal = searchLrCustomer.value.trim();
-            const modeVal = searchLrModeType.value.trim();
-            const cityVal = searchLrPickupCity.value.trim();
-            const destinationVal = searchLrDestinationCity.value.trim();
-            const vendorVal = searchLrVendor.value.trim();
-            const vehicleVal = searchLrVehicleNo.value.trim();
+            const lrVal = searchLrNumber?.value.trim() || '';
+            const dateVal = searchLrDate?.value.trim() || '';
+            const customerVal = searchLrCustomer?.value.trim() || '';
+            const modeVal = searchLrModeType?.value.trim() || '';
+            const cityVal = searchLrPickupCity?.value.trim() || '';
+            const destinationVal = searchLrDestinationCity?.value.trim() || '';
+            const vendorVal = searchLrVendor?.value.trim() || '';
+            const vehicleVal = searchLrVehicleNo?.value.trim() || '';
 
-            // Replace 'FullTruckLoad' and column names with your actual Supabase table/view
             let query = client
                 .from('FullLoadMovementDetailsView')
-                .select('LRNumber, PickupDate, CustomerName, ModeType, OriginCity,DestinationCity, VendorName, VehicleNumber')
-                .order('PickupDate', { ascending: false })
+                .select('LRNumber, PickupDate, CustomerName, ModeType, OriginCity, DestinationCity, VendorName, VehicleNumber')
                 .eq('company_id', CompanyID)
+                .order('PickupDate', { ascending: false })
                 .limit(50);
 
             if (lrVal) query = query.ilike('LRNumber', `%${lrVal}%`);
@@ -194,22 +234,23 @@ function initLRSearchModal() {
             console.error('LR search error:', err);
             resultsBody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center py-4 text-danger">
+                    <td colspan="9" class="text-center py-4 text-danger">
                         <i class="bi bi-exclamation-triangle me-1"></i> Failed to load LR records.
                     </td>
                 </tr>`;
-            resultsCount.textContent = '0 records found';
+            if (resultsCount) resultsCount.textContent = '0 records found';
         }
     }
 
-    // 5. Render rows
     function renderLRSearchResults(rows) {
-        resultsCount.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'} found`;
+        if (resultsCount) {
+            resultsCount.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'} found`;
+        }
 
         if (!rows.length) {
             resultsBody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="vm-empty">
+                    <td colspan="9" class="vm-empty">
                         <i class="bi bi-inbox"></i>
                         No matching LR records found
                     </td>
@@ -217,7 +258,7 @@ function initLRSearchModal() {
             return;
         }
 
-        const safe = (val) => DOMPurify.sanitize(val ?? '');
+        const safe = (val) => (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(String(val ?? '')) : escapeHtml(val));
 
         resultsBody.innerHTML = rows.map(row => `
             <tr style="cursor: pointer;" data-lr="${safe(row.LRNumber)}">
@@ -238,13 +279,10 @@ function initLRSearchModal() {
         `).join('');
     }
 
-    // 6. Select LR (button click or row double-click)
     const selectLR = (lrNo) => {
         if (!lrNo) return;
         lrNumberInput.value = lrNo;
         lrSearchModal.hide();
-
-        // Trigger existing change/input listeners in FullTruckLoad.js to load booking details
         lrNumberInput.dispatchEvent(new Event('change', { bubbles: true }));
         lrNumberInput.focus();
     };
@@ -252,8 +290,7 @@ function initLRSearchModal() {
     resultsBody.addEventListener('click', (e) => {
         const btn = e.target.closest('.select-lr-btn');
         if (!btn) return;
-        const tr = btn.closest('tr');
-        selectLR(tr?.dataset.lr);
+        selectLR(btn.closest('tr')?.dataset.lr);
     });
 
     resultsBody.addEventListener('dblclick', (e) => {
@@ -262,29 +299,33 @@ function initLRSearchModal() {
     });
 }
 
-// Container number validation
-document.getElementById('containerNumber').addEventListener('input', function () {
+// ============ CONTAINER VALIDATION ============
+document.getElementById('containerNumber')?.addEventListener('input', function () {
     this.value = this.value.toUpperCase();
     const feedback = document.getElementById('containerFeedback');
-    const result = validateContainerNumber(this.value);
 
+    if (!this.value.trim()) {
+        this.classList.remove('is-invalid', 'is-valid');
+        feedback?.classList.add('d-none');
+        return;
+    }
+
+    const result = validateContainerNumber(this.value);
     if (!result.valid) {
         this.classList.add('is-invalid');
         this.classList.remove('is-valid');
-        feedback.textContent = result.error;
-        feedback.classList.remove('d-none');
+        if (feedback) {
+            feedback.textContent = result.error;
+            feedback.classList.remove('d-none');
+        }
     } else {
         this.classList.remove('is-invalid');
         this.classList.add('is-valid');
-        feedback.classList.add('d-none');
+        feedback?.classList.add('d-none');
     }
 });
 
-document.getElementById("lrNumber").addEventListener("input", function () {
-    loadMovementDetails(this.value.trim());
-});
-
-// Helper to map raw database row to application state keys
+// ============ LR NUMBER LOOKUP & LOADING ============
 function mapMovementRow(row) {
     return {
         lrNumber: row.lr_number,
@@ -333,7 +374,8 @@ async function loadMovementDetails(query = '') {
         .select('*')
         .eq('company_id', CompanyID)
         .ilike('lr_number', `%${query}%`)
-        .order('lr_number', { ascending: false });
+        .order('lr_number', { ascending: false })
+        .limit(20);
 
     if (error || !data) return;
 
@@ -342,130 +384,197 @@ async function loadMovementDetails(query = '') {
 }
 
 function populateLRNumberSuggestions() {
-    const suggestions = movementDetails.map(m => `<option value="${m.lrNumber}"></option>`).join('');
-    document.getElementById("lrNumberSuggestions").innerHTML = suggestions;
+    const dataList = document.getElementById('lrNumberSuggestions');
+    if (!dataList) return;
+
+    dataList.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    movementDetails.forEach(m => {
+        const option = document.createElement('option');
+        option.value = m.lrNumber || '';
+        fragment.appendChild(option);
+    });
+    dataList.appendChild(fragment);
 }
 
-// When an LR Number is selected from the dropdown
-$("#lrNumber").on("change", async function () {
-    const lrNumber = $(this).val().trim();
+const debouncedLoadMovement = debounce((val) => loadMovementDetails(val), 250);
+
+const lrNumberEl = document.getElementById('lrNumber');
+lrNumberEl?.addEventListener('input', function () {
+    debouncedLoadMovement(this.value.trim());
+});
+
+lrNumberEl?.addEventListener('change', async function () {
+    const lrNumber = this.value.trim();
     if (!lrNumber) return;
 
     let movementData = movementDetails.find(m => m.lrNumber === lrNumber);
 
     if (!movementData) {
         const { data, error } = await supabaseClient
-            .from("FullLoadBookingDetails")
-            .select("*")
-            .eq("lr_number", lrNumber)
+            .from('FullLoadBookingDetails')
+            .select('*')
+            .eq('lr_number', lrNumber)
+            .eq('company_id', CompanyID)
             .maybeSingle();
 
         if (error || !data) {
-            showToast("No data found for LR:", lrNumber);
+            notify(`No data found for LR: ${lrNumber}`, 'warning');
             return;
         }
 
         movementData = mapMovementRow(data);
     }
 
-    // Map state keys directly to DOM selector strings
     const elementMap = {
-        lrDate: "#lrDate", quotationID: "#quotationID", modeType: "#modeType",
-        movementType: "#movementType", partyCode: "#partyCode", partyName: "#partyName",
-        originPinCode: "#originPinCode", originCity: "#originCity", originAddress: "#originAddress",
-        destinationPinCode: "#destinationPinCode", destinationCity: "#destinationCity",
-        destinationAddress: "#destinationAddress", requestedDate: "#requestedDate",
-        referenceNumber: "#referenceNumber", invoiceValue: "#invoiceValue", vendorCode: "#vendorCode",
-        vendorName: "#vendorName", vehicleType: "#vehicleType", vehicleNumber: "#vehicleNumber",
-        containerNumber: "#containerNumber", routeDetails: "#routeDetails", quantity: "#quantity",
-        actualWT: "#actualWt", chargeWT: "#chargeWt", paymentType: "#paymentType",
-        information: "#information", descriptionOfGoods: "#descriptionofGoods", waybillno: "#wayBillNo",
-        driverCode: "#driverCode", driverName: "#driverName", driverPhoneNo: "#driverPhoneNo", driverDLNo: "#driverDLNo"
+        lrDate: 'lrDate',
+        quotationID: 'quotationID',
+        modeType: 'modeType',
+        movementType: 'movementType',
+        partyCode: 'partyCode',
+        partyName: 'partyName',
+        originPinCode: 'originPinCode',
+        originCity: 'originCity',
+        originAddress: 'originAddress',
+        destinationPinCode: 'destinationPinCode',
+        destinationCity: 'destinationCity',
+        destinationAddress: 'destinationAddress',
+        requestedDate: 'requestedDate',
+        referenceNumber: 'referenceNumber',
+        invoiceValue: 'invoiceValue',
+        vendorCode: 'vendorCode',
+        vendorName: 'vendorName',
+        vehicleType: 'vehicleType',
+        vehicleNumber: 'vehicleNumber',
+        containerNumber: 'containerNumber',
+        routeDetails: 'routeDetails',
+        quantity: 'quantity',
+        actualWT: 'actualWt',
+        chargeWT: 'chargeWt',
+        paymentType: 'mainPaymentType',
+        information: 'information',
+        descriptionOfGoods: 'descriptionofGoods',
+        waybillno: 'wayBillNo',
+        driverCode: 'driverCode',
+        driverName: 'driverName',
+        driverPhoneNo: 'driverPhoneNo',
+        driverDLNo: 'driverDLNo'
     };
 
-    Object.entries(movementData).forEach(([key, value]) => {
-        if (elementMap[key]) $(elementMap[key]).val(value ?? "");
+    Object.entries(elementMap).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = movementData[key] ?? '';
     });
 
     await Promise.all([
-        loadBillingCharges(lrNumber, "Sale", "chargesDetailsTable"),
-        loadBillingCharges(lrNumber, "Buy", "vendorChargesDetailsTable"),
+        loadBillingCharges(lrNumber, 'Sale', 'chargesDetailsTable'),
+        loadBillingCharges(lrNumber, 'Buy', 'vendorChargesDetailsTable'),
         loadShipmentDetails(lrNumber)
     ]);
 
-    document.getElementById("addFreightRow").disabled = true;
-    document.getElementById("addVendorFreightRow").disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    const saveBtn = document.getElementById('saveButton');
+    const modifyBtn = document.getElementById('modifyButton');
+    const newBtn = document.getElementById('newButton');
+    const reportBtn = document.getElementById('reportButton');
+    const addFreightBtn = document.getElementById('addFreightRow');
+    const addVendorBtn = document.getElementById('addVendorFreightRow');
+
+    if (addFreightBtn) addFreightBtn.disabled = true;
+    if (addVendorBtn) addVendorBtn.disabled = true;
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Update';
+        saveBtn.dataset.mode = 'update';
+        saveBtn.disabled = true;
+    }
 
     disableForm();
-    document.getElementById("modifyButton").disabled = false;
-    document.getElementById("newButton").disabled = false;
-    document.getElementById("saveButton").disabled = true;
-    document.getElementById("reportButton").disabled = false;
+    setFormStateBadge('View', 'text-bg-secondary');
+
+    if (modifyBtn) modifyBtn.disabled = false;
+    if (newBtn) newBtn.disabled = false;
+    if (reportBtn) reportBtn.disabled = false;
 });
 
-document.getElementById('newButton').addEventListener('click', async function () {
+// ============ ACTION BAR BUTTONS ============
+document.getElementById('newButton')?.addEventListener('click', () => {
     enableForm();
     clearForm();
+    setFormStateBadge('New', 'text-bg-light border');
 
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    reportButton.disabled = true;
-    deleteButton.disabled = true;
+    const saveBtn = document.getElementById('saveButton');
+    const modifyBtn = document.getElementById('modifyButton');
+    const reportBtn = document.getElementById('reportButton');
+    const deleteBtn = document.getElementById('deleteButton');
 
-    document.getElementById('saveButton').innerHTML = '<i class="bi bi-save"></i> Save';
-    document.getElementById('lrDate').valueAsDate = new Date();
-    document.getElementById('quantity').value = "1.00";
-
-    document.getElementById('addFreightRow').disabled = false;
-    document.getElementById('addVendorFreightRow').disabled = false;
-
-    // Hide the Request Number container / badge if it was visible
-    const requestNoEl = document.getElementById("headerPickupRequestNoText");
-    const headerBadge = document.getElementById("headerPickupRequestBadge");
-
-    if (headerBadge) {
-        headerBadge.classList.add("d-none");
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Save';
+        saveBtn.dataset.mode = 'insert';
     }
+    if (modifyBtn) modifyBtn.disabled = true;
+    if (reportBtn) reportBtn.disabled = true;
+    if (deleteBtn) deleteBtn.disabled = true;
 
-    if (requestNoEl) {
-        requestNoEl.textContent = ""; // Correct way to clear text content of a span
-    }
+    const lrDateEl = document.getElementById('lrDate');
+    if (lrDateEl) lrDateEl.valueAsDate = new Date();
+
+    const qtyEl = document.getElementById('quantity');
+    if (qtyEl) qtyEl.value = '1.00';
+
+    const addFreightBtn = document.getElementById('addFreightRow');
+    const addVendorBtn = document.getElementById('addVendorFreightRow');
+    if (addFreightBtn) addFreightBtn.disabled = false;
+    if (addVendorBtn) addVendorBtn.disabled = false;
+
+    const headerBadge = document.getElementById('headerPickupRequestBadge');
+    const requestNoEl = document.getElementById('headerPickupRequestNoText');
+    if (headerBadge) headerBadge.classList.add('d-none');
+    if (requestNoEl) requestNoEl.textContent = '';
 
     deletedShipmentIds = [];
     currentEditShipmentId = null;
 
-    const hintV = document.getElementById('selectedVendorSubPartyHint');
-    const hintC = document.getElementById('selectedSubPartyHint');
-    if (hintV) {
-        hintV.textContent = '';
-        hintV.classList.add('d-none');
-    }
-    if (hintC) {
-        hintC.textContent = '';
-        hintC.classList.add('d-none');
-    }
+    ['selectedVendorSubPartyHint', 'selectedSubPartyHint'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = '';
+            el.classList.add('d-none');
+        }
+    });
 
-    ["chargesDetailsTable", "vendorChargesDetailsTable", "shipmentDetailsTable"].forEach(id => {
+    ['chargesDetailsTable', 'vendorChargesDetailsTable', 'shipmentDetailsTable'].forEach(id => {
         const table = document.getElementById(id);
         if (table) {
-            table.querySelector("tbody")?.replaceChildren();
-            table.querySelector("tfoot")?.replaceChildren();
+            table.querySelector('tbody')?.replaceChildren();
+            table.querySelector('tfoot')?.replaceChildren();
         }
     });
 });
 
-document.getElementById('modifyButton').addEventListener('click', function () {
+document.getElementById('modifyButton')?.addEventListener('click', () => {
     enableForm();
-    document.getElementById('saveButton').disabled = false;
-    document.getElementById('modifyButton').disabled = true;
-    document.getElementById('reportButton').disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    document.getElementById('addFreightRow').disabled = false;
-    document.getElementById('addVendorFreightRow').disabled = false;
+    setFormStateBadge('Editing', 'text-bg-warning');
 
-    document.querySelectorAll('.deleteRow, .delete-shipment-btn, .edit-shipment-btn').forEach(btn => btn.disabled = false);
-    document.getElementById("lrNumber").disabled = true;
+    const saveBtn = document.getElementById('saveButton');
+    const modifyBtn = document.getElementById('modifyButton');
+    const reportBtn = document.getElementById('reportButton');
+    const addFreightBtn = document.getElementById('addFreightRow');
+    const addVendorBtn = document.getElementById('addVendorFreightRow');
+
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Update';
+        saveBtn.dataset.mode = 'update';
+    }
+    if (modifyBtn) modifyBtn.disabled = true;
+    if (reportBtn) reportBtn.disabled = true;
+    if (addFreightBtn) addFreightBtn.disabled = false;
+    if (addVendorBtn) addVendorBtn.disabled = false;
+
+    document.querySelectorAll('.deleteRow, .delete-shipment-btn, .edit-shipment-btn').forEach(btn => {
+        btn.disabled = false;
+    });
+    if (lrNumberEl) lrNumberEl.disabled = true;
 });
 
 function areRequiredFieldsFilled() {
@@ -475,123 +584,114 @@ function areRequiredFieldsFilled() {
         'vehicleNumber', 'quantity', 'chargeWt', 'modeType'
     ];
 
-    for (let fieldId of requiredFields) {
+    for (const fieldId of requiredFields) {
         const field = document.getElementById(fieldId);
-        if (!field) continue;
-
-        // Skip fields hidden from the user (auto-derived from Shipment rows,
-        // e.g. destination*). The user cannot fill these, so don't block the save.
-        if (field.closest('.d-none')) continue;
+        if (!field || field.closest('.d-none')) continue;
 
         if (!field.value.trim()) {
             field.focus();
-            alert('Please fill in all required fields. Missing: ' + fieldId);
+            notify(`Please fill in all required fields. Missing: ${fieldId}`, 'error');
             return false;
         }
     }
     return true;
 }
 
-// =========================================================================
-// SAVE BUTTON CLICKED - AUTO TARIFF & DEDUPLICATION LOGIC
-// =========================================================================
-document.getElementById("saveButton").addEventListener("click", async function (event) {
+// ============ SAVE / UPDATE BOOKING ============
+document.getElementById('saveButton')?.addEventListener('click', async function (event) {
     event.preventDefault();
 
-    // NOTE: recalculateShipmentSummary() is intentionally NOT called here.
-    // It runs when a shipment row is added/edited/deleted. Calling it again
-    // on Save would overwrite the user's manually-entered origin fields with
-    // values taken from the Pickup shipment rows.
+    const saveBtn = this;
+    const addBtn = document.getElementById('addFreightRow');
+    const vendorAddBtn = document.getElementById('addVendorFreightRow');
+    const originalHTML = saveBtn.innerHTML;
+    const isSaveAction = (saveBtn.dataset.mode || 'insert') === 'insert';
 
-    const saveBtn = document.getElementById("saveButton");
-    const addBtn = document.getElementById("addFreightRow");
-    const vendorAddBtn = document.getElementById("addVendorFreightRow");
-    let lrNumber = document.getElementById("lrNumber").value.trim();
+    let lrNumber = document.getElementById('lrNumber')?.value.trim() || '';
 
     saveBtn.disabled = true;
-    addBtn.disabled = true;
-    vendorAddBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
+    if (addBtn) addBtn.disabled = true;
+    if (vendorAddBtn) vendorAddBtn.disabled = true;
 
     if (!areRequiredFieldsFilled()) {
         saveBtn.disabled = false;
-        addBtn.disabled = false;
-        vendorAddBtn.disabled = false;
+        saveBtn.innerHTML = originalHTML;
+        if (addBtn) addBtn.disabled = false;
+        if (vendorAddBtn) vendorAddBtn.disabled = false;
         return;
     }
 
-    if (document.querySelectorAll("#chargesDetailsTable tbody tr:not([data-status='deleted'])").length === 0) {
-        await applyCustomerTariff();
-    }
-    if (document.querySelectorAll("#vendorChargesDetailsTable tbody tr:not([data-status='deleted'])").length === 0) {
-        await applyVendorTariff();
-    }
-
-    const isSaveAction = saveBtn.innerText.trim().toLowerCase() === "save";
-
-    if (!lrNumber) {
-        lrNumber = await generateLRNumber();
-        document.getElementById("lrNumber").value = lrNumber;
-    }
-
-    const val = id => document.getElementById(id)?.value || "";
-    const modeType = val("modeType");
-    const transitType = modeType === "FTL" ? "By Road" : "By Sea Freight";
-
-    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
-    // console.log("headerPickupRequestNoText:", requestNoText);
-    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
-    const headerBadge = document.getElementById("headerPickupRequestBadge");
-
-    // Determine if the badge is visible and a valid request number exists
-    const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
-    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
-
-    let formData = {
-        lr_number: lrNumber,
-        pickup_date: val("lrDate"),
-        customer_code: val("partyCode"),
-        customer_name: val("partyName"),
-        requested_date: val("requestedDate"),
-        quotation_id: val("quotationID"),
-        mode_type: modeType,
-        movement_type: val("movementType"),
-        transit_type: transitType,
-        origin_pincode: val("originPinCode"),
-        origin_city: val("originCity"),
-        origin_address: val("originAddress"),
-        destination_pincode: val("destinationPinCode"),
-        destination_city: val("destinationCity"),
-        destination_address: val("destinationAddress"),
-        reference_number: val("referenceNumber"),
-        invoice_value: parseFloat(val("invoiceValue")) || 0,
-        vendor_code: val("vendorCode"),
-        vendor_name: val("vendorName"),
-        vehicle_type: val("vehicleType"),
-        vehicle_number: val("vehicleNumber"),
-        container_number: val("containerNumber"),
-        quantity: val("quantity"),
-        actual_weight: val("actualWt"),
-        charge_weight: val("chargeWt"),
-        payment_type: val("paymentType"),
-        routedetails: val("routeDetails") || null,
-        information: val("information"),
-        description_of_goods: val("descriptionofGoods"),
-        waybillno: val("wayBillNo"),
-        company_id: CompanyID,
-        driver_code: val("driverCode"),
-        driver_name: val("driverName"),
-        driver_phone_no: val("driverPhoneNo"),
-        driver_dl_no: val("driverDLNo"),
-        pickup_request_no: finalPickupRequestNo
-    };
-
     try {
+        // Apply default tariffs if no real charge rows exist
+        if (getActiveRows('chargesDetailsTable').length === 0) {
+            await applyCustomerTariff();
+        }
+        if (getActiveRows('vendorChargesDetailsTable').length === 0) {
+            await applyVendorTariff();
+        }
+
+        if (!lrNumber) {
+            lrNumber = await generateLRNumber();
+            if (lrNumberEl) lrNumberEl.value = lrNumber;
+        }
+
+        const val = id => document.getElementById(id)?.value?.trim() || '';
+        const num = id => parseFloat(document.getElementById(id)?.value) || 0;
+
+        const modeType = val('modeType');
+        const transitType = modeType === 'FTL' ? 'By Road' : 'By Sea Freight';
+
+        const headerBadge = document.getElementById('headerPickupRequestBadge');
+        const rawRequestNo = document.getElementById('headerPickupRequestNoText')?.textContent?.trim() || '';
+        const isBadgeVisible = Boolean(headerBadge && !headerBadge.classList.contains('d-none'));
+        const finalPickupRequestNo = (isBadgeVisible && rawRequestNo) ? rawRequestNo : null;
+
+        const formData = {
+            lr_number: lrNumber,
+            pickup_date: val('lrDate') || null,
+            customer_code: val('partyCode'),
+            customer_name: val('partyName'),
+            requested_date: val('requestedDate') || null,
+            quotation_id: val('quotationID'),
+            mode_type: modeType,
+            movement_type: val('movementType'),
+            transit_type: transitType,
+            origin_pincode: val('originPinCode'),
+            origin_city: val('originCity'),
+            origin_address: val('originAddress'),
+            destination_pincode: val('destinationPinCode'),
+            destination_city: val('destinationCity'),
+            destination_address: val('destinationAddress'),
+            reference_number: val('referenceNumber'),
+            invoice_value: num('invoiceValue'),
+            vendor_code: val('vendorCode'),
+            vendor_name: val('vendorName'),
+            vehicle_type: val('vehicleType'),
+            vehicle_number: val('vehicleNumber'),
+            container_number: val('containerNumber'),
+            quantity: num('quantity'),
+            actual_weight: num('actualWt'),
+            charge_weight: num('chargeWt'),
+            payment_type: val('mainPaymentType'),
+            routedetails: val('routeDetails') || null,
+            information: val('information'),
+            description_of_goods: val('descriptionofGoods'),
+            waybillno: val('wayBillNo'),
+            company_id: CompanyID,
+            driver_code: val('driverCode'),
+            driver_name: val('driverName'),
+            driver_phone_no: val('driverPhoneNo'),
+            driver_dl_no: val('driverDLNo'),
+            pickup_request_no: finalPickupRequestNo
+        };
+
         let query;
         if (isSaveAction) {
             formData.created_by = UserLoginID;
             formData.created_at = localtimeStamp;
             query = supabaseClient
-                .from("FullLoadBookingDetails")
+                .from('FullLoadBookingDetails')
                 .insert([formData])
                 .select()
                 .single();
@@ -599,67 +699,77 @@ document.getElementById("saveButton").addEventListener("click", async function (
             formData.updated_by = UserLoginID;
             formData.updated_at = localtimeStamp;
             query = supabaseClient
-                .from("FullLoadBookingDetails")
+                .from('FullLoadBookingDetails')
                 .update(formData)
-                .eq("lr_number", lrNumber)
+                .eq('lr_number', lrNumber)
+                .eq('company_id', CompanyID)
                 .select()
                 .single();
         }
-
 
         const { data, error } = await query;
         if (error) throw error;
 
         const bookingId = data.id;
+        const postSaveTasks = [
+            saveCharges(bookingId, 'chargesDetailsTable', 'Sale'),
+            saveCharges(bookingId, 'vendorChargesDetailsTable', 'Buy'),
+            saveShipments(bookingId, lrNumber)
+        ];
 
-        await Promise.all([
-            saveCharges(bookingId, "chargesDetailsTable", "Sale"),
-            saveCharges(bookingId, "vendorChargesDetailsTable", "Buy"),
-            saveShipments(bookingId, lrNumber),
-            updatePickupRequestStatus(requestNoText)
-        ]);
+        if (finalPickupRequestNo && typeof updatePickupRequestStatus === 'function') {
+            postSaveTasks.push(updatePickupRequestStatus(finalPickupRequestNo));
+        }
 
+        await Promise.all(postSaveTasks);
         await loadShipmentDetails(lrNumber);
 
         disableForm();
-        saveBtn.innerHTML = `<i class="bi bi-save"></i> Update`;
-        document.getElementById("modifyButton").disabled = false;
-        document.getElementById("reportButton").disabled = false;
+        setFormStateBadge('Saved', 'text-bg-success');
 
-        alert(`Movement details ${isSaveAction ? "saved" : "updated"} successfully!\nLR Number: ${lrNumber}`);
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Update';
+        saveBtn.dataset.mode = 'update';
+        saveBtn.disabled = true;
 
+        const modifyBtn = document.getElementById('modifyButton');
+        const reportBtn = document.getElementById('reportButton');
+        if (modifyBtn) modifyBtn.disabled = false;
+        if (reportBtn) reportBtn.disabled = false;
+
+        notify(`Movement details ${isSaveAction ? 'saved' : 'updated'} successfully! LR Number: ${lrNumber}`, 'success');
     } catch (err) {
-        console.error("Error saving data:", err);
-        alert("Error saving movement details");
+        console.error('Error saving data:', err);
+        notify(`Error saving movement details: ${err.message || 'Unknown error'}`, 'error');
         saveBtn.disabled = false;
-        addBtn.disabled = false;
-        vendorAddBtn.disabled = false;
+        saveBtn.innerHTML = originalHTML;
+        if (addBtn) addBtn.disabled = false;
+        if (vendorAddBtn) vendorAddBtn.disabled = false;
     }
 });
 
-// =========================================================================
-// SHIPMENT DETAILS TABS - UI & DB LOGIC
-// =========================================================================
-addShipmentBtn.addEventListener('click', function () {
-    const type = document.getElementById('shipmentType').value;
-    const name = document.getElementById('consigneeorConsignorName').value.trim();
-    const address = document.getElementById('consigneeorConsignorAddress').value.trim();
-    const pincode = document.getElementById('shipmentPinCode').value.trim();
-    const city = document.getElementById('shipmentCity').value.trim();
-    const refNo = document.getElementById('shipmentReferenceNumber').value.trim();
-    const eWayBillNo = document.getElementById('shipmentEWayBillNumber').value.trim();
+// ============ SHIPMENT DETAILS TAB ============
+addShipmentBtn?.addEventListener('click', () => {
+    const type = document.getElementById('shipmentType')?.value || '';
+    const name = document.getElementById('consigneeorConsignorName')?.value.trim() || '';
+    const address = document.getElementById('consigneeorConsignorAddress')?.value.trim() || '';
+    const pincode = document.getElementById('shipmentPinCode')?.value.trim() || '';
+    const city = document.getElementById('shipmentCity')?.value.trim() || '';
+    const refNo = document.getElementById('shipmentReferenceNumber')?.value.trim() || '';
+    const eWayBillNo = document.getElementById('shipmentEWayBillNumber')?.value.trim() || '';
 
-    const invValue = parseFloat(document.getElementById('shipmentInvoiceValue').value || 0).toFixed(2);
-    const qty = parseFloat(document.getElementById('shipmentQuantity').value || 0).toFixed(2);
-    const actWt = parseFloat(document.getElementById('shipmentActualWt').value || 0).toFixed(2);
-    const chgWt = parseFloat(document.getElementById('shipmentChargeWt').value || 0).toFixed(2);
+    const invValue = (parseFloat(document.getElementById('shipmentInvoiceValue')?.value) || 0).toFixed(2);
+    const qty = (parseFloat(document.getElementById('shipmentQuantity')?.value) || 0).toFixed(2);
+    const actWt = (parseFloat(document.getElementById('shipmentActualWt')?.value) || 0).toFixed(2);
+    const chgWt = (parseFloat(document.getElementById('shipmentChargeWt')?.value) || 0).toFixed(2);
 
     if (!name || !address || !pincode || !city) {
-        alert('Please fill in Name, Address, Pincode, and City before adding.');
+        notify('Please fill in Name, Address, Pincode, and City before adding.', 'error');
         return;
     }
 
-    let tr = currentEditShipmentId ? shipmentTableBody.querySelector(`tr[data-id="${currentEditShipmentId}"]`) : null;
+    let tr = currentEditShipmentId
+        ? shipmentTableBody.querySelector(`tr[data-id="${CSS.escape(currentEditShipmentId)}"]`)
+        : null;
 
     if (!tr) {
         tr = document.createElement('tr');
@@ -672,65 +782,82 @@ addShipmentBtn.addEventListener('click', function () {
     });
 
     tr.innerHTML = `
-        <td>${type}</td>
-        <td class="text-cap">${name}</td>
-        <td class="text-cap text-truncate" style="max-width: 150px;" title="${address}">${address}</td>
-        <td>${pincode}</td>
-        <td class="text-cap">${city}</td>
-        <td class="text-upper">${refNo}</td>
-        <td class="text-upper">${eWayBillNo}</td>
+        <td>${escapeHtml(type)}</td>
+        <td class="text-cap">${escapeHtml(name)}</td>
+        <td class="text-cap text-truncate" style="max-width: 150px;" title="${escapeHtml(address)}">${escapeHtml(address)}</td>
+        <td>${escapeHtml(pincode)}</td>
+        <td class="text-cap">${escapeHtml(city)}</td>
+        <td class="text-upper">${escapeHtml(refNo)}</td>
+        <td class="text-upper">${escapeHtml(eWayBillNo)}</td>
         <td class="text-end">${invValue}</td>
         <td class="text-end">${qty}</td>
         <td class="text-end">${actWt}</td>
         <td class="text-end">${chgWt}</td>
         <td class="text-center text-nowrap">
-            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 edit-shipment-btn" title="Edit Row"><i class="bi bi-pencil"></i></button>
-            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-shipment-btn" title="Remove Row"><i class="bi bi-trash"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 edit-shipment-btn" title="Edit Row" aria-label="Edit Row"><i class="bi bi-pencil"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-shipment-btn" title="Remove Row" aria-label="Remove Row"><i class="bi bi-trash"></i></button>
         </td>
     `;
 
     recalculateShipmentSummary();
 
     currentEditShipmentId = null;
-    document.getElementById('shipmentId').value = '';
-    document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-plus-lg"></i> Add';
+    const shipmentIdEl = document.getElementById('shipmentId');
+    if (shipmentIdEl) shipmentIdEl.value = '';
+    addShipmentBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add';
 
-    ['consigneeorConsignorName', 'consigneeorConsignorAddress', 'shipmentPinCode', 'shipmentCity',
-        'shipmentReferenceNumber', 'shipmentInvoiceValue', 'shipmentQuantity', 'shipmentActualWt', 'shipmentChargeWt', 'shipmentEWayBillNumber']
-        .forEach(id => document.getElementById(id).value = '');
+    [
+        'consigneeorConsignorName', 'consigneeorConsignorAddress', 'shipmentPinCode', 'shipmentCity',
+        'shipmentReferenceNumber', 'shipmentInvoiceValue', 'shipmentQuantity', 'shipmentActualWt',
+        'shipmentChargeWt', 'shipmentEWayBillNumber'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
 
-    document.getElementById('consigneeorConsignorName').focus();
+    document.getElementById('consigneeorConsignorName')?.focus();
 });
 
-shipmentTableBody.addEventListener('click', function (e) {
+shipmentTableBody?.addEventListener('click', (e) => {
     const deleteBtn = e.target.closest('.delete-shipment-btn');
     const editBtn = e.target.closest('.edit-shipment-btn');
 
     if (deleteBtn) {
         const tr = deleteBtn.closest('tr');
-        if (tr.dataset.id) deletedShipmentIds.push(tr.dataset.id);
+        const rowId = tr.dataset.id;
+        // Only queue real DB IDs for deletion (skip temp_ IDs)
+        if (rowId && !rowId.startsWith('temp_')) {
+            deletedShipmentIds.push(rowId);
+        }
         tr.remove();
         recalculateShipmentSummary();
     } else if (editBtn) {
         const tr = editBtn.closest('tr');
-        currentEditShipmentId = tr.dataset.id || ('temp_' + Date.now());
+        currentEditShipmentId = tr.dataset.id || `temp_${Date.now()}`;
         tr.dataset.id = currentEditShipmentId;
-        document.getElementById('shipmentId').value = currentEditShipmentId;
 
-        document.getElementById('shipmentType').value = tr.dataset.type || '';
-        document.getElementById('consigneeorConsignorName').value = tr.dataset.name || '';
-        document.getElementById('consigneeorConsignorAddress').value = tr.dataset.address || '';
-        document.getElementById('shipmentPinCode').value = tr.dataset.pincode || '';
-        document.getElementById('shipmentCity').value = tr.dataset.city || '';
-        document.getElementById('shipmentReferenceNumber').value = tr.dataset.refNo || '';
-        document.getElementById('shipmentEWayBillNumber').value = tr.dataset.eWayBillNo || tr.dataset.e_waybill_no || '';
-        document.getElementById('shipmentInvoiceValue').value = tr.dataset.invValue || '';
-        document.getElementById('shipmentQuantity').value = tr.dataset.qty || '';
-        document.getElementById('shipmentActualWt').value = tr.dataset.actWt || '';
-        document.getElementById('shipmentChargeWt').value = tr.dataset.chgWt || '';
+        const fieldValues = {
+            shipmentId: currentEditShipmentId,
+            shipmentType: tr.dataset.type || '',
+            consigneeorConsignorName: tr.dataset.name || '',
+            consigneeorConsignorAddress: tr.dataset.address || '',
+            shipmentPinCode: tr.dataset.pincode || '',
+            shipmentCity: tr.dataset.city || '',
+            shipmentReferenceNumber: tr.dataset.refNo || '',
+            shipmentEWayBillNumber: tr.dataset.eWayBillNo || tr.dataset.e_waybill_no || '',
+            shipmentInvoiceValue: tr.dataset.invValue || '',
+            shipmentQuantity: tr.dataset.qty || '',
+            shipmentActualWt: tr.dataset.actWt || '',
+            shipmentChargeWt: tr.dataset.chgWt || ''
+        };
 
-        document.getElementById('addShipmentRow').innerHTML = '<i class="bi bi-pencil"></i> Edit Item';
-        document.getElementById('consigneeorConsignorName').focus();
+        Object.entries(fieldValues).forEach(([id, val]) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        });
+
+        if (addShipmentBtn) addShipmentBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit Item';
+        document.getElementById('consigneeorConsignorName')?.focus();
     }
 });
 
@@ -740,7 +867,6 @@ async function saveShipments(bookingId, lrNumber) {
     const shipmentsToUpdate = [];
 
     rows.forEach(tr => {
-        // Skip placeholder / empty rows if present
         if (tr.querySelector('.vm-empty')) return;
 
         const shipment = {
@@ -756,11 +882,13 @@ async function saveShipments(bookingId, lrNumber) {
             invoice_value: parseFloat(tr.dataset.invValue) || 0,
             quantity: parseFloat(tr.dataset.qty) || 0,
             actual_weight: parseFloat(tr.dataset.actWt) || 0,
-            charge_weight: parseFloat(tr.dataset.chgWt) || 0,
+            charge_weight: parseFloat(tr.dataset.chgWt) || 0
         };
 
         const rowId = tr.dataset.id;
-        if (rowId && rowId !== "null" && rowId !== "undefined" && rowId.trim() !== "") {
+        const isPersistedId = rowId && rowId !== 'null' && rowId !== 'undefined' && rowId.trim() !== '' && !rowId.startsWith('temp_');
+
+        if (isPersistedId) {
             shipment.id = rowId;
             shipment.updated_at = new Date().toISOString();
             shipmentsToUpdate.push(shipment);
@@ -773,34 +901,31 @@ async function saveShipments(bookingId, lrNumber) {
         const promises = [];
 
         if (deletedShipmentIds.length > 0) {
-            promises.push(supabaseClient
-                .from('FullLoadShipmentDetails')
-                .delete()
-                .in('id', deletedShipmentIds));
+            promises.push(
+                supabaseClient.from('FullLoadShipmentDetails').delete().in('id', deletedShipmentIds)
+            );
         }
         if (shipmentsToUpdate.length > 0) {
-            promises.push(supabaseClient
-                .from('FullLoadShipmentDetails')
-                .upsert(shipmentsToUpdate));
+            promises.push(
+                supabaseClient.from('FullLoadShipmentDetails').upsert(shipmentsToUpdate)
+            );
         }
         if (shipmentsToInsert.length > 0) {
-            promises.push(supabaseClient
-                .from('FullLoadShipmentDetails')
-                .insert(shipmentsToInsert));
+            promises.push(
+                supabaseClient.from('FullLoadShipmentDetails').insert(shipmentsToInsert)
+            );
         }
 
         if (promises.length > 0) {
-            // Promise.allSettled ensures that even if one action fails, it doesn't crash the rest
             const results = await Promise.allSettled(promises);
             results.forEach((res, idx) => {
                 if (res.status === 'rejected') {
-                    console.warn(`Shipment operation at index ${idx} failed, ignoring:`, res.reason);
+                    console.warn(`Shipment operation at index ${idx} failed:`, res.reason);
                 }
             });
         }
     } catch (err) {
-        // Catch any unexpected errors and ignore them so execution continues
-        console.warn("Failed to update shipment details, ignoring and continuing:", err);
+        console.warn('Failed to update shipment details:', err);
     } finally {
         deletedShipmentIds = [];
     }
@@ -811,12 +936,14 @@ async function loadShipmentDetails(lrNumber) {
         .from('FullLoadShipmentDetails')
         .select('*')
         .eq('lr_number', lrNumber);
-    if (error || !data) return;
+
+    if (error || !data || !shipmentTableBody) return;
 
     shipmentTableBody.innerHTML = '';
     deletedShipmentIds = [];
     currentEditShipmentId = null;
 
+    const fragment = document.createDocumentFragment();
     data.forEach(row => {
         const tr = document.createElement('tr');
         const eWayBillNo = row.e_waybill_no || '';
@@ -829,7 +956,7 @@ async function loadShipmentDetails(lrNumber) {
             pincode: row.pincode,
             city: row.city,
             refNo: row.reference_number,
-            eWayBillNo: eWayBillNo,
+            eWayBillNo,
             e_waybill_no: eWayBillNo,
             invValue: row.invoice_value,
             qty: row.quantity,
@@ -838,156 +965,175 @@ async function loadShipmentDetails(lrNumber) {
         });
 
         tr.innerHTML = `
-            <td>${row.shipment_type}</td>
-            <td class="text-cap">${row.consignee_or_consignor_name}</td>
-            <td class="text-cap text-truncate" style="max-width: 150px;" title="${row.consignee_or_consignor_address}">${row.consignee_or_consignor_address}</td>
-            <td>${row.pincode}</td>
-            <td class="text-cap">${row.city}</td>
-            <td class="text-upper">${row.reference_number || ''}</td>
-            <td class="text-upper">${eWayBillNo}</td>
-            <td class="text-end">${parseFloat(row.invoice_value || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(row.quantity || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(row.actual_weight || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(row.charge_weight || 0).toFixed(2)}</td>
+            <td>${escapeHtml(row.shipment_type)}</td>
+            <td class="text-cap">${escapeHtml(row.consignee_or_consignor_name)}</td>
+            <td class="text-cap text-truncate" style="max-width: 150px;" title="${escapeHtml(row.consignee_or_consignor_address)}">${escapeHtml(row.consignee_or_consignor_address)}</td>
+            <td>${escapeHtml(row.pincode)}</td>
+            <td class="text-cap">${escapeHtml(row.city)}</td>
+            <td class="text-upper">${escapeHtml(row.reference_number || '')}</td>
+            <td class="text-upper">${escapeHtml(eWayBillNo)}</td>
+            <td class="text-end">${(parseFloat(row.invoice_value) || 0).toFixed(2)}</td>
+            <td class="text-end">${(parseFloat(row.quantity) || 0).toFixed(2)}</td>
+            <td class="text-end">${(parseFloat(row.actual_weight) || 0).toFixed(2)}</td>
+            <td class="text-end">${(parseFloat(row.charge_weight) || 0).toFixed(2)}</td>
             <td class="text-center text-nowrap">
-                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 edit-shipment-btn" title="Edit Row" disabled><i class="bi bi-pencil"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-shipment-btn" title="Remove Row" disabled><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 edit-shipment-btn" title="Edit Row" aria-label="Edit Row" disabled><i class="bi bi-pencil"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-shipment-btn" title="Remove Row" aria-label="Remove Row" disabled><i class="bi bi-trash"></i></button>
             </td>
         `;
-        shipmentTableBody.appendChild(tr);
+        fragment.appendChild(tr);
     });
+
+    shipmentTableBody.appendChild(fragment);
     updateShipmentTotals();
 }
 
+// ============ BILLING CHARGES TABS ============
 async function loadBillingCharges(lrNumber, accountType, tableId) {
     const { data, error } = await supabaseClient
-        .from("FullLoadBookingCharges")
-        .select("*")
-        .eq("LRNumber", lrNumber)
-        .eq("AccountType", accountType);
+        .from('FullLoadBookingCharges')
+        .select('*')
+        .eq('LRNumber', lrNumber)
+        .eq('AccountType', accountType);
 
     if (error || !data) return;
 
-    const tableBody = document.getElementById(tableId).querySelector("tbody");
-    tableBody.innerHTML = "";
+    const tableBody = document.querySelector(`#${tableId} tbody`);
+    if (!tableBody) return;
+    tableBody.innerHTML = '';
 
+    const fragment = document.createDocumentFragment();
     data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.dataset.status = "old";
+        const tr = document.createElement('tr');
+        tr.dataset.status = 'old';
         tr.dataset.id = row.id;
 
         tr.innerHTML = `
-            <td class="align-middle">${row.ChargesType}</td>
-            <td class="align-middle">${row.TaxRate}%</td>
-            <td class="text-end align-middle">${parseFloat(row.TotalAmount).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.CGSTAmt).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.SGSTAmt).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.IGSTAmt).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.TotalGSTAmt).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.GrandTotalAmt).toFixed(2)}</td>
-            <td><button type="button" class="btn btn-sm btn-danger deleteRow" disabled>Delete</button></td>
-            <td class="align-middle d-none">${row.HSNCode || ""}</td>
-            <td class="align-middle d-none">${row.TaxID || ""}</td>
+            <td class="align-middle">${escapeHtml(row.ChargesType)}</td>
+            <td class="text-end align-middle">${escapeHtml(row.TaxRate)}%</td>
+            <td class="text-end align-middle">${(parseFloat(row.TotalAmount) || 0).toFixed(2)}</td>
+            <td class="text-end align-middle">${(parseFloat(row.CGSTAmt) || 0).toFixed(2)}</td>
+            <td class="text-end align-middle">${(parseFloat(row.SGSTAmt) || 0).toFixed(2)}</td>
+            <td class="text-end align-middle">${(parseFloat(row.IGSTAmt) || 0).toFixed(2)}</td>
+            <td class="text-end align-middle">${(parseFloat(row.TotalGSTAmt) || 0).toFixed(2)}</td>
+            <td class="text-end align-middle">${(parseFloat(row.GrandTotalAmt) || 0).toFixed(2)}</td>
+            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger deleteRow" disabled aria-label="Delete charge"><i class="bi bi-trash"></i></button></td>
+            <td class="align-middle d-none">${escapeHtml(row.HSNCode || '')}</td>
+            <td class="align-middle d-none">${escapeHtml(row.TaxID || '')}</td>
         `;
-        tableBody.appendChild(tr);
 
-        tr.querySelector(".deleteRow").onclick = () => {
-            tr.dataset.status = "deleted";
-            tr.style.display = "none";
+        tr.querySelector('.deleteRow').onclick = () => {
+            tr.dataset.status = 'deleted';
+            tr.style.display = 'none';
             updateChargesTotals(tableId);
         };
+
+        fragment.appendChild(tr);
     });
+
+    tableBody.appendChild(fragment);
     updateChargesTotals(tableId);
 }
 
-document.getElementById("addFreightRow").addEventListener("click", async () => {
-    await addFreightRow("chargesDetailsTable", "chargesType", "customerFreightAmt", "partyDefaultTax");
-    await getFixedCharges("Sell");
+document.getElementById('addFreightRow')?.addEventListener('click', async () => {
+    await addFreightRow('chargesDetailsTable', 'chargesType', 'customerFreightAmt', 'partyDefaultTax');
+    await getFixedCharges('Sell');
 });
 
-document.getElementById("addVendorFreightRow").addEventListener("click", async () => {
-    await addFreightRow("vendorChargesDetailsTable", "vendorChargesType", "vendorFreightAmt", "vendorDefaultTax");
-    await getFixedCharges("Buy");
+document.getElementById('addVendorFreightRow')?.addEventListener('click', async () => {
+    await addFreightRow('vendorChargesDetailsTable', 'vendorChargesType', 'vendorFreightAmt', 'vendorDefaultTax');
+    await getFixedCharges('Buy');
 });
 
 async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
-    const chargesType = document.getElementById(chargesInput).value.trim();
-    const amount = parseFloat(document.getElementById(amountInput).value) || 0;
-    const taxID = document.getElementById(taxInput).value || 1;
-    const HSNCode = await getDropdownDataValue(chargesType, "ChargesType");
+    const chargesEl = document.getElementById(chargesInput);
+    const amountEl = document.getElementById(amountInput);
+    const taxEl = document.getElementById(taxInput);
 
-    const addVendorBtn = document.getElementById("addVendorFreightRow");
-    const addFreightBtn = document.getElementById("addFreightRow");
+    const chargesType = chargesEl?.value.trim() || '';
+    const amount = parseFloat(amountEl?.value) || 0;
+    const taxID = taxEl?.value || 1;
 
-    addVendorBtn.disabled = true;
-    addFreightBtn.disabled = true;
+    const addVendorBtn = document.getElementById('addVendorFreightRow');
+    const addFreightBtn = document.getElementById('addFreightRow');
 
-    if (!chargesType || amount <= 0) {
-        alert("Enter Charges Type and Amount");
-        addVendorBtn.disabled = false;
-        addFreightBtn.disabled = false;
-        return;
-    }
+    if (addVendorBtn) addVendorBtn.disabled = true;
+    if (addFreightBtn) addFreightBtn.disabled = true;
 
-    const tableBody = document.getElementById(tableId).querySelector("tbody");
-    for (let row of tableBody.querySelectorAll("tr")) {
-        if (row.dataset.status !== "deleted" && row.children[0].textContent.trim() === chargesType) {
-            addVendorBtn.disabled = false;
-            addFreightBtn.disabled = false;
-            return;
+    try {
+        if (!chargesType || amount <= 0) {
+            notify('Enter Charges Type and Amount', 'error');
+            return null;
         }
-    }
 
-    const taxes = await getTaxRatesById(taxID);
-    const taxCalculations = calculateTaxes(amount, taxes);
-    const tr = document.createElement("tr");
-    tr.dataset.status = "new";
+        const tableBody = document.querySelector(`#${tableId} tbody`);
+        if (!tableBody) return null;
 
-    tr.innerHTML = `
-        <td>${chargesType}</td>
-        <td>${taxCalculations.totalRate}%</td>
-        <td class="text-end">${amount.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.sgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.cgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.igstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.totalGstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.grandTotal.toFixed(2)}</td>
-        <td><button type="button" class="btn btn-sm btn-danger deleteRow">Delete</button></td>
-        <td class="d-none">${HSNCode?.hsn_code || "0"}</td>
-        <td class="d-none">${taxID}</td>
-    `;
-    tableBody.appendChild(tr);
+        // Prevent duplicate active charge types
+        const isDuplicate = getActiveRows(tableId).some(
+            row => row.children[0]?.textContent.trim() === chargesType
+        );
+        if (isDuplicate) return null;
 
-    tr.querySelector(".deleteRow").onclick = () => {
-        if (tr.dataset.status === "new") tr.remove();
-        else {
-            tr.dataset.status = "deleted";
-            tr.style.display = "none";
-        }
+        const [HSNCode, taxes] = await Promise.all([
+            getDropdownDataValue(chargesType, 'ChargesType'),
+            getTaxRatesById(taxID)
+        ]);
+
+        const taxCalculations = calculateTaxes(amount, taxes);
+        const tr = document.createElement('tr');
+        tr.dataset.status = 'new';
+
+        // Column order: ChargesType | GST% | Amount | CGST | SGST | IGST | Total GST | Grand Total | Action | HSN | TaxID
+        tr.innerHTML = `
+            <td>${escapeHtml(chargesType)}</td>
+            <td class="text-end">${taxCalculations.totalRate}%</td>
+            <td class="text-end">${amount.toFixed(2)}</td>
+            <td class="text-end">${taxCalculations.cgstAmt.toFixed(2)}</td>
+            <td class="text-end">${taxCalculations.sgstAmt.toFixed(2)}</td>
+            <td class="text-end">${taxCalculations.igstAmt.toFixed(2)}</td>
+            <td class="text-end">${taxCalculations.totalGstAmt.toFixed(2)}</td>
+            <td class="text-end">${taxCalculations.grandTotal.toFixed(2)}</td>
+            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger deleteRow" aria-label="Delete charge"><i class="bi bi-trash"></i></button></td>
+            <td class="d-none">${escapeHtml(HSNCode?.hsn_code || '0')}</td>
+            <td class="d-none">${escapeHtml(taxID)}</td>
+        `;
+
+        tableBody.appendChild(tr);
+
+        tr.querySelector('.deleteRow').onclick = () => {
+            if (tr.dataset.status === 'new') {
+                tr.remove();
+            } else {
+                tr.dataset.status = 'deleted';
+                tr.style.display = 'none';
+            }
+            updateChargesTotals(tableId);
+        };
+
         updateChargesTotals(tableId);
-    };
 
-    updateChargesTotals(tableId);
-    document.getElementById(chargesInput).value = "";
-    document.getElementById(amountInput).value = "";
-    document.getElementById(taxInput).selectedIndex = 0;
-    addVendorBtn.disabled = false;
-    addFreightBtn.disabled = false;
+        if (chargesEl) chargesEl.value = '';
+        if (amountEl) amountEl.value = '';
+        if (taxEl) taxEl.selectedIndex = 0;
+
+        return tr;
+    } finally {
+        if (addVendorBtn) addVendorBtn.disabled = false;
+        if (addFreightBtn) addFreightBtn.disabled = false;
+    }
 }
 
 function updateChargesTotals(tableId) {
     const table = document.getElementById(tableId);
     if (!table) return;
 
-    const rows = table.querySelectorAll("tbody tr");
-    const tfoot = table.querySelector("tfoot") || table.createTFoot();
+    const rows = getActiveRows(tableId);
+    const tfoot = table.querySelector('tfoot') || table.createTFoot();
 
-    let totals = { amount: 0, cgst: 0, sgst: 0, igst: 0, gst: 0, grand: 0 };
+    const totals = { amount: 0, cgst: 0, sgst: 0, igst: 0, gst: 0, grand: 0 };
 
     rows.forEach(tr => {
-        if (tr.dataset.status === "deleted") return;
-
-        // Ensure the cells exist before accessing textContent
         totals.amount += parseFloat(tr.children[2]?.textContent) || 0;
         totals.cgst += parseFloat(tr.children[3]?.textContent) || 0;
         totals.sgst += parseFloat(tr.children[4]?.textContent) || 0;
@@ -1011,28 +1157,34 @@ function updateChargesTotals(tableId) {
 }
 
 async function saveCharges(bookingId, tableId, accountType) {
-    const rows = document.getElementById(tableId).querySelectorAll("tbody tr");
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
     const insertData = [];
     const deleteIds = [];
 
     const { data: existingData } = await supabaseClient
-        .from("FullLoadBookingCharges")
-        .select("ChargesType")
-        .eq("ID_FT", bookingId)
-        .eq("AccountType", accountType);
+        .from('FullLoadBookingCharges')
+        .select('ChargesType')
+        .eq('ID_FT', bookingId)
+        .eq('AccountType', accountType);
 
     const existingChargeTypes = new Set(existingData?.map(d => d.ChargesType) || []);
-    const getNumber = val => (!val || val === "No GST") ? 0 : parseFloat(val) || 0;
+    const getNumber = val => (!val || val === 'No GST') ? 0 : parseFloat(val) || 0;
+    const lrNumber = document.getElementById('lrNumber')?.value.trim() || '';
 
     rows.forEach(row => {
+        // Skip empty-state placeholder rows
+        if (row.querySelector('td.vm-empty')) return;
+
         const status = row.dataset.status;
-        const cells = row.querySelectorAll("td");
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 11) return;
+
         const chargeType = cells[0].textContent.trim();
 
-        if (status === "new" && !existingChargeTypes.has(chargeType)) {
+        if (status === 'new' && !existingChargeTypes.has(chargeType)) {
             insertData.push({
                 ID_FT: bookingId,
-                LRNumber: document.getElementById("lrNumber").value.trim(),
+                LRNumber: lrNumber,
                 ChargesType: chargeType,
                 TaxRate: getNumber(cells[1].textContent),
                 Quantity: 1,
@@ -1043,8 +1195,8 @@ async function saveCharges(bookingId, tableId, accountType) {
                 IGSTAmt: getNumber(cells[5].textContent),
                 TotalGSTAmt: getNumber(cells[6].textContent),
                 GrandTotalAmt: getNumber(cells[7].textContent),
-                HSNCode: cells[9].textContent || "",
-                TaxID: cells[10].textContent || "",
+                HSNCode: cells[9].textContent || '',
+                TaxID: cells[10].textContent || '',
                 AccountType: accountType,
                 created_by: UserLoginID,
                 created_at: localtimeStamp
@@ -1052,46 +1204,47 @@ async function saveCharges(bookingId, tableId, accountType) {
             existingChargeTypes.add(chargeType);
         }
 
-        if (status === "deleted" && row.dataset.id) {
+        if (status === 'deleted' && row.dataset.id) {
             deleteIds.push(row.dataset.id);
         }
     });
 
     const promises = [];
-    if (insertData.length > 0) promises.push(supabaseClient.from("FullLoadBookingCharges").insert(insertData));
-    if (deleteIds.length > 0) promises.push(supabaseClient.from("FullLoadBookingCharges").delete().in("id", deleteIds));
+    if (insertData.length > 0) promises.push(supabaseClient.from('FullLoadBookingCharges').insert(insertData));
+    if (deleteIds.length > 0) promises.push(supabaseClient.from('FullLoadBookingCharges').delete().in('id', deleteIds));
     if (promises.length > 0) await Promise.all(promises);
 }
 
+// ============ TARIFFS & FIXED CHARGES ============
 async function getTariffRate(partyCode, tariffType) {
-    const movementType = document.getElementById("movementType").value;
-    const modeType = document.getElementById("modeType").value;
-    const vehicleType = document.getElementById("vehicleType").value;
-    const routeDetails = document.getElementById("routeDetails").value.toLowerCase().trim();
-    const chargeWt = parseFloat(document.getElementById("chargeWt").value) || 0;
-    const bookingDate = document.getElementById("lrDate").value;
+    const movementType = document.getElementById('movementType')?.value;
+    const modeType = document.getElementById('modeType')?.value;
+    const vehicleType = document.getElementById('vehicleType')?.value;
+    const routeDetails = document.getElementById('routeDetails')?.value.toLowerCase().trim();
+    const chargeWt = parseFloat(document.getElementById('chargeWt')?.value) || 0;
+    const bookingDate = document.getElementById('lrDate')?.value;
 
     if (!partyCode || !movementType || !modeType || !vehicleType || !routeDetails) {
         return null;
     }
 
     const { data, error } = await supabaseClient
-        .from("FTL_FCL_Tariff")
-        .select("Rate")
-        .eq("PartyCode", partyCode)
-        .eq("MovementType", movementType)
-        .eq("ModeType", modeType)
-        .eq("VehicleType", vehicleType)
-        .eq("RouteDetails", routeDetails)
-        .eq("TariffType", tariffType)
-        .gte("CargoWeight", chargeWt)
-        .lte("EffectiveDate", bookingDate)
-        .order("EffectiveDate", { ascending: false })
-        .order("CargoWeight", { ascending: true })
+        .from('FTL_FCL_Tariff')
+        .select('Rate')
+        .eq('PartyCode', partyCode)
+        .eq('MovementType', movementType)
+        .eq('ModeType', modeType)
+        .eq('VehicleType', vehicleType)
+        .eq('RouteDetails', routeDetails)
+        .eq('TariffType', tariffType)
+        .gte('CargoWeight', chargeWt)
+        .lte('EffectiveDate', bookingDate)
+        .order('EffectiveDate', { ascending: false })
+        .order('CargoWeight', { ascending: true })
         .limit(1);
 
     if (error) {
-        console.error("Tariff fetch error:", error);
+        console.error('Tariff fetch error:', error);
         return null;
     }
 
@@ -1099,126 +1252,134 @@ async function getTariffRate(partyCode, tariffType) {
 }
 
 async function applyCustomerTariff() {
-    const partyCode = document.getElementById("partyCode").value;
-    const rate = await getTariffRate(partyCode, "Sell");
+    const partyCode = document.getElementById('partyCode')?.value;
+    const rate = await getTariffRate(partyCode, 'Sell');
 
-    const amountInput = document.getElementById("customerFreightAmt");
-    const chargesInput = document.getElementById("chargesType");
+    const amountInput = document.getElementById('customerFreightAmt');
+    const chargesInput = document.getElementById('chargesType');
+    if (!amountInput || !chargesInput) return;
 
     if (!rate) {
-        chargesInput.value = "";
-        amountInput.value = "0.00";
+        chargesInput.value = '';
+        amountInput.value = '0.00';
         return;
     }
 
-    chargesInput.value = "Freight Amount";
+    chargesInput.value = 'Freight Amount';
     amountInput.value = rate;
 
-    await addFreightRow("chargesDetailsTable", "chargesType", "customerFreightAmt", "partyDefaultTax");
+    await addFreightRow('chargesDetailsTable', 'chargesType', 'customerFreightAmt', 'partyDefaultTax');
 }
 
 async function applyVendorTariff() {
-    const vendorCode = document.getElementById("vendorCode").value;
-    const rate = await getTariffRate(vendorCode, "Buy");
+    const vendorCode = document.getElementById('vendorCode')?.value;
+    const rate = await getTariffRate(vendorCode, 'Buy');
 
-    const amountInput = document.getElementById("vendorFreightAmt");
-    const chargesInput = document.getElementById("vendorChargesType");
+    const amountInput = document.getElementById('vendorFreightAmt');
+    const chargesInput = document.getElementById('vendorChargesType');
+    if (!amountInput || !chargesInput) return;
 
     if (!rate) {
-        chargesInput.value = "";
-        amountInput.value = "0.00";
+        chargesInput.value = '';
+        amountInput.value = '0.00';
         return;
     }
 
-    chargesInput.value = "Freight Amount";
+    chargesInput.value = 'Freight Amount';
     amountInput.value = rate;
 
-    await addFreightRow("vendorChargesDetailsTable", "vendorChargesType", "vendorFreightAmt", "vendorDefaultTax");
+    await addFreightRow('vendorChargesDetailsTable', 'vendorChargesType', 'vendorFreightAmt', 'vendorDefaultTax');
 }
 
-["lrDate", "partyCode", "modeType", "movementType", "routeDetails", "vehicleType", "chargeWt", "vendorCode"].forEach(id => {
-    document.getElementById(id).addEventListener("change", async () => {
+['lrDate', 'partyCode', 'modeType', 'movementType', 'routeDetails', 'vehicleType', 'chargeWt', 'vendorCode'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', async () => {
         await Promise.all([applyCustomerTariff(), applyVendorTariff()]);
     });
 });
 
 function clearAutoCharges(tableId) {
     document.querySelectorAll(`#${tableId} tbody tr`).forEach(row => {
-        if (row.dataset.auto === "true") row.remove();
+        if (row.dataset.auto === 'true') row.remove();
     });
 }
 
-async function getFixedCharges(accountType = "Sell") {
-    const partyCode = accountType === "Sell" ? document.getElementById("partyCode").value : document.getElementById("vendorCode").value;
-    const movementType = document.getElementById("movementType").value;
-    const modeType = document.getElementById("modeType").value;
-    const bookingDate = document.getElementById("lrDate").value;
-    const freightAmt = accountType === "Sell" ? parseFloat(document.getElementById("customerFreightAmt").value) || 0 : parseFloat(document.getElementById("vendorFreightAmt").value) || 0;
+async function getFixedCharges(accountType = 'Sell') {
+    const partyCode = accountType === 'Sell'
+        ? document.getElementById('partyCode')?.value
+        : document.getElementById('vendorCode')?.value;
+    const movementType = document.getElementById('movementType')?.value;
+    const modeType = document.getElementById('modeType')?.value;
+    const bookingDate = document.getElementById('lrDate')?.value;
+    const freightAmt = accountType === 'Sell'
+        ? parseFloat(document.getElementById('customerFreightAmt')?.value) || 0
+        : parseFloat(document.getElementById('vendorFreightAmt')?.value) || 0;
 
     if (!partyCode) return;
 
     const { data } = await supabaseClient
-        .from("FixedCharges")
-        .select("*")
-        .eq("PartyCode", partyCode)
-        .eq("FixedChargesType", accountType)
-        .lte("EffectiveDate", bookingDate)
-        .order("EffectiveDate", { ascending: false });
+        .from('FixedCharges')
+        .select('*')
+        .eq('PartyCode', partyCode)
+        .eq('FixedChargesType', accountType)
+        .lte('EffectiveDate', bookingDate)
+        .order('EffectiveDate', { ascending: false });
 
     if (!data || data.length === 0) return;
 
     const applicableCharges = [];
     data.forEach(row => {
-        if ((row.MovementType === movementType || row.MovementType === "All") &&
-            (row.TransitType === "All") &&
-            (row.ModeType === modeType || row.ModeType === "All")) {
-            let charge = (row.Percentage > 0) ? (freightAmt * row.Percentage) / 100 : 0;
+        if (
+            (row.MovementType === movementType || row.MovementType === 'All') &&
+            row.TransitType === 'All' &&
+            (row.ModeType === modeType || row.ModeType === 'All')
+        ) {
+            let charge = row.Percentage > 0 ? (freightAmt * row.Percentage) / 100 : 0;
             if (row.Amount > charge) charge = row.Amount;
             applicableCharges.push({ type: row.ChargesType, amount: charge });
         }
     });
-    applyFixedCharges(applicableCharges, accountType);
+
+    await applyFixedCharges(applicableCharges, accountType);
 }
 
-function applyFixedCharges(charges, accountType) {
-    const tableId = accountType === "Sell" ? "chargesDetailsTable" : "vendorChargesDetailsTable";
-    const chargesInput = accountType === "Sell" ? "chargesType" : "vendorChargesType";
-    const amountInput = accountType === "Sell" ? "customerFreightAmt" : "vendorFreightAmt";
-    const taxInput = accountType === "Sell" ? "partyDefaultTax" : "vendorDefaultTax";
+async function applyFixedCharges(charges, accountType) {
+    const tableId = accountType === 'Sell' ? 'chargesDetailsTable' : 'vendorChargesDetailsTable';
+    const chargesInput = accountType === 'Sell' ? 'chargesType' : 'vendorChargesType';
+    const amountInput = accountType === 'Sell' ? 'customerFreightAmt' : 'vendorFreightAmt';
+    const taxInput = accountType === 'Sell' ? 'partyDefaultTax' : 'vendorDefaultTax';
 
     clearAutoCharges(tableId);
 
-    charges.forEach(ch => {
-        document.getElementById(chargesInput).value = ch.type;
-        document.getElementById(amountInput).value = ch.amount.toFixed(2);
-        addFreightRow(tableId, chargesInput, amountInput, taxInput);
+    for (const ch of charges) {
+        const chargesEl = document.getElementById(chargesInput);
+        const amountEl = document.getElementById(amountInput);
+        if (chargesEl) chargesEl.value = ch.type;
+        if (amountEl) amountEl.value = ch.amount.toFixed(2);
 
-        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
-        if (rows.length > 0) rows[rows.length - 1].dataset.auto = "true";
-    });
+        const newRow = await addFreightRow(tableId, chargesInput, amountInput, taxInput);
+        if (newRow) newRow.dataset.auto = 'true';
+    }
 }
 
 async function generateLRNumber() {
-    const companyId = localStorage.getItem("CompanyID");
+    const companyId = localStorage.getItem('CompanyID');
     const companyProfile = await getCompanyProfile(companyId);
-    const { data } = await supabaseClient.rpc("generate_lr_number", {
+    const { data } = await supabaseClient.rpc('generate_lr_number', {
         p_company_id: companyId,
         p_short_code: companyProfile.short_code
     });
     return data;
 }
 
-// Handle clicks on the LR Print dropdown options
+// ============ PRINT DROPDOWN ============
 document.querySelectorAll('.dropdown-menu [data-print-type]').forEach(item => {
     item.addEventListener('click', async (e) => {
         e.preventDefault();
-
         const printType = e.currentTarget.getAttribute('data-print-type');
-        const lrNumberField = document.getElementById("lrNumber");
-        const lrNumber = lrNumberField ? lrNumberField.value.trim() : "";
+        const lrNumber = document.getElementById('lrNumber')?.value.trim() || '';
 
         if (!lrNumber) {
-            alert("Please enter or select an LR Number first.");
+            notify('Please enter or select an LR Number first.', 'warning');
             return;
         }
 
@@ -1230,9 +1391,13 @@ document.querySelectorAll('.dropdown-menu [data-print-type]').forEach(item => {
     });
 });
 
-document.getElementById("partyName").addEventListener("change", async function () {
+// ============ PARTY & ORIGIN AUTO-FILL ============
+document.getElementById('partyName')?.addEventListener('change', async function () {
     const selectedPartyName = this.value.trim();
-    if (!selectedPartyName) { clearOriginFields(); return; }
+    if (!selectedPartyName) {
+        clearOriginFields();
+        return;
+    }
 
     const { data: partyData } = await supabaseClient
         .from('PartyDetails')
@@ -1242,7 +1407,9 @@ document.getElementById("partyName").addEventListener("change", async function (
         .maybeSingle();
 
     if (partyData) {
-        document.getElementById("partyCode").value = partyData.PartyCode;
+        const partyCodeEl = document.getElementById('partyCode');
+        if (partyCodeEl) partyCodeEl.value = partyData.PartyCode;
+
         const { data: addressData } = await supabaseClient
             .from('PartyBillingAddress')
             .select('Address, City, PinCode, State')
@@ -1250,141 +1417,115 @@ document.getElementById("partyName").addEventListener("change", async function (
             .eq('company_id', CompanyID)
             .eq('Status', 'Active');
 
-        // if (addressData?.length > 1) showAddressSelectionModal(addressData);
-        // else 
-        if (addressData?.length === 1) populateOriginFields(addressData[0].PinCode, addressData[0].City, addressData[0].Address);
-        else populateOriginFields(partyData.PinCode, partyData.City, partyData.Address);
+        if (addressData?.length === 1) {
+            populateOriginFields(addressData[0].PinCode, addressData[0].City, addressData[0].Address);
+        } else {
+            populateOriginFields(partyData.PinCode, partyData.City, partyData.Address);
+        }
     }
 });
 
 function populateOriginFields(pincode, city, address) {
-    document.getElementById("originPinCode").value = pincode || "";
-    document.getElementById("originCity").value = city || "";
-    document.getElementById("originAddress").value = address || "";
-    document.getElementById("originPinCode").dispatchEvent(new Event('change'));
+    const pinEl = document.getElementById('originPinCode');
+    const cityEl = document.getElementById('originCity');
+    const addrEl = document.getElementById('originAddress');
+
+    if (pinEl) {
+        pinEl.value = pincode || '';
+        pinEl.dispatchEvent(new Event('change'));
+    }
+    if (cityEl) cityEl.value = city || '';
+    if (addrEl) addrEl.value = address || '';
+
     applyCustomerTariff();
 }
 
 function clearOriginFields() {
-    ["partyCode", "originPinCode", "originCity", "originAddress"].forEach(id => document.getElementById(id).value = "");
+    ['partyCode', 'originPinCode', 'originCity', 'originAddress'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
 }
 
-// function showAddressSelectionModal(addresses) {
-//     let modalEl = document.getElementById("addressSelectionModal");
-//     if (!modalEl) {
-//         document.body.insertAdjacentHTML('beforeend', `
-//         <div class="modal fade" id="addressSelectionModal" tabindex="-1" aria-hidden="true">
-//             <div class="modal-dialog modal-dialog-centered modal-md">
-//                 <div class="modal-content shadow-lg border-0">
-//                     <div class="modal-header bg-light pb-2 pt-2">
-//                         <h6 class="modal-title mb-0">Select Pickup Address</h6>
-//                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-//                     </div>
-//                     <div class="modal-body p-0"><div class="list-group list-group-flush" id="addressModalList"></div></div>
-//                 </div>
-//             </div>
-//         </div>`);
-//         modalEl = document.getElementById("addressSelectionModal");
-//     }
-
-//     const listContainer = document.getElementById("addressModalList");
-//     listContainer.innerHTML = "";
-
-//     addresses.forEach(addr => {
-//         const btn = document.createElement("button");
-//         btn.type = "button";
-//         btn.className = "list-group-item list-group-item-action p-3";
-//         btn.innerHTML = `<h6 class="mb-1 text-cap">${addr.City || 'Unknown'} - ${addr.PinCode || ''}</h6><p class="mb-1 small text-muted text-cap">${addr.Address || ''}</p>`;
-//         btn.onclick = () => {
-//             populateOriginFields(addr.PinCode, addr.City, addr.Address);
-//             bootstrap.Modal.getInstance(modalEl).hide();
-//         };
-//         listContainer.appendChild(btn);
-//     });
-
-//     new bootstrap.Modal(modalEl).show();
-// }
-
+// ============ SHIPMENT SUMMARY & TOTALS ============
 function updateShipmentTotals() {
-    let totalQty = 0, totalActWt = 0, totalChgWt = 0;
+    let totalQty = 0;
+    let totalActWt = 0;
+    let totalChgWt = 0;
+
     document.querySelectorAll('#shipmentDetailsTable tbody tr').forEach(tr => {
+        if (tr.querySelector('td.vm-empty')) return;
         totalQty += parseFloat(tr.dataset.qty) || 0;
         totalActWt += parseFloat(tr.dataset.actWt) || 0;
         totalChgWt += parseFloat(tr.dataset.chgWt) || 0;
     });
 
-    document.getElementById('quantity').value = totalQty.toFixed(2);
-    document.getElementById('actualWt').value = totalActWt.toFixed(2);
-    const chargeWtInput = document.getElementById('chargeWt');
-    chargeWtInput.value = totalChgWt.toFixed(2);
-    chargeWtInput.dispatchEvent(new Event('change'));
+    const qtyEl = document.getElementById('quantity');
+    const actWtEl = document.getElementById('actualWt');
+    const chargeWtEl = document.getElementById('chargeWt');
+
+    if (qtyEl) qtyEl.value = totalQty.toFixed(2);
+    if (actWtEl) actWtEl.value = totalActWt.toFixed(2);
+    if (chargeWtEl) {
+        chargeWtEl.value = totalChgWt.toFixed(2);
+        chargeWtEl.dispatchEvent(new Event('change'));
+    }
 }
 
-// =========================================================================
-// RECALCULATE SUMMARY FROM SHIPMENT ROWS
-// -------------------------------------------------------------------------
-// Rules:
-//   • If any row has type "Delivery"  → update destination* fields
-//   • If any row has type "Pickup"    → update origin* fields
-//   • If no row of a given type exists → leave the corresponding fields
-//     untouched (do not clear or overwrite them)
-//   • Shared fields (referenceNumber, invoiceValue, totals) are always
-//     aggregated from all rows
-//
-// NOTE: This function is called ONLY when a shipment row is added, edited,
-// or deleted — NOT on Save. That prevents the user's manually-entered
-// origin/destination values from being overwritten at save time.
-// =========================================================================
 function recalculateShipmentSummary() {
-    const allRows = [...shipmentTableBody.querySelectorAll('tr')];
+    const allRows = Array.from(shipmentTableBody?.querySelectorAll('tr') || []).filter(
+        tr => !tr.querySelector('td.vm-empty')
+    );
 
-    // Nothing to do if no rows
     if (allRows.length === 0) {
         updateShipmentTotals();
         return;
     }
 
-    const uniqueCities = new Set();
+    const pickupCities = new Set();
+    const deliveryCities = new Set();
     const uniqueRefs = new Set();
     let totalInvoiceValue = 0;
 
-    let deliveryRow = null;   // first Delivery row
-    let pickupRow = null;     // first Pickup row
+    let deliveryRow = null;
+    let pickupRow = null;
 
     allRows.forEach(row => {
-        if (row.dataset.city) uniqueCities.add(row.dataset.city);
         if (row.dataset.refNo) uniqueRefs.add(row.dataset.refNo);
         totalInvoiceValue += parseFloat(row.dataset.invValue) || 0;
 
         const type = (row.dataset.type || '').toLowerCase();
-        if (!deliveryRow && type === 'delivery') deliveryRow = row;
-        if (!pickupRow && type === 'pickup') pickupRow = row;
+        if (type === 'delivery') {
+            if (!deliveryRow) deliveryRow = row;
+            if (row.dataset.city) deliveryCities.add(row.dataset.city);
+        } else if (type === 'pickup') {
+            if (!pickupRow) pickupRow = row;
+            if (row.dataset.city) pickupCities.add(row.dataset.city);
+        }
     });
 
-    const citiesString = Array.from(uniqueCities).join(', ');
-    const refsString = Array.from(uniqueRefs).join(', ');
-
-    // ---- Destination fields ----
-    // Only update when at least one Delivery row exists.
-    // Otherwise leave the destination fields exactly as they were.
     if (deliveryRow) {
-        document.getElementById('destinationPinCode').value = deliveryRow.dataset.pincode || '';
-        document.getElementById('destinationCity').value = citiesString;
-        document.getElementById('destinationAddress').value = deliveryRow.dataset.address || '';
+        const destPin = document.getElementById('destinationPinCode');
+        const destCity = document.getElementById('destinationCity');
+        const destAddr = document.getElementById('destinationAddress');
+        if (destPin) destPin.value = deliveryRow.dataset.pincode || '';
+        if (destCity) destCity.value = Array.from(deliveryCities).join(', ');
+        if (destAddr) destAddr.value = deliveryRow.dataset.address || '';
     }
 
-    // ---- Origin fields ----
-    // Only update when at least one Pickup row exists.
-    // Otherwise leave the origin fields exactly as they were.
     if (pickupRow) {
-        document.getElementById('originPinCode').value = pickupRow.dataset.pincode || '';
-        document.getElementById('originCity').value = citiesString;
-        document.getElementById('originAddress').value = pickupRow.dataset.address || '';
+        const origPin = document.getElementById('originPinCode');
+        const origCity = document.getElementById('originCity');
+        const origAddr = document.getElementById('originAddress');
+        if (origPin) origPin.value = pickupRow.dataset.pincode || '';
+        if (origCity) origCity.value = Array.from(pickupCities).join(', ');
+        if (origAddr) origAddr.value = pickupRow.dataset.address || '';
     }
 
-    // ---- Shared fields (always updated) ----
-    document.getElementById('referenceNumber').value = refsString;
-    document.getElementById('invoiceValue').value = totalInvoiceValue.toFixed(2);
+    const refEl = document.getElementById('referenceNumber');
+    const invEl = document.getElementById('invoiceValue');
+    if (refEl) refEl.value = Array.from(uniqueRefs).join(', ');
+    if (invEl) invEl.value = totalInvoiceValue.toFixed(2);
 
     updateShipmentTotals();
 }

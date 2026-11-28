@@ -10,25 +10,29 @@
     <title>Full Truck Load · BizNavigation</title>
 
     <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Modern Font -->
+    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Remove Select2 CSS/JS & jQuery if not used by external scripts -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
-
     <!-- Page-scoped polish -->
     <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
         .vm-action-bar {
             position: sticky;
             top: 0;
@@ -44,7 +48,7 @@
             display: flex;
             align-items: center;
             gap: .5rem;
-            margin: 1.25rem 0 .25rem;
+            margin: 1.25rem 0 .5rem;
             font-size: .75rem;
             font-weight: 600;
             letter-spacing: .06em;
@@ -58,6 +62,14 @@
             height: 1px;
             background: currentColor;
             opacity: .15;
+            order: 1;
+        }
+
+        .vm-section-title .vm-section-badge {
+            order: 2;
+            font-size: .75rem;
+            text-transform: none;
+            letter-spacing: normal;
         }
 
         .form-label .req {
@@ -109,16 +121,22 @@
             white-space: nowrap;
         }
 
+        .modal-table-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .subparty-table-scroll {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
         @media (max-width: 575.98px) {
             .vm-action-bar .btn {
                 flex: 1 1 auto;
             }
         }
     </style>
-
-    <!-- Core Scripts (Deferred) -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
 </head>
 
 <body>
@@ -132,7 +150,6 @@
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-content">
-
                 <div class="container-fluid mt-3 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-body pb-3">
@@ -148,7 +165,8 @@
                                             id="formStateBadge">New</span>
                                     </h5>
 
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <div class="d-flex flex-wrap gap-2" role="group"
+                                        aria-label="Booking action buttons">
                                         <button type="button" class="btn btn-outline-primary btn-sm bg-white"
                                             id="newButton" title="Create new booking" aria-label="New booking">
                                             <i class="bi bi-file-earmark-plus"></i>
@@ -181,13 +199,11 @@
                                                         Print</a></li>
                                                 <li><a class="dropdown-item" href="#"
                                                         data-print-type="lr_annexure_Report">LR Annexure</a></li>
-
-                                                <!-- NEW: Cash Voucher Print Option -->
                                                 <li>
-                                                    <hr class="dropdown-divider" id="cashVoucherDivider">
+                                                    <hr class="dropdown-divider d-none" id="cashVoucherDivider">
                                                 </li>
                                                 <li>
-                                                    <a class="dropdown-item" href="#" id="printCashVoucherBtn">
+                                                    <a class="dropdown-item d-none" href="#" id="printCashVoucherBtn">
                                                         <i class="bi bi-receipt text-success me-2"></i>Vendor Cash
                                                         Voucher
                                                     </a>
@@ -205,18 +221,6 @@
                                     <input type="hidden" id="partyCode" name="partyCode">
                                     <input type="hidden" id="vendorCode" name="vendorCode">
                                 </div>
-
-                                <!-- ============ BOOKING INFORMATION ============ -->
-                                <p class="vm-section-title d-flex justify-content-between align-items-center">
-                                    <span>
-                                        <i class="bi bi-journal-text"></i> Booking Information
-                                    </span>
-                                    <!-- This badge will dynamically show the request number when incomingRequestNo is present -->
-                                    <span id="headerPickupRequestBadge" class="badge text-bg-primary fw-normal d-none"
-                                        style="font-size: 0.75rem;">
-                                        Req No: <span id="headerPickupRequestNoText"></span>
-                                    </span>
-                                </p>
 
                                 <div class="row g-3">
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
@@ -266,9 +270,6 @@
                                 </div>
 
                                 <!-- ============ ROUTE & MOVEMENT ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-geo-alt"></i> Route &amp; Movement
-                                </p>
 
                                 <div class="row g-3">
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
@@ -346,9 +347,6 @@
                                 </div>
 
                                 <!-- ============ VEHICLE & VENDOR ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-truck"></i> Vehicle &amp; Vendor
-                                </p>
 
                                 <div class="row g-3">
                                     <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12">
@@ -403,9 +401,6 @@
                                 </div>
 
                                 <!-- ============ WEIGHTS & PAYMENT ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-clipboard-data"></i> Weights &amp; Payment
-                                </p>
 
                                 <div class="row g-3">
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
@@ -449,9 +444,6 @@
                                 </div>
 
                                 <!-- ============ ADDITIONAL INFORMATION ============ -->
-                                <p class="vm-section-title">
-                                    <i class="bi bi-info-circle"></i> Additional Information
-                                </p>
 
                                 <div class="row g-3">
                                     <div class="col-12">
@@ -869,18 +861,16 @@
                                             </div>
                                         </div>
 
-                                    </div><!-- tab-content -->
-                                </div><!-- mt-4 -->
+                                    </div>
+                                </div>
 
                             </form>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
-
 
     <!-- ============ SUB-PARTY / BILLING ADDRESS MODAL ============ -->
     <div class="modal fade" id="cashPaymentPartyModal" tabindex="-1" aria-labelledby="cashPaymentPartyModalLabel"
@@ -899,7 +889,6 @@
                     <input type="hidden" id="cashModalTargetField" value="partyName">
                     <input type="hidden" id="cashModalParentPartyCode" value="">
 
-                    <!-- Existing Sub-Parties / Billing Addresses List -->
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="m-0 fw-semibold text-secondary">Select Existing Address</h6>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="toggleAddSubPartyFormBtn">
@@ -907,16 +896,16 @@
                         </button>
                     </div>
 
-                    <div class="table-responsive border rounded mb-3" style="max-height: 240px;">
+                    <div class="table-responsive border rounded mb-3 subparty-table-scroll">
                         <table class="table table-sm table-hover align-middle mb-0" id="cashSubPartyTable">
                             <thead class="table-light sticky-top">
                                 <tr>
-                                    <th>Contact / Name</th>
-                                    <th>Address</th>
-                                    <th>City / Pin</th>
-                                    <th>State</th>
-                                    <th>Phone</th>
-                                    <th class="text-center">Select</th>
+                                    <th scope="col">Contact / Name</th>
+                                    <th scope="col">Address</th>
+                                    <th scope="col">City / Pin</th>
+                                    <th scope="col">State</th>
+                                    <th scope="col">Phone</th>
+                                    <th scope="col" class="text-center">Select</th>
                                 </tr>
                             </thead>
                             <tbody id="cashSubPartyTableBody">
@@ -938,8 +927,8 @@
                             </h6>
                             <div class="row g-2">
                                 <div class="col-md-6">
-                                    <label for="subPartyContactName" class="form-label form-label-sm">Contact
-                                        Name <span class="req">*</span></label>
+                                    <label for="subPartyContactName" class="form-label form-label-sm">Contact Name <span
+                                            class="req">*</span></label>
                                     <input type="text" class="form-control form-control-sm text-cap"
                                         id="subPartyContactName" placeholder="Enter Party / Contact Name" required>
                                 </div>
@@ -1002,6 +991,7 @@
             </div>
         </div>
     </div>
+
     <!-- ============ LR SEARCH MODAL ============ -->
     <div class="modal fade" id="lrSearchModal" tabindex="-1" aria-labelledby="lrSearchModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
@@ -1015,7 +1005,6 @@
                 </div>
 
                 <div class="modal-body">
-                    <!-- Search Filters -->
                     <div class="row g-2 align-items-end mb-3">
                         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                             <label for="searchLrNumber" class="form-label small fw-semibold mb-1">LR Number</label>
@@ -1048,6 +1037,7 @@
                             <input type="text" id="searchLrPickupCity" class="form-control form-control-sm text-cap"
                                 placeholder="Pickup City..." autocomplete="off">
                         </div>
+
                         <div class="col-xl-3 col-lg-4 col-md-4 col-sm-6">
                             <label for="searchLrDestinationCity" class="form-label small fw-semibold mb-1">Destination
                                 City</label>
@@ -1055,6 +1045,7 @@
                                 class="form-control form-control-sm text-cap" placeholder="Destination City..."
                                 autocomplete="off">
                         </div>
+
                         <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6">
                             <label for="searchLrVendor" class="form-label small fw-semibold mb-1">Vendor Name</label>
                             <input type="text" id="searchLrVendor" class="form-control form-control-sm"
@@ -1073,26 +1064,25 @@
                                 <i class="bi bi-search"></i> Search
                             </button>
                             <button type="button" id="btnResetLrSearch" class="btn btn-outline-secondary btn-sm"
-                                title="Reset filters">
+                                title="Reset filters" aria-label="Reset filters">
                                 <i class="bi bi-arrow-counterclockwise"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Results Table -->
-                    <div class="table-container border rounded" style="max-height: 400px; overflow-y: auto;">
+                    <div class="table-container border rounded modal-table-scroll">
                         <table class="table table-hover table-sm align-middle mb-0" id="lrSearchTable">
                             <thead class="table-light sticky-top">
                                 <tr>
-                                    <th>LR Number</th>
-                                    <th>LR Date</th>
-                                    <th>Customer Name</th>
-                                    <th>Mode Type</th>
-                                    <th>Pickup City</th>
-                                    <th>Destination City</th>
-                                    <th>Vendor Name</th>
-                                    <th>Vehicle No</th>
-                                    <th class="text-center">Action</th>
+                                    <th scope="col">LR Number</th>
+                                    <th scope="col">LR Date</th>
+                                    <th scope="col">Customer Name</th>
+                                    <th scope="col">Mode Type</th>
+                                    <th scope="col">Pickup City</th>
+                                    <th scope="col">Destination City</th>
+                                    <th scope="col">Vendor Name</th>
+                                    <th scope="col">Vehicle No</th>
+                                    <th scope="col" class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="lrSearchResultsBody">
@@ -1116,7 +1106,8 @@
     </div>
 
     <!-- ============ TOASTS ============ -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite" aria-atomic="true">
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="polite"
+        aria-atomic="true">
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
@@ -1142,15 +1133,16 @@
         </div>
     </div>
 
-    <!-- External Library Scripts -->
+    <!-- External Library Scripts (deferred in execution order) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
-        crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
 
     <!-- Local Scripts -->
     <script src="../../assets/js/utils/server.js" defer></script>
@@ -1167,103 +1159,50 @@
 
     <!-- ============================================================
          EMPTY-STATE PLACEHOLDER MANAGEMENT
-         Automatically removes the "No ... rows added" row when data
-         is added, and restores it when the table becomes empty.
          ============================================================ -->
     <script>
         (function () {
-            // Configuration for each table that has an empty-state placeholder
             const EMPTY_STATES = {
-                shipmentDetailsTable: {
-                    colspan: 12,
-                    icon: 'bi-box-seam',
-                    text: 'No shipment rows added'
-                },
-                chargesDetailsTable: {
-                    colspan: 9,
-                    icon: 'bi-currency-rupee',
-                    text: 'No customer charges added'
-                },
-                vendorChargesDetailsTable: {
-                    colspan: 9,
-                    icon: 'bi-wallet2',
-                    text: 'No vendor charges added'
-                }
+                shipmentDetailsTable: { colspan: 12, icon: 'bi-box-seam', text: 'No shipment rows added' },
+                chargesDetailsTable: { colspan: 9, icon: 'bi-currency-rupee', text: 'No customer charges added' },
+                vendorChargesDetailsTable: { colspan: 9, icon: 'bi-wallet2', text: 'No vendor charges added' }
             };
 
-            /**
-- Remove the placeholder row (any <tr> containing a td.vm-empty).
-             */
             function clearEmptyState(tableId) {
-                const table = document.getElementById(tableId);
-                if (!table) return;
-                const tbody = table.querySelector('tbody');
-                if (!tbody) return;
-
-                const emptyRow = tbody.querySelector('tr td.vm-empty');
-                if (emptyRow) {
-                    emptyRow.closest('tr').remove();
-                }
+                const tbody = document.querySelector(`#${tableId} tbody`);
+                const emptyCell = tbody?.querySelector('tr td.vm-empty');
+                if (emptyCell) emptyCell.closest('tr').remove();
             }
 
-            /**
-- Re-insert the placeholder when the tbody has no data rows left.
-             */
             function restoreEmptyStateIfNeeded(tableId) {
-                const table = document.getElementById(tableId);
-                if (!table) return;
-                const tbody = table.querySelector('tbody');
-                if (!tbody) return;
-
-                // Check if there is at least one real data row (not the placeholder)
-                const hasDataRow = Array.from(tbody.children).some(tr => {
-                    return !tr.querySelector('td.vm-empty');
-                });
-
-                if (hasDataRow) return; // still has data, nothing to do
-
-                // If placeholder already exists, do nothing
-                if (tbody.querySelector('td.vm-empty')) return;
-
+                const tbody = document.querySelector(`#${tableId} tbody`);
                 const cfg = EMPTY_STATES[tableId];
-                if (!cfg) return;
+                if (!tbody || !cfg) return;
+
+                const hasDataRow = Array.from(tbody.children).some(tr => !tr.querySelector('td.vm-empty'));
+                if (hasDataRow || tbody.querySelector('td.vm-empty')) return;
 
                 const tr = document.createElement('tr');
                 const td = document.createElement('td');
                 td.colSpan = cfg.colspan;
                 td.className = 'vm-empty';
-                td.innerHTML = '<i class="bi ' + cfg.icon + '"></i>' + cfg.text;
+                td.innerHTML = `<i class="bi ${cfg.icon}"></i>${cfg.text}`;
                 tr.appendChild(td);
                 tbody.appendChild(tr);
             }
 
-            /**
-        - Set up a MutationObserver on the tbody of each table.
-        - When rows are added/removed, we adjust the placeholder accordingly.
-             */
             function observeTable(tableId) {
-                const table = document.getElementById(tableId);
-                if (!table) return;
-                const tbody = table.querySelector('tbody');
+                const tbody = document.querySelector(`#${tableId} tbody`);
                 if (!tbody) return;
 
-                const observer = new MutationObserver(function (mutations) {
-                    // If any child was added, remove placeholder if a real row exists
-                    const addedNodes = mutations.some(m => m.addedNodes.length > 0);
-                    const removedNodes = mutations.some(m => m.removedNodes.length > 0);
+                const observer = new MutationObserver((mutations) => {
+                    const added = mutations.some(m => m.addedNodes.length > 0);
+                    const removed = mutations.some(m => m.removedNodes.length > 0);
 
-                    if (addedNodes) {
-                        // If a real row was added, remove the placeholder
-                        const hasDataRow = Array.from(tbody.children).some(tr => {
-                            return !tr.querySelector('td.vm-empty');
-                        });
-                        if (hasDataRow) {
-                            clearEmptyState(tableId);
-                        }
+                    if (added && Array.from(tbody.children).some(tr => !tr.querySelector('td.vm-empty'))) {
+                        clearEmptyState(tableId);
                     }
-
-                    if (removedNodes) {
-                        // If no data rows left, restore placeholder
+                    if (removed) {
                         restoreEmptyStateIfNeeded(tableId);
                     }
                 });
@@ -1271,15 +1210,11 @@
                 observer.observe(tbody, { childList: true });
             }
 
-            // Expose functions for use by external scripts (e.g., FullTruckLoad.js)
             window.clearEmptyState = clearEmptyState;
             window.restoreEmptyStateIfNeeded = restoreEmptyStateIfNeeded;
 
-            // Start observing when DOM is ready
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function () {
-                    Object.keys(EMPTY_STATES).forEach(observeTable);
-                });
+                document.addEventListener('DOMContentLoaded', () => Object.keys(EMPTY_STATES).forEach(observeTable));
             } else {
                 Object.keys(EMPTY_STATES).forEach(observeTable);
             }
@@ -1292,6 +1227,20 @@
     <script>
         (function () {
             const CASH_PAYMENT_LABEL = 'cash payment';
+
+            function escapeHtml(str) {
+                return String(str ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function getActiveCompanyId() {
+                if (typeof CompanyID !== 'undefined' && CompanyID) return CompanyID;
+                return window.companyId || window.currentCompanyId || null;
+            }
 
             function isCashPaymentValue(val) {
                 return String(val || '').trim().toLowerCase().includes(CASH_PAYMENT_LABEL);
@@ -1309,13 +1258,15 @@
                 }
 
                 try {
+                    const companyId = getActiveCompanyId();
                     let query = client
                         .from('PartyBillingAddress')
                         .select('id, "PartyCode", "Address", "City", "PinCode", "Country", "ContactName", "ContactNumber", "DefaultActive", "State", "Status"')
                         .eq('Status', 'Active')
+                        .eq('PartyCode', partyCode || 'CASH')
                         .order('id', { ascending: false });
 
-                    query = query.eq('PartyCode', partyCode || 'CASH');
+                    if (companyId) query = query.eq('company_id', companyId);
 
                     const { data, error } = await query;
                     if (error) throw error;
@@ -1326,15 +1277,16 @@
                     }
 
                     tbody.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     data.forEach(row => {
                         const tr = document.createElement('tr');
                         const cityPin = [row.City, row.PinCode].filter(Boolean).join(' - ');
                         tr.innerHTML = `
-                            <td class="fw-semibold">${row.ContactName || '-'}</td>
-                            <td>${row.Address || '-'}</td>
-                            <td>${cityPin || '-'}</td>
-                            <td>${row.State || '-'}</td>
-                            <td>${row.ContactNumber || '-'}</td>
+                            <td class="fw-semibold">${escapeHtml(row.ContactName || '-')}</td>
+                            <td>${escapeHtml(row.Address || '-')}</td>
+                            <td>${escapeHtml(cityPin || '-')}</td>
+                            <td>${escapeHtml(row.State || '-')}</td>
+                            <td>${escapeHtml(row.ContactNumber || '-')}</td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-primary select-sub-party-btn">Select</button>
                             </td>
@@ -1342,8 +1294,9 @@
                         tr.querySelector('.select-sub-party-btn').addEventListener('click', () => {
                             applySubPartySelection(row, targetField);
                         });
-                        tbody.appendChild(tr);
+                        fragment.appendChild(tr);
                     });
+                    tbody.appendChild(fragment);
                 } catch (err) {
                     console.error('Error loading PartyBillingAddress:', err);
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Failed to load addresses. Check console for details.</td></tr>';
@@ -1353,27 +1306,18 @@
             function applySubPartySelection(row, targetField) {
                 const inputEl = document.getElementById(targetField);
                 const subName = row.ContactName || row.Address || 'Sub-Party';
+                const hintEl = document.getElementById(targetField === 'vendorName' ? 'selectedVendorSubPartyHint' : 'selectedSubPartyHint');
 
-                if (targetField === 'vendorName') {
-                    const hint = document.getElementById('selectedVendorSubPartyHint');
-                    if (inputEl) {
-                        inputEl.value = `Cash Payment (${subName})`;
-                        inputEl.dispatchEvent(new Event('input'));
-                    }
-                    if (hint) {
-                        hint.textContent = `Billing: ${subName}${row.City ? ' · ' + row.City : ''}`;
-                        hint.classList.remove('d-none');
-                    }
-                } else {
-                    const hint = document.getElementById('selectedSubPartyHint');
-                    if (inputEl) {
-                        inputEl.value = `Cash Payment (${subName})`;
-                        inputEl.dispatchEvent(new Event('input'));
-                    }
-                    if (hint) {
-                        hint.textContent = `Billing: ${subName}${row.City ? ' · ' + row.City : ''}`;
-                        hint.classList.remove('d-none');
-                    }
+                if (inputEl) {
+                    inputEl.value = `Cash Payment (${subName})`;
+                    inputEl.dispatchEvent(new Event('input'));
+                }
+                if (hintEl) {
+                    hintEl.textContent = `Billing: ${subName}${row.City ? ' · ' + row.City : ''}`;
+                    hintEl.classList.remove('d-none');
+                }
+
+                if (targetField !== 'vendorName') {
                     if (row.Address && document.getElementById('originAddress')) {
                         document.getElementById('originAddress').value = row.Address;
                     }
@@ -1387,8 +1331,7 @@
 
                 const modalEl = document.getElementById('cashPaymentPartyModal');
                 if (modalEl && window.bootstrap) {
-                    const instance = bootstrap.Modal.getInstance(modalEl);
-                    if (instance) instance.hide();
+                    bootstrap.Modal.getInstance(modalEl)?.hide();
                 }
             }
 
@@ -1399,7 +1342,6 @@
 
                 const pVal = parentNameInput?.value || '';
                 const isCash = isCashPaymentValue(pVal) || pVal.trim() === '';
-
                 const parentCode = parentCodeInput?.value || (isCash ? 'CASH' : '');
                 const parentName = pVal || 'Cash Payment';
 
@@ -1407,23 +1349,20 @@
                 document.getElementById('cashModalParentPartyCode').value = parentCode;
                 document.getElementById('cashModalParentPartyBadge').textContent = parentName;
                 document.getElementById('addSubPartyParentName').textContent = parentName;
-
                 document.getElementById('addSubPartyCard')?.classList.add('d-none');
 
                 loadSubPartiesForParty(parentCode, targetField);
 
                 const modalEl = document.getElementById('cashPaymentPartyModal');
                 if (modalEl && window.bootstrap) {
-                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                    modal.show();
+                    bootstrap.Modal.getOrCreateInstance(modalEl).show();
                 }
             }
 
             function bindFieldTriggers(inputId, btnId, targetField) {
                 const input = document.getElementById(inputId);
                 const btn = document.getElementById(btnId);
-                const isVendor = targetField === 'vendorName';
-                const codeInputId = isVendor ? 'vendorCode' : 'partyCode';
+                const codeInputId = targetField === 'vendorName' ? 'vendorCode' : 'partyCode';
 
                 if (!input) return;
 
@@ -1439,29 +1378,29 @@
 
                         if (voucherBtn) voucherBtn.classList.toggle('d-none', !isCash);
                         if (voucherDiv) voucherDiv.classList.toggle('d-none', !isCash);
-
-                        if (isCash && mainPrintBtn) {
-                            mainPrintBtn.disabled = false;
-                        }
+                        if (isCash && mainPrintBtn) mainPrintBtn.disabled = false;
                     }
                 };
 
                 window[`checkAndPromptBillingAddresses_${targetField}`] = async function () {
-                    const codeInput = document.getElementById(codeInputId);
-                    const pCode = codeInput?.value || (isCashPaymentValue(input.value) ? 'CASH' : '');
+                    const pCode = document.getElementById(codeInputId)?.value || (isCashPaymentValue(input.value) ? 'CASH' : '');
+                    if (!pCode) return;
 
-                    if (pCode) {
-                        const client = await supabaseClient;
-                        if (client) {
-                            const { count } = await client.from('PartyBillingAddress')
-                                .select('id', { count: 'exact', head: true })
-                                .eq('Status', 'Active')
-                                .eq('PartyCode', pCode);
+                    const client = await supabaseClient;
+                    if (!client) return;
 
-                            if ((count && count > 1) || pCode === 'CASH') {
-                                openCashPaymentModal(targetField);
-                            }
-                        }
+                    const companyId = getActiveCompanyId();
+                    let query = client
+                        .from('PartyBillingAddress')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('Status', 'Active')
+                        .eq('PartyCode', pCode);
+
+                    if (companyId) query = query.eq('company_id', companyId);
+
+                    const { count } = await query;
+                    if ((count && count > 1) || pCode === 'CASH') {
+                        openCashPaymentModal(targetField);
                     }
                 };
 
@@ -1471,21 +1410,21 @@
                 });
 
                 input.addEventListener('input', syncBtnState);
-
-                if (btn) {
-                    btn.addEventListener('click', () => openCashPaymentModal(targetField));
-                }
+                btn?.addEventListener('click', () => openCashPaymentModal(targetField));
             }
 
-            document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', () => {
                 bindFieldTriggers('partyName', 'openPartyBillingModalBtn', 'partyName');
                 bindFieldTriggers('vendorName', 'openVendorBillingModalBtn', 'vendorName');
 
                 document.getElementById('newButton')?.addEventListener('click', () => {
-                    const hintV = document.getElementById('selectedVendorSubPartyHint');
-                    const hintC = document.getElementById('selectedSubPartyHint');
-                    if (hintV) { hintV.textContent = ''; hintV.classList.add('d-none'); }
-                    if (hintC) { hintC.textContent = ''; hintC.classList.add('d-none'); }
+                    ['selectedVendorSubPartyHint', 'selectedSubPartyHint'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.textContent = '';
+                            el.classList.add('d-none');
+                        }
+                    });
                 });
 
                 document.getElementById('toggleAddSubPartyFormBtn')?.addEventListener('click', () => {
@@ -1496,7 +1435,8 @@
                     document.getElementById('addSubPartyCard')?.classList.add('d-none');
                 });
 
-                document.getElementById('saveSubPartyBillingBtn')?.addEventListener('click', async () => {
+                document.getElementById('saveSubPartyBillingBtn')?.addEventListener('click', async function () {
+                    const saveBtn = this;
                     const contactName = document.getElementById('subPartyContactName')?.value.trim();
                     const address = document.getElementById('subPartyAddress')?.value.trim();
                     const city = document.getElementById('subPartyCity')?.value.trim();
@@ -1525,109 +1465,128 @@
                         State: state,
                         Status: 'Active',
                         created_at: new Date().toISOString(),
-                        created_by: window.currentUserEmail || window.currentUser?.email || 'system',
-                        company_id: window.companyId || window.currentCompanyId || null
+                        created_by: (typeof UserLoginID !== 'undefined' && UserLoginID) || window.currentUserEmail || window.currentUser?.email || 'system',
+                        company_id: getActiveCompanyId()
                     };
 
-                    const client = await supabaseClient;
-                    if (client) {
-                        const { data, error } = await client.from('PartyBillingAddress').insert([payload]).select().single();
-                        if (error) {
-                            alert('Error saving sub-party: ' + error.message);
-                            return;
+                    saveBtn.disabled = true;
+                    try {
+                        const client = await supabaseClient;
+                        if (client) {
+                            const { data, error } = await client.from('PartyBillingAddress').insert([payload]).select().single();
+                            if (error) {
+                                alert('Error saving sub-party: ' + error.message);
+                                return;
+                            }
+                            applySubPartySelection(data, targetField);
+                        } else {
+                            applySubPartySelection(payload, targetField);
                         }
-                        applySubPartySelection(data, targetField);
-                    } else {
-                        applySubPartySelection(payload, targetField);
+
+                        // Clear sub-party inputs after successful save
+                        ['subPartyContactName', 'subPartyContactNumber', 'subPartyAddress', 'subPartyCity', 'subPartyPinCode', 'subPartyState'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.value = '';
+                        });
+                        const chk = document.getElementById('subPartyDefaultActive');
+                        if (chk) chk.checked = false;
+                    } finally {
+                        saveBtn.disabled = false;
                     }
+                });
+
+                // Generate and Print Cash Voucher
+                document.getElementById('printCashVoucherBtn')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    const lrNumber = document.getElementById('lrNumber')?.value.trim() || 'DRAFT';
+                    const vendorName = document.getElementById('vendorName')?.value.trim() || 'Cash Payment';
+                    const vehicleNo = document.getElementById('vehicleNumber')?.value.trim() || '-';
+                    const origin = document.getElementById('originCity')?.value.trim() || '';
+                    const destination = document.getElementById('destinationCity')?.value.trim() || '';
+                    const routeDetails = document.getElementById('routeDetails')?.value.trim() || '';
+                    const route = (origin && destination) ? `${origin} to ${destination}` : (routeDetails || '-');
+
+                    let totalAmount = 0;
+                    document.querySelectorAll('#vendorChargesDetailsTable tbody tr').forEach(row => {
+                        if (row.querySelector('td.vm-empty')) return;
+                        const rowTotal = parseFloat(row.cells[7]?.textContent || 0);
+                        if (Number.isFinite(rowTotal)) totalAmount += rowTotal;
+                    });
+
+                    if (totalAmount === 0) {
+                        alert('Please add vendor charges before generating a cash voucher.');
+                        return;
+                    }
+
+                    const printWindow = window.open('', '_blank', 'width=800,height=600');
+                    if (!printWindow) {
+                        alert('Popup blocked. Please allow popups to print the cash voucher.');
+                        return;
+                    }
+
+                    const htmlContent = `
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Cash Voucher - ${escapeHtml(lrNumber)}</title>
+                            <style>
+                                body { font-family: 'Inter', Arial, sans-serif; padding: 40px; color: #333; }
+                                .voucher-box { border: 2px solid #2c3e50; padding: 30px; max-width: 700px; margin: 0 auto; position: relative; }
+                                .header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px; }
+                                .header h2 { margin: 0; color: #2c3e50; text-transform: uppercase; letter-spacing: 2px; }
+                                .header p { margin: 5px 0 0; font-size: 14px; color: #666; }
+                                .row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 15px; }
+                                .label { font-weight: 600; width: 150px; display: inline-block; }
+                                .value { border-bottom: 1px dashed #999; flex-grow: 1; padding-left: 10px; }
+                                .amount-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; }
+                                .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
+                                .sig-line { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 14px; }
+                                @media print { body { padding: 0; } .voucher-box { border: none; } }
+                            </style>
+                        </head>
+                        <body onload="window.print();">
+                            <div class="voucher-box">
+                                <div class="header">
+                                    <h2>Cash Payment Voucher</h2>
+                                    <p>AllEdge Soft &amp; Logic (OPC) Pvt. Ltd.</p>
+                                </div>
+                                <div class="row">
+                                    <div><span class="label">Voucher Date:</span> <span>${new Date().toLocaleDateString('en-IN')}</span></div>
+                                    <div><span class="label">LR Number:</span> <span>${escapeHtml(lrNumber)}</span></div>
+                                </div>
+                                <div class="row" style="margin-top: 25px;">
+                                    <span class="label">Paid To:</span>
+                                    <span class="value">${escapeHtml(vendorName)}</span>
+                                </div>
+                                <div class="row">
+                                    <span class="label">Vehicle No:</span>
+                                    <span class="value">${escapeHtml(vehicleNo)}</span>
+                                </div>
+                                <div class="row">
+                                    <span class="label">Route:</span>
+                                    <span class="value">${escapeHtml(route)}</span>
+                                </div>
+                                <div class="amount-box">
+                                    ₹ ${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                                <div class="row">
+                                    <span class="label">Being payment for:</span>
+                                    <span class="value">Freight charges for LR ${escapeHtml(lrNumber)}</span>
+                                </div>
+                                <div class="signatures">
+                                    <div class="sig-line">Receiver's Signature</div>
+                                    <div class="sig-line">Authorised Signatory</div>
+                                </div>
+                            </div>
+                       </` + `body>
+                        </` + `html>
+                    `;
+                    printWindow.document.write(htmlContent);
+                    printWindow.document.close();
                 });
             });
         })();
-
-        // Generate and Print Cash Voucher
-        document.getElementById('printCashVoucherBtn')?.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            const lrNumber = document.getElementById('lrNumber')?.value || 'DRAFT';
-            const vendorName = document.getElementById('vendorName')?.value || 'Cash Payment';
-            const vehicleNo = document.getElementById('vehicleNumber')?.value || '-';
-            const origin = document.getElementById('originCity')?.value || '';
-            const destination = document.getElementById('destinationCity')?.value || '';
-            const route = origin && destination ? `${origin} to ${destination}` : '-';
-
-            let totalAmount = 0;
-            const vendorRows = document.querySelectorAll('#vendorChargesDetailsTable tbody tr:not(.vm-empty)');
-            vendorRows.forEach(row => {
-                const rowTotal = parseFloat(row.cells[7]?.textContent || 0);
-                if (!isNaN(rowTotal)) totalAmount += rowTotal;
-            });
-
-            if (totalAmount === 0) {
-                alert('Please add vendor charges before generating a cash voucher.');
-                return;
-            }
-
-            const printWindow = window.open('', '_blank', 'width=800,height=600');
-            const htmlContent = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Cash Voucher - ${lrNumber}</title>
-                    <style>
-                        body { font-family: 'Inter', Arial, sans-serif; padding: 40px; color: #333; }
-                        .voucher-box { border: 2px solid #2c3e50; padding: 30px; max-width: 700px; margin: 0 auto; position: relative; }
-                        .header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 15px; margin-bottom: 25px; }
-                        .header h2 { margin: 0; color: #2c3e50; text-transform: uppercase; letter-spacing: 2px; }
-                        .header p { margin: 5px 0 0; font-size: 14px; color: #666; }
-                        .row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 15px; }
-                        .label { font-weight: 600; width: 150px; display: inline-block; }
-                        .value { border-bottom: 1px dashed #999; flex-grow: 1; padding-left: 10px; }
-                        .amount-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; text-align: center; margin: 20px 0; font-size: 24px; font-weight: bold; }
-                        .signatures { display: flex; justify-content: space-between; margin-top: 60px; }
-                        .sig-line { border-top: 1px solid #000; width: 200px; text-align: center; padding-top: 5px; font-size: 14px; }
-                        @media print { body { padding: 0; } .voucher-box { border: none; } }
-                    </style>
-                </head>
-                <body onload="window.print();">
-                    <div class="voucher-box">
-                        <div class="header">
-                            <h2>Cash Payment Voucher</h2>
-                            <p>AllEdge Soft & Logic (OPC) Pvt. Ltd.</p>
-                        </div>
-                        <div class="row">
-                            <div><span class="label">Voucher Date:</span> <span>${new Date().toLocaleDateString('en-IN')}</span></div>
-                            <div><span class="label">LR Number:</span> <span>${lrNumber}</span></div>
-                        </div>
-                        <div class="row" style="margin-top: 25px;">
-                            <span class="label">Paid To:</span>
-                            <span class="value">${vendorName}</span>
-                        </div>
-                        <div class="row">
-                            <span class="label">Vehicle No:</span>
-                            <span class="value">${vehicleNo}</span>
-                        </div>
-                        <div class="row">
-                            <span class="label">Route:</span>
-                            <span class="value">${route}</span>
-                        </div>
-                        <div class="amount-box">
-                            ₹ ${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                        <div class="row">
-                            <span class="label">Being payment for:</span>
-                            <span class="value">Freight charges for LR ${lrNumber}</span>
-                        </div>
-                        <div class="signatures">
-                            <div class="sig-line">Receiver's Signature</div>
-                            <div class="sig-line">Authorised Signatory</div>
-                        </div>
-                    </div>
-                </` + `body>
-                </` + `html>
-            `;
-            printWindow.document.write(htmlContent);
-            printWindow.document.close();
-        });
     </script>
 </body>
 

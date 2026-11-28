@@ -1,4 +1,4 @@
-
+// VolumetricCalculatorTab.js
 tabPackingType.addEventListener('change', () =>
     handleDatalistInsert(tabPackingType, 'tabPackingTypeSuggestions', 'PackingType')
 );
@@ -224,6 +224,7 @@ function updateTotals() {
         totalChargableWt += parseFloat(cells[9].textContent) || 0;
     });
 
+
     document.getElementById("totalQuantity").textContent = totalQuantity.toFixed(2);
     document.getElementById("totalActualWt").textContent = totalActualWt.toFixed(2);
     document.getElementById("totalActualWtSum").textContent = totalActualWtSum.toFixed(2);
@@ -232,8 +233,8 @@ function updateTotals() {
     document.getElementById("totalChargeableWt").textContent = totalChargableWt.toFixed(2);
 
     document.getElementById("quantity").value = totalQuantity.toFixed(2);
-    document.getElementById("actualWeight").value = totalActualWt.toFixed(2);
-    document.getElementById("volumetricWeight").value = totalVolumeWt.toFixed(2);
+    document.getElementById("actualWeight").value = totalActualWtSum.toFixed(2);
+    document.getElementById("volumetricWeight").value = totalVolWtSum.toFixed(2);
     document.getElementById("chargeableWeight").value = totalChargableWt.toFixed(2);
 }
 

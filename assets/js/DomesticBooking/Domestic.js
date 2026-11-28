@@ -1,7 +1,55 @@
+// Domestic.js
 const docketNoInput = document.getElementById('docketNo');
+let insertedID = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
+// Utility: Debounce for live search inputs
+function debounce(fn, delay = 250) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
+
+// Utility: Safe toast wrapper
+function notify(message, type = 'info') {
+    if (typeof showToast === 'function') {
+        showToast(message, type);
+    } else {
+        alert(message);
+    }
+}
+
+// Utility: Update header state badge if present
+function setFormStateBadge(label, badgeClass = 'text-bg-light border') {
+    const badge = document.getElementById('formStateBadge');
+    if (!badge) return;
+    badge.textContent = label;
+    badge.className = `badge rounded-pill fw-normal ${badgeClass}`;
+}
+
+// Utility: Lock calculated weight fields
+function disableCalculatedWeightFields() {
+    ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = true;
+    });
+}
+
+// Utility: Toggle tab Add buttons
+function setTabAddButtonsDisabled(disabled) {
+    ['addFreightRow', 'addVolumetricRow', 'addContainer'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = disabled;
+    });
+}
+
+// ============ DOMContentLoaded ============
+document.addEventListener('DOMContentLoaded', async () => {
     enableForm();
+
+    const saveBtn = document.getElementById('saveButton');
+    if (saveBtn) saveBtn.dataset.mode = 'insert';
 
     await Promise.all([
         loadSuggestions('customerNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
@@ -10,33 +58,34 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadDatalist('departmentList', 'Department')
     ]);
 
-    await setupPincodeListener('originPinCode', 'orgincity');
-    await initChargeableWeightCalculator("#actualWeight", "#volumetricWeight", "#chargeableWeight", "#uOMType");
+    await setupPincodeListener('originPinCode', 'originCity');
+    await initChargeableWeightCalculator('#actualWeight', '#volumetricWeight', '#chargeableWeight', '#uOMType');
 
-    document.getElementById('chargeableWeight').disabled = true;
+    disableCalculatedWeightFields();
 
     populateContainerTypes();
     setupEventListeners();
-    loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
+    loadDatalist('tabPackingTypeSuggestions', 'PackingType');
     initDatalistValidation();
     loadTaxData();
     initDocketSearchModal();
 
     const urlParams = new URLSearchParams(window.location.search);
     const incomingRequestNo = urlParams.get('pickupRequestNo');
-    const headerBadge = document.getElementById("headerPickupRequestBadge");
-    const headerText = document.getElementById("headerPickupRequestNoText");
+    const headerBadge = document.getElementById('headerPickupRequestBadge');
+    const headerText = document.getElementById('headerPickupRequestNoText');
 
-    if (incomingRequestNo) {
+    if (incomingRequestNo && headerBadge && headerText) {
         headerText.textContent = incomingRequestNo;
-        headerBadge.classList.remove("d-none");
+        headerBadge.classList.remove('d-none');
     }
 });
 
+// ============ DOCKET SEARCH MODAL ============
 function initDocketSearchModal() {
-    const docketNoInput = document.getElementById('docketNo');
+    const docketInput = document.getElementById('docketNo');
     const modalEl = document.getElementById('docketSearchModal');
-    if (!docketNoInput || !modalEl) return;
+    if (!docketInput || !modalEl) return;
 
     const docketSearchModal = new bootstrap.Modal(modalEl);
 
@@ -49,27 +98,22 @@ function initDocketSearchModal() {
     const resultsBody = document.getElementById('docketSearchResultsBody');
     const resultsCount = document.getElementById('docketSearchCount');
 
-    let searchTimer = null;
-
     // 1. Open modal on double-click of Docket No
-    docketNoInput.addEventListener('dblclick', () => {
-        searchDocketNo.value = docketNoInput.value.trim();
+    docketInput.addEventListener('dblclick', () => {
+        if (searchDocketNo) searchDocketNo.value = docketInput.value.trim();
         docketSearchModal.show();
         fetchDocketsForModal();
     });
 
-    // Focus Docket No filter when modal opens
     modalEl.addEventListener('shown.bs.modal', () => {
-        searchDocketNo.focus();
+        searchDocketNo?.focus();
     });
 
     // 2. Live search (debounced) & Enter key support
-    const triggerDebouncedSearch = () => {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(fetchDocketsForModal, 300);
-    };
+    const triggerDebouncedSearch = debounce(fetchDocketsForModal, 300);
 
     [searchDocketNo, searchCustomerName, searchServiceProvider].forEach(input => {
+        if (!input) return;
         input.addEventListener('input', triggerDebouncedSearch);
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -79,19 +123,19 @@ function initDocketSearchModal() {
         });
     });
 
-    searchTransitType.addEventListener('change', fetchDocketsForModal);
-    btnSearchDockets.addEventListener('click', fetchDocketsForModal);
+    searchTransitType?.addEventListener('change', fetchDocketsForModal);
+    btnSearchDockets?.addEventListener('click', fetchDocketsForModal);
 
     // 3. Reset filters
-    btnResetDocketSearch.addEventListener('click', () => {
-        searchDocketNo.value = '';
-        searchCustomerName.value = '';
-        searchTransitType.value = '';
-        searchServiceProvider.value = '';
+    btnResetDocketSearch?.addEventListener('click', () => {
+        if (searchDocketNo) searchDocketNo.value = '';
+        if (searchCustomerName) searchCustomerName.value = '';
+        if (searchTransitType) searchTransitType.value = '';
+        if (searchServiceProvider) searchServiceProvider.value = '';
         fetchDocketsForModal();
     });
 
-    // 4. Query Supabase (adjust table & column names to match your schema)
+    // 4. Query Supabase (scoped to CompanyID, awaited AFTER chaining filters)
     async function fetchDocketsForModal() {
         resultsBody.innerHTML = `
             <tr>
@@ -102,15 +146,15 @@ function initDocketSearchModal() {
             </tr>`;
 
         try {
-            const docketVal = searchDocketNo.value.trim();
-            const customerVal = searchCustomerName.value.trim();
-            const transitVal = searchTransitType.value.trim();
-            const providerVal = searchServiceProvider.value.trim();
+            const docketVal = searchDocketNo?.value.trim() || '';
+            const customerVal = searchCustomerName?.value.trim() || '';
+            const transitVal = searchTransitType?.value.trim() || '';
+            const providerVal = searchServiceProvider?.value.trim() || '';
 
-            // Replace 'domestic_booking' and column names with your actual Supabase table/view
-            let query = await supabaseClient
+            let query = supabaseClient
                 .from('DomesticBookingView')
                 .select('DocketNo, BookingDate, CustomerName, TransitType, ServiceProvider, OriginCity, DestinationCity')
+                .eq('company_id', CompanyID)
                 .order('BookingDate', { ascending: false })
                 .limit(50);
 
@@ -131,13 +175,15 @@ function initDocketSearchModal() {
                         <i class="bi bi-exclamation-triangle me-1"></i> Failed to load dockets.
                     </td>
                 </tr>`;
-            resultsCount.textContent = '0 records found';
+            if (resultsCount) resultsCount.textContent = '0 records found';
         }
     }
 
     // 5. Render rows
     function renderDocketSearchResults(rows) {
-        resultsCount.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'} found`;
+        if (resultsCount) {
+            resultsCount.textContent = `${rows.length} record${rows.length === 1 ? '' : 's'} found`;
+        }
 
         if (!rows.length) {
             resultsBody.innerHTML = `
@@ -150,7 +196,7 @@ function initDocketSearchModal() {
             return;
         }
 
-        const safe = (val) => DOMPurify.sanitize(val ?? '');
+        const safe = (val) => (typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(String(val ?? '')) : String(val ?? ''));
 
         resultsBody.innerHTML = rows.map(row => `
             <tr style="cursor: pointer;" data-docket="${safe(row.DocketNo)}">
@@ -172,11 +218,11 @@ function initDocketSearchModal() {
     // 6. Select docket (button click or row double-click)
     const selectDocket = (docketNo) => {
         if (!docketNo) return;
-        docketNoInput.value = docketNo;
+        docketInput.value = docketNo;
         docketSearchModal.hide();
 
-        docketNoInput.dispatchEvent(new Event('change', { bubbles: true }));
-        docketNoInput.focus();
+        docketInput.dispatchEvent(new Event('change', { bubbles: true }));
+        docketInput.focus();
     };
 
     resultsBody.addEventListener('click', (e) => {
@@ -192,58 +238,72 @@ function initDocketSearchModal() {
     });
 }
 
-document.getElementById("docketNo").addEventListener("input", e => loadDocketDetails(e.target.value));
+// ============ DOCKET INPUT HANDLERS ============
+const debouncedLoadDocket = debounce((val) => loadDocketDetails(val), 250);
 
-docketNoInput.addEventListener('change', async () => {
-    const docketNo = docketNoInput.value;
-    if (!docketNo) return;
+if (docketNoInput) {
+    docketNoInput.addEventListener('input', function () {
+        this.value = this.value
+            .toUpperCase()
+            .replace(/[\r\n]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
 
-    try {
+        debouncedLoadDocket(this.value);
+    });
 
-        // 2) Load basic docket details
-        await fetchDocketDetails(docketNo);
-
-        // 3) Setup charge type validation
-        await setupChargeTypeValidation();
-
-        // 4) Read temp form ID
-        const tempFormID = document.getElementById('tempFormID').value.trim();
-
-        // If TEMP docket, stop here (do not load other details)
-        if (tempFormID.includes('TEMP')) return;
-
-        // 5) Load remaining sections in parallel (faster)
-        await Promise.all([
-            loadFreightCharges(),
-            loadVolumetricDetails(),
-            fetchEquipmentDetails(tempFormID),
-            // fetchContainerDetails(tempFormID),
-            // loadBookingStatus(docketNo)
-        ]);
-
-        // 1) Check billing status first
-        const { isUnbilled, invoiceNo } = await checkAWBBilledStatus(docketNo);
-
-        if (!isUnbilled) {
-            showToast('This AWB has already been billed.' + ` Invoice Number: ${invoiceNo}`);
-            // alert(`This AWB has already been billed.\nInvoice Number: ${invoiceNo}`);
-            disableForm();
-            saveButton.disabled = true;
-            modifyButton.disabled = true;
-            deleteButton.disabled = true;
+    docketNoInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
         }
+    });
 
-    } catch (error) {
-        console.error('Error loading AWB details:', error);
-        alert('Failed to load docket details. Please try again.');
-    }
-});
+    docketNoInput.addEventListener('change', async () => {
+        const docketNo = docketNoInput.value.trim();
+        if (!docketNo) return;
+
+        try {
+            const docketResult = await fetchDocketDetails(docketNo);
+            if (!docketResult.found) return;
+
+            await setupChargeTypeValidation();
+
+            const tempFormID = document.getElementById('tempFormID')?.value.trim() || '';
+            if (!tempFormID || tempFormID.includes('TEMP')) return;
+
+            await Promise.all([
+                loadFreightCharges(),
+                loadVolumetricDetails(),
+                fetchEquipmentDetails(tempFormID)
+            ]);
+
+            // Check billed status directly from already-fetched docket record
+            if (docketResult.invoiceNo) {
+                notify(`This AWB has already been billed. Invoice Number: ${docketResult.invoiceNo}`, 'warning');
+                disableForm();
+                setFormStateBadge('Billed', 'text-bg-info');
+
+                const saveBtn = document.getElementById('saveButton');
+                const modifyBtn = document.getElementById('modifyButton');
+                const deleteBtn = document.getElementById('deleteButton');
+                if (saveBtn) saveBtn.disabled = true;
+                if (modifyBtn) modifyBtn.disabled = true;
+                if (deleteBtn) deleteBtn.disabled = true;
+            }
+        } catch (error) {
+            console.error('Error loading docket details:', error);
+            notify('Failed to load docket details. Please try again.', 'error');
+        }
+    });
+}
+
+// ============ SUPABASE QUERIES ============
 async function loadDocketDetails(docketNo) {
     if (!docketNo) return;
 
     const { data, error } = await supabaseClient
         .from('DomesticBookingDetails')
-        .select('*')
+        .select('DocketNo')
         .ilike('DocketNo', `${docketNo}%`)
         .eq('company_id', CompanyID)
         .limit(10);
@@ -254,40 +314,129 @@ async function loadDocketDetails(docketNo) {
     }
 
     const dataList = document.getElementById('docketNoSuggestions');
-    dataList.innerHTML = '';
+    if (!dataList) return;
 
-    data.forEach(item => {
+    dataList.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    (data || []).forEach(item => {
         const option = document.createElement('option');
         option.value = item.DocketNo;
-        dataList.appendChild(option);
+        fragment.appendChild(option);
     });
+    dataList.appendChild(fragment);
 }
 
+async function fetchDocketDetails(docketNo) {
+    const { data, error } = await supabaseClient
+        .from('DomesticBookingDetails')
+        .select('*')
+        .eq('DocketNo', docketNo)
+        .eq('company_id', CompanyID)
+        .maybeSingle();
+
+    if (error) {
+        console.error('Error fetching docket details:', error);
+        return { found: false, invoiceNo: null };
+    }
+
+    if (!data) {
+        return { found: false, invoiceNo: null };
+    }
+
+    const fieldMap = {
+        tempFormID: data.id,
+        currentStatus: data.Status,
+        partyCode: data.CustomerCode,
+        customerName: data.CustomerName,
+        bookedDate: data.BookingDate,
+        shippingTypeD: data.ShippingType,
+        transitTypeD: data.TransitType,
+        modeTypeD: data.ModeType,
+        serviceProviderName: data.ServiceProvider,
+        customerReferenceNo: data.CustomerReferenceNo,
+        invoiceValue: data.InvoiceValue,
+        paymentType: data.PaymentType,
+        consignorName: data.ConsignorName,
+        originPinCode: data.OriginPincode,
+        originCity: data.OriginCity,
+        originAddress: data.OriginAddress,
+        consigneeName: data.ConsigneeName,
+        destinationPincode: data.DestinationPincode,
+        destinationCity: data.DestinationCity,
+        destinationAddress: data.DestinationAddress,
+        uOMType: data.UOMType,
+        quantity: data.Quantity,
+        actualWeight: data.ActualWeight,
+        volumetricWeight: data.VolumetricWeight,
+        chargeableWeight: data.ChargeableWeight,
+        cargoDescription: data.CargoDescription,
+        department: data.Department
+    };
+
+    Object.entries(fieldMap).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val ?? '';
+    });
+
+    toggleContainerTab(data.ModeType);
+    disableForm();
+    setFormStateBadge('View', 'text-bg-secondary');
+
+    const saveBtn = document.getElementById('saveButton');
+    const modifyBtn = document.getElementById('modifyButton');
+    const deleteBtn = document.getElementById('deleteButton');
+    const reportBtn = document.getElementById('reportButton');
+
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.dataset.mode = 'update';
+    }
+    if (deleteBtn) deleteBtn.disabled = true;
+    if (modifyBtn) modifyBtn.disabled = false;
+    if (reportBtn) reportBtn.disabled = false;
+    setTabAddButtonsDisabled(true);
+
+    return { found: true, invoiceNo: data.InvoiceNumber || null };
+}
+
+// Kept for backward compatibility if called by other modules
+async function checkAWBBilledStatus(docketNo) {
+    const { data, error } = await supabaseClient
+        .from('DomesticBookingDetails')
+        .select('InvoiceNumber')
+        .eq('DocketNo', docketNo)
+        .eq('company_id', CompanyID)
+        .maybeSingle();
+
+    if (error || !data || !data.InvoiceNumber) {
+        return { isUnbilled: true, invoiceNo: null };
+    }
+
+    return { isUnbilled: false, invoiceNo: data.InvoiceNumber };
+}
+
+// ============ CHARGEABLE WEIGHT CALCULATOR ============
 async function initChargeableWeightCalculator(actualSelector, volumetricSelector, chargeableSelector, uomSelector) {
-    const actualWeightInput = typeof actualSelector === "string" ? document.querySelector(actualSelector) : actualSelector;
-    const volumetricWeightInput = typeof volumetricSelector === "string" ? document.querySelector(volumetricSelector) : volumetricSelector;
-    const chargeableWeightInput = typeof chargeableSelector === "string" ? document.querySelector(chargeableSelector) : chargeableSelector;
-    const uOMTypeInput = typeof uomSelector === "string" ? document.querySelector(uomSelector) : uomSelector;
+    const actualWeightInput = typeof actualSelector === 'string' ? document.querySelector(actualSelector) : actualSelector;
+    const volumetricWeightInput = typeof volumetricSelector === 'string' ? document.querySelector(volumetricSelector) : volumetricSelector;
+    const chargeableWeightInput = typeof chargeableSelector === 'string' ? document.querySelector(chargeableSelector) : chargeableSelector;
+    const uOMTypeInput = typeof uomSelector === 'string' ? document.querySelector(uomSelector) : uomSelector;
 
     if (!actualWeightInput || !volumetricWeightInput || !chargeableWeightInput || !uOMTypeInput) {
-        console.warn("One or more elements not found for chargeable weight calculator.");
+        console.warn('One or more elements not found for chargeable weight calculator.');
         return;
     }
 
     function applyRounding(uom, chargeable, actual) {
-        uom = uom?.trim().toLowerCase();
-        switch (uom) {
+        switch (uom?.trim().toLowerCase()) {
             case 'kgs':
-                return Math.round(chargeable);
             case 'tons':
                 return Math.round(chargeable);
-            case 'gms':
-                if (Number.isInteger(chargeable)) {
-                    return chargeable;
-                } else {
-                    const decimal = chargeable - Math.floor(chargeable);
-                    return (decimal <= 0.5) ? Math.floor(chargeable) + 0.5 : Math.round(chargeable);
-                }
+            case 'gms': {
+                if (Number.isInteger(chargeable)) return chargeable;
+                const decimal = chargeable - Math.floor(chargeable);
+                return decimal <= 0.5 ? Math.floor(chargeable) + 0.5 : Math.round(chargeable);
+            }
             case 'fixed':
                 return actual;
             default:
@@ -298,196 +447,108 @@ async function initChargeableWeightCalculator(actualSelector, volumetricSelector
     function updateChargeableWeight() {
         const actualVal = actualWeightInput.value;
         const volVal = volumetricWeightInput.value;
-        const uomVal = uOMTypeInput?.value;
+        const uomVal = uOMTypeInput.value;
 
-        if (actualVal === "" || volVal === "" || !uomVal) {
-            chargeableWeightInput.value = "";
+        if (actualVal === '' || volVal === '' || !uomVal) {
+            chargeableWeightInput.value = '';
             return;
         }
 
-        const actual = parseFloat(actualVal);
-        const volumetric = parseFloat(volVal);
+        const actual = parseFloat(actualVal) || 0;
+        const volumetric = parseFloat(volVal) || 0;
         const rawChargeable = Math.max(actual, volumetric);
-        const roundedChargeable = applyRounding(uomVal, rawChargeable, actual);
-        chargeableWeightInput.value = roundedChargeable.toFixed(2);
+        chargeableWeightInput.value = applyRounding(uomVal, rawChargeable, actual).toFixed(2);
     }
 
-    // Attach event listeners
-    actualWeightInput.addEventListener("input", updateChargeableWeight);
-    volumetricWeightInput.addEventListener("input", updateChargeableWeight);
-    uOMTypeInput.addEventListener("change", updateChargeableWeight);
+    actualWeightInput.addEventListener('input', updateChargeableWeight);
+    volumetricWeightInput.addEventListener('input', updateChargeableWeight);
+    uOMTypeInput.addEventListener('change', updateChargeableWeight);
 
-    // Optional: initial calculation
     updateChargeableWeight();
 }
 
-async function fetchDocketDetails(docketNo) {
-
-    const { data, error } = await supabaseClient
-        .from('DomesticBookingDetails')
-        .select('*')
-        .eq('DocketNo', docketNo)
-        .eq('company_id', CompanyID)
-        .maybeSingle();
-
-    if (error) {
-        console.error('Error fetching docket details:', error);
-        return;
-    }
-
-    if (!data) {
-        return;
-    }
-    // Map fields
-
-    document.getElementById('tempFormID').value = data.id;
-    document.getElementById('currentStatus').value = data.Status
-    document.getElementById('partyCode').value = data.CustomerCode
-    document.getElementById('customerName').value = data.CustomerName;
-    document.getElementById('bookedDate').value = data.BookingDate;
-    document.getElementById('shippingTypeD').value = data.ShippingType;
-    document.getElementById('transitTypeD').value = data.TransitType;
-    document.getElementById('modeTypeD').value = data.ModeType;
-    document.getElementById('serviceProviderName').value = data.ServiceProvider;
-    document.getElementById('customerReferenceNo').value = data.CustomerReferenceNo;
-    document.getElementById('invoiceValue').value = data.InvoiceValue;
-    document.getElementById('paymentType').value = data.PaymentType;
-    document.getElementById('consignorName').value = data.ConsignorName;
-    document.getElementById('originPinCode').value = data.OriginPincode;
-    document.getElementById('originCity').value = data.OriginCity;
-    document.getElementById('originAddress').value = data.OriginAddress;
-    document.getElementById('consigneeName').value = data.ConsigneeName;
-    document.getElementById('destinationPincode').value = data.DestinationPincode;
-    document.getElementById('destinationCity').value = data.DestinationCity;
-    document.getElementById('destinationAddress').value = data.DestinationAddress;
-    document.getElementById('uOMType').value = data.UOMType;
-    document.getElementById('quantity').value = data.Quantity;
-    document.getElementById('actualWeight').value = data.ActualWeight;
-    document.getElementById('volumetricWeight').value = data.VolumetricWeight;
-    document.getElementById('chargeableWeight').value = data.ChargeableWeight;
-    document.getElementById('cargoDescription').value = data.CargoDescription;
-    document.getElementById('department').value = data.Department;
-
-    toggleContainerTab(data.ModeType);
-
-    disableForm();
-    deleteButton.disabled = true;
-    saveButton.disabled = true;
-    modifyButton.disabled = false;
-    reportButton.disabled = false;
-    document.getElementById('addFreightRow').disabled = true;
-}
-
-async function checkAWBBilledStatus(docketNo) {
-    const { data, error } = await supabaseClient
-        .from('DomesticBookingDetails')
-        .select('InvoiceNumber')
-        .eq('DocketNo', docketNo)
-        .eq('company_id', CompanyID)
-        .maybeSingle();
-
-    // If no record or no invoice → unbilled
-    if (error || !data || !data.InvoiceNumber) {
-        return { isUnbilled: true, invoiceNo: null };
-    }
-
-    // If invoice exists → billed
-    return { isUnbilled: false, invoiceNo: data.InvoiceNumber };
-}
-
-//newbutton on click clear form & enable saveButton
-document.getElementById('newButton').addEventListener('click', () => {
+// ============ ACTION BAR BUTTONS ============
+document.getElementById('newButton')?.addEventListener('click', () => {
     clearForm();
     enableForm();
     toggleEditMode(true);
+    setFormStateBadge('New', 'text-bg-light border');
 
-    // Button States
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    deleteButton.disabled = true;
-    reportButton.disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
-    saveButton.dataset.mode = 'insert';
+    const saveBtn = document.getElementById('saveButton');
+    const modifyBtn = document.getElementById('modifyButton');
+    const deleteBtn = document.getElementById('deleteButton');
+    const reportBtn = document.getElementById('reportButton');
 
-    // Total container refresh
-    // location.reload();
-
-
-    //clear domestic booking charges table
-    const chargesTableBody = document.getElementById('chargesBody');
-    chargesTableBody.innerHTML = '';
-
-    // Enable the save button
-    document.getElementById('saveButton').disabled = false;
-    saveButton.dataset.mode = 'insert';
-    enableForm();
-
-    // Enable adding freight
-    document.getElementById('addFreightRow').disabled = false;
-
-    // Clear Freight Table
-    document.querySelector('#freightTable tbody').innerHTML = '';
-
-    // Clear Container Details Table
-    document.querySelector('#containerDetailsTable tbody').innerHTML = '';
-
-    // Clear Volumetric Table
-    document.querySelector('#volumetricTable tbody').innerHTML = '';
-
-    // Recalculate Totals
-    recalcTotals();
-    // updateTotals(); // Reset totals display
-    document.querySelector('#bookingStatusTable tbody').innerHTML = ''; // Clear previous data
-    // Hide the Request Number container / badge if it was visible
-    const requestNoEl = document.getElementById("headerPickupRequestNoText");
-    const headerBadge = document.getElementById("headerPickupRequestBadge");
-
-    if (headerBadge) {
-        headerBadge.classList.add("d-none");
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Save';
+        saveBtn.dataset.mode = 'insert';
     }
+    if (modifyBtn) modifyBtn.disabled = true;
+    if (deleteBtn) deleteBtn.disabled = true;
+    if (reportBtn) reportBtn.disabled = true;
 
-    if (requestNoEl) {
-        requestNoEl.textContent = ""; // Correct way to clear text content of a span
-    }
+    setTabAddButtonsDisabled(false);
 
-    // Disable calculated weight fields
-    ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
-        document.getElementById(id).disabled = true;
+    // Clear child tables
+    ['#chargesBody', '#containerDetailsTable tbody', '#volumetricTable tbody', '#bookingStatusTable tbody'].forEach(selector => {
+        const tbody = document.querySelector(selector);
+        if (tbody) tbody.innerHTML = '';
     });
+
+    // Reset pickup request badge
+    const headerBadge = document.getElementById('headerPickupRequestBadge');
+    const requestNoEl = document.getElementById('headerPickupRequestNoText');
+    if (headerBadge) headerBadge.classList.add('d-none');
+    if (requestNoEl) requestNoEl.textContent = '';
+
+    recalcTotals();
+    disableCalculatedWeightFields();
     resetVolumetricTotals();
-    toggleContainerTab("");
+    toggleContainerTab('');
     setTempFormID();
 });
 
-modifyButton.addEventListener('click', () => {
+document.getElementById('modifyButton')?.addEventListener('click', () => {
     enableForm();
-    docketNoInput.disabled = true;
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    saveButton.dataset.mode = 'update';
+    setFormStateBadge('Editing', 'text-bg-warning');
 
+    if (docketNoInput) docketNoInput.disabled = true;
+
+    const saveBtn = document.getElementById('saveButton');
+    const modifyBtn = document.getElementById('modifyButton');
+    const reportBtn = document.getElementById('reportButton');
+
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Update';
+        saveBtn.dataset.mode = 'update';
+    }
+    if (modifyBtn) modifyBtn.disabled = true;
+    if (reportBtn) reportBtn.disabled = true;
+
+    setTabAddButtonsDisabled(false);
+    disableCalculatedWeightFields();
     toggleEditMode(false);
-
 });
 
-document.getElementById('saveButton').addEventListener('click', async () => {
-    const docketNoInput = document.getElementById('docketNo');
-    const mode = document.getElementById('saveButton').dataset.mode || 'insert';
+document.getElementById('saveButton')?.addEventListener('click', async function () {
+    const saveBtn = this;
+    const mode = saveBtn.dataset.mode || 'insert';
+    const originalHTML = saveBtn.innerHTML;
 
-    const val = id => document.getElementById(id)?.value || "";
-    saveButton.disabled = true;
-    const requestNoText = document.getElementById("headerPickupRequestNoText").textContent.trim();
-    const rawRequestNo = document.getElementById('headerPickupRequestNoText').textContent.trim();
-    const headerBadge = document.getElementById("headerPickupRequestBadge");
+    const val = id => document.getElementById(id)?.value?.trim() || '';
+    const num = id => parseFloat(document.getElementById(id)?.value) || 0;
+    const int = id => parseInt(document.getElementById(id)?.value, 10) || 0;
 
-    // Determine if the badge is visible and a valid request number exists
-    const isBadgeVisible = headerBadge && !headerBadge.classList.contains("d-none");
-    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo !== "") ? rawRequestNo : null;
+    const headerBadge = document.getElementById('headerPickupRequestBadge');
+    const rawRequestNo = document.getElementById('headerPickupRequestNoText')?.textContent?.trim() || '';
+    const isBadgeVisible = Boolean(headerBadge && !headerBadge.classList.contains('d-none'));
+    const finalPickupRequestNo = (isBadgeVisible && rawRequestNo) ? rawRequestNo : null;
 
     const formData = {
         DocketNo: val('docketNo'),
-        BookingDate: val('bookedDate'),
+        BookingDate: val('bookedDate') || null,
         CustomerCode: val('partyCode'),
         CustomerName: val('customerName'),
         ShippingType: val('shippingTypeD'),
@@ -503,11 +564,11 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         ModeType: val('modeTypeD'),
         ServiceProvider: val('serviceProviderName'),
         CustomerReferenceNo: val('customerReferenceNo'),
-        InvoiceValue: val('invoiceValue'),
-        Quantity: val('quantity'),
-        ActualWeight: val('actualWeight'),
-        VolumetricWeight: val('volumetricWeight'),
-        ChargeableWeight: val('chargeableWeight'),
+        InvoiceValue: num('invoiceValue'),
+        Quantity: int('quantity'),
+        ActualWeight: num('actualWeight'),
+        VolumetricWeight: num('volumetricWeight'),
+        ChargeableWeight: num('chargeableWeight'),
         CargoDescription: val('cargoDescription'),
         PaymentType: val('paymentType'),
         UOMType: val('uOMType'),
@@ -528,73 +589,77 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         });
     }
 
-    try {
-        let response;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
 
+    try {
         if (mode === 'insert') {
             const { data, error } = await supabaseClient
                 .from('DomesticBookingDetails')
                 .insert(formData)
-                .select('id')     // IMPORTANT
-                .single();        // ensures single row returned
+                .select('id')
+                .single();
 
             if (error) throw error;
-
-            insertedID = data.id;     // <-- ID RECEIVED HERE
+            insertedID = data.id;
         } else {
             const { data, error } = await supabaseClient
                 .from('DomesticBookingDetails')
                 .update(formData)
-                .eq('DocketNo', docketNoInput.value)
+                .eq('DocketNo', formData.DocketNo)
                 .eq('company_id', CompanyID)
                 .select('id')
                 .single();
 
             if (error) throw error;
-
             insertedID = data.id;
         }
 
-        // console.log("Inserted/Updated ID:", insertedID);
-        document.getElementById('tempFormID').value = insertedID; // Store ID for related tables
+        const tempFormIDEl = document.getElementById('tempFormID');
+        if (tempFormIDEl) tempFormIDEl.value = insertedID;
 
-        await saveFreightCharges(insertedID);
-        await saveNewVolumetricRows();
-        await saveEquipmentDetails();
+        // Save all child tables in parallel
+        await Promise.all([
+            saveFreightCharges(insertedID),
+            saveNewVolumetricRows(),
+            saveEquipmentDetails()
+        ]);
+
+        if (finalPickupRequestNo && typeof updatePickupRequestStatus === 'function') {
+            await updatePickupRequestStatus(finalPickupRequestNo);
+        }
+
         toggleEditMode(true);
         disableForm();
-        document.getElementById('addFreightRow').disabled = true;
-        document.getElementById('addVolumetricRow').disabled = true;
-        document.getElementById('addContainer').disabled = true;
+        setTabAddButtonsDisabled(true);
+        setFormStateBadge('Saved', 'text-bg-success');
 
-        await updatePickupRequestStatus(requestNoText);
-        showToast(`Booking details ${mode} successful!`);
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="bi bi-check2-circle"></i> Update';
+        saveBtn.dataset.mode = 'update';
 
+        const modifyBtn = document.getElementById('modifyButton');
+        const reportBtn = document.getElementById('reportButton');
+        const deleteBtn = document.getElementById('deleteButton');
+        if (modifyBtn) modifyBtn.disabled = false;
+        if (reportBtn) reportBtn.disabled = false;
+        if (deleteBtn) deleteBtn.disabled = true;
+
+        notify(`Booking details ${mode} successful!`, 'success');
     } catch (err) {
         console.error(`Error while ${mode}:`, err);
+        notify(`Failed to ${mode} booking: ${err.message || 'Unknown error'}`, 'error');
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHTML;
     }
 });
 
-document.getElementById('modeTypeD').addEventListener('change', function () {
+// ============ FIELD LISTENERS ============
+document.getElementById('modeTypeD')?.addEventListener('change', function () {
     toggleContainerTab(this.value);
 });
-department.addEventListener('change', () =>
-    handleDatalistInsert(department, 'departmentList', 'Department')
-);
 
-docketNoInput.addEventListener('input', function () {
-
-    this.value = this.value
-        .toUpperCase()          // Capital letters
-        .replace(/[\r\n]/g, '') // Remove new lines
-        .replace(/\s+/g, ' ')   // Single space only
-        .trim();                // Remove start/end spaces
-});
-
-// Prevent Enter key
-docketNoInput.addEventListener('keydown', function (event) {
-
-    if (event.key === 'Enter') {
-        event.preventDefault();
-    }
+const departmentEl = document.getElementById('department');
+departmentEl?.addEventListener('change', () => {
+    handleDatalistInsert(departmentEl, 'departmentList', 'Department');
 });
